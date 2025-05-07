@@ -9,6 +9,7 @@ public class Invoice {
     private LocalDate createdAt;
     private String status;
 
+
     public Invoice(){
 
     }

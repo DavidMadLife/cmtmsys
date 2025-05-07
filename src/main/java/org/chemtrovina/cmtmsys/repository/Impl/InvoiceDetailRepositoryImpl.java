@@ -33,7 +33,7 @@ public class InvoiceDetailRepositoryImpl extends GenericRepositoryImpl<InvoiceDe
         StringBuilder sql = new StringBuilder("UPDATE InvoiceDetail SET ");
         List<Object> params = new ArrayList<>();
 
-        if (detail.getInvoiceId() != null && !detail.getInvoiceId().isBlank()) {
+        if (detail.getInvoiceId() != 0) {
             sql.append("InvoiceId = ?, ");
             params.add(detail.getInvoiceId());
         }
@@ -76,7 +76,7 @@ public class InvoiceDetailRepositoryImpl extends GenericRepositoryImpl<InvoiceDe
         public InvoiceDetail mapRow(ResultSet rs, int rowNum) throws SQLException {
             return new InvoiceDetail(
                     rs.getInt("Id"),
-                    rs.getString("InvoiceId"),
+                    rs.getInt("InvoiceId"),
                     rs.getString("SapPN"),
                     rs.getInt("Quantity"),
                     rs.getInt("MOQ"),

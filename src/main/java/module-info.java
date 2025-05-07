@@ -9,6 +9,7 @@ module org.chemtrovina.cmtmsys {
     requires java.sql;
     requires spring.jdbc;
     requires org.apache.poi.ooxml;
+    requires spring.tx;
 
     opens org.chemtrovina.cmtmsys to javafx.fxml;
     exports org.chemtrovina.cmtmsys;

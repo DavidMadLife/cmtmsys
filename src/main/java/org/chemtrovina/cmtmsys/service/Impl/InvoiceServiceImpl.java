@@ -1,4 +1,57 @@
 package org.chemtrovina.cmtmsys.service.Impl;
 
-public class InvoiceServiceImpl {
+import org.chemtrovina.cmtmsys.model.Invoice;
+import org.chemtrovina.cmtmsys.model.InvoiceDetail;
+import org.chemtrovina.cmtmsys.repository.base.InvoiceRepository;
+import org.chemtrovina.cmtmsys.service.base.InvoiceService;
+
+import java.util.List;
+
+public class InvoiceServiceImpl implements InvoiceService {
+
+    private final InvoiceRepository invoiceRepository;
+
+
+
+    public InvoiceServiceImpl(InvoiceRepository invoiceRepository) {
+        this.invoiceRepository = invoiceRepository;
+    }
+
+    @Override
+    public void add(Invoice invoice) {
+        invoiceRepository.add(invoice);
+    }
+
+    @Override
+    public void update(Invoice invoice) {
+        invoiceRepository.update(invoice);
+    }
+
+    @Override
+    public Invoice findById(int id) {
+        return invoiceRepository.findById(id);
+    }
+
+    @Override
+    public List<Invoice> findAll() {
+        return invoiceRepository.findAll();
+    }
+
+    @Override
+    public Invoice findByInvoiceNo(String invoiceNo) {
+        return invoiceRepository.findByInvoiceNo(invoiceNo);
+    }
+
+    @Override
+    public void saveInvoiceWithDetails(Invoice invoice, List<InvoiceDetail> details) {
+        invoiceRepository.saveInvoiceWithDetails(invoice, details);
+    }
+
+    @Override
+    public boolean existsByInvoiceNo(String invoiceNo) {
+        invoiceRepository.existsByInvoiceNo(invoiceNo);
+        return true;
+    }
+
+
 }

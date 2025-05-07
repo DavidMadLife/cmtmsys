@@ -2,7 +2,7 @@ package org.chemtrovina.cmtmsys.model;
 
 public class InvoiceDetail {
     private int id;
-    private String invoiceId;
+    private int invoiceId;
     private String sapPN;
     private int quantity;
     private int moq;
@@ -12,7 +12,7 @@ public class InvoiceDetail {
     public InvoiceDetail() {
     }
 
-    public InvoiceDetail(int id, String invoiceId, String sapPN, int quantity, int moq, String status, int totalReel) {
+    public InvoiceDetail(int id, int invoiceId, String sapPN, int quantity, int moq, String status, int totalReel) {
         this.id = id;
         this.invoiceId = invoiceId;
         this.sapPN = sapPN;
@@ -30,11 +30,11 @@ public class InvoiceDetail {
         this.id = id;
     }
 
-    public String getInvoiceId() {
+    public int getInvoiceId() {
         return invoiceId;
     }
 
-    public void setInvoiceId(String invoiceId) {
+    public void setInvoiceId(int invoiceId) {
         this.invoiceId = invoiceId;
     }
 

@@ -1,12 +1,14 @@
 package org.chemtrovina.cmtmsys.repository.Impl;
 
 import org.chemtrovina.cmtmsys.model.Invoice;
+import org.chemtrovina.cmtmsys.model.InvoiceDetail;
 import org.chemtrovina.cmtmsys.repository.base.InvoiceRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,6 +18,49 @@ public class InvoiceRepositoryImpl extends GenericRepositoryImpl<Invoice> implem
     public InvoiceRepositoryImpl(JdbcTemplate jdbcTemplate) {
         super(jdbcTemplate, new InvoiceRowMapper(), "Invoice");
     }
+
+    @Override
+    public boolean existsByInvoiceNo(String invoiceNo) {
+        String sql = "SELECT COUNT(*) FROM Invoice WHERE InvoiceNo = ?";
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, invoiceNo);
+        return count != null && count > 0;
+    }
+
+
+    @Override
+    public void saveInvoiceWithDetails(Invoice invoice, List<InvoiceDetail> details) {
+        // Lưu invoice, lấy id sinh ra
+        String invoiceSql = "INSERT INTO Invoice (InvoiceNo, InvoiceDate, CreatedAt, Status) VALUES (?, ?, ?, ?)";
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+
+        jdbcTemplate.update(connection -> {
+            PreparedStatement ps = connection.prepareStatement(invoiceSql, Statement.RETURN_GENERATED_KEYS);
+            ps.setString(1, invoice.getInvoiceNo());
+            ps.setDate(2, Date.valueOf(invoice.getInvoiceDate()));
+            ps.setDate(3, Date.valueOf(invoice.getCreatedAt()));
+            ps.setString(4, invoice.getStatus());
+            return ps;
+        }, keyHolder);
+
+        int invoiceId = keyHolder.getKey().intValue();
+        invoice.setId(invoiceId);
+
+        // Gán invoiceId vào từng detail rồi lưu
+        String detailSql = "INSERT INTO InvoiceDetail (InvoiceId, SapPN, Quantity, MOQ, Status, TotalReel) VALUES (?, ?, ?, ?, ?, ?)";
+        for (InvoiceDetail detail : details) {
+            detail.setInvoiceId(invoiceId);
+            jdbcTemplate.update(detailSql,
+                    invoiceId,
+                    detail.getSapPN(),
+                    detail.getQuantity(),
+                    detail.getMoq(),
+                    detail.getStatus(),
+                    detail.getTotalReel()
+            );
+        }
+    }
+
+
 
     @Override
     public void add(Invoice invoice) {

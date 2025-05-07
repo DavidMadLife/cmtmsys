@@ -1,14 +1,53 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import java.util.*?>
-<?import javafx.scene.*?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
 
-<AnchorPane xmlns="http://javafx.com/javafx"
-            xmlns:fx="http://javafx.com/fxml"
-            fx:controller="org.chemtrovina.cmtmsys.controller.InvoiceController"
-            prefHeight="400.0" prefWidth="600.0">
 
+<AnchorPane prefHeight="832.0" prefWidth="1280.0" style="-fx-background-color: #456F92;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.chemtrovina.cmtmsys.controller.InvoiceController">
+   <children>
+      <TableView fx:id="tableView" layoutX="30.0" layoutY="86.0" prefHeight="634.0" prefWidth="650.0">
+        <columns>
+          <TableColumn fx:id="colDate" maxWidth="200.0" prefWidth="88.0" text="Date" />
+            <TableColumn fx:id="colInvoiceNo" maxWidth="200.0" prefWidth="116.0" text="Invoice No" />
+            <TableColumn fx:id="colSAPCode" maxWidth="200.0" prefWidth="141.0" text="SAP Code" />
+            <TableColumn fx:id="colQty" maxWidth="200.0" prefWidth="113.0" text="Qty" />
+            <TableColumn fx:id="colMOQ" maxWidth="200.0" prefWidth="94.0" text="MOQ" />
+            <TableColumn fx:id="colReelQty" maxWidth="200.0" prefWidth="100.0" text="Reel Qty" />
+        </columns>
+      </TableView>
+      <HBox layoutX="30.0" layoutY="33.0" prefHeight="26.0" prefWidth="650.0" spacing="10.0">
+         <children>
+            <HBox prefHeight="19.0" prefWidth="240.0" style="-fx-background-color: #ffffff; -fx-border-radius: 30;">
+               <children>
+                  <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Date" textAlignment="CENTER" wrappingWidth="92.13671875">
+                     <font>
+                        <Font size="16.0" />
+                     </font>
+                  </Text>
+                  <DatePicker fx:id="dpDate" prefHeight="31.0" prefWidth="147.0" />
+               </children>
+            </HBox>
+            <HBox prefHeight="26.0" prefWidth="240.0" style="-fx-background-color: #ffffff; -fx-border-radius: 100;">
+               <children>
+                  <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Invoice No" textAlignment="CENTER" wrappingWidth="92.13671875">
+                     <font>
+                        <Font size="16.0" />
+                     </font>
+                  </Text>
+                  <ComboBox fx:id="cbInvoiceNo" prefHeight="25.0" prefWidth="148.0" />
+               </children>
+            </HBox>
+            <Button fx:id="btnNew" mnemonicParsing="false" prefHeight="25.0" prefWidth="72.0" text="New" />
+            <Button fx:id="btnSave" layoutX="510.0" layoutY="10.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="72.0" text="Save" />
+         </children>
+      </HBox>
+   </children>
 </AnchorPane>
