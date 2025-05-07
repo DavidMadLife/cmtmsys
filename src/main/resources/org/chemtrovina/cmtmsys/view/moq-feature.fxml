@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
+
+<AnchorPane prefHeight="832.0" prefWidth="1280.0" style="-fx-background-color: #456F92;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.chemtrovina.cmtmsys.controller.MOQController">
+    <children>
+        <TableView fx:id="moqTableView" fixedCellSize="0.0" layoutX="452.0" layoutY="27.0" prefHeight="730.0" prefWidth="806.0">
+            <columns>
+                <TableColumn fx:id="noColumn" prefWidth="117.0" text="No" />
+                <TableColumn fx:id="makerColumn" prefWidth="123.0" text="Maker" />
+                <TableColumn fx:id="makerPNColumn" prefWidth="170.0" text="Maker P/N" />
+                <TableColumn fx:id="sapPNColumn" prefWidth="142.0" text="SAP P/N" />
+                <TableColumn fx:id="moqColumn" prefWidth="125.0" text="MOQ" />
+                <TableColumn fx:id="mslColumn" maxWidth="500.0" prefWidth="130.0" text="MSL" />
+            </columns>
+        </TableView>
+        <Pane layoutX="23.0" layoutY="65.0" prefHeight="558.0" prefWidth="422.0" style="-fx-background-color: #B9B9B9;">
+            <children>
+                <VBox layoutX="20.0" layoutY="172.0" prefHeight="200.0" prefWidth="382.0" style="-fx-spacing: 42;">
+                    <children>
+                        <HBox layoutX="10.0" layoutY="10.0" prefHeight="33.0" prefWidth="401.0" style="-fx-spacing: 30;">
+                            <children>
+                                <Text strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-weight: Bold;" text="Maker" textAlignment="CENTER" wrappingWidth="98.783203125">
+                                    <font>
+                                        <Font size="18.0" />
+                                    </font>
+                                </Text>
+                                <TextField fx:id="makerField" prefHeight="33.0" prefWidth="217.0" />
+                                <CheckBox fx:id="makerCheckBox" mnemonicParsing="false" prefHeight="33.0" prefWidth="18.0" />
+                            </children>
+                        </HBox>
+                        <HBox layoutX="10.0" layoutY="43.0" prefHeight="33.0" prefWidth="401.0" style="-fx-spacing: 30;">
+                            <children>
+                                <Text strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-weight: Bold;" text="P/N" textAlignment="CENTER" wrappingWidth="98.783203125">
+                                    <font>
+                                        <Font size="18.0" />
+                                    </font>
+                                </Text>
+                                <TextField fx:id="pnField" prefHeight="33.0" prefWidth="217.0" />
+                                <CheckBox fx:id="pnCheckBox" mnemonicParsing="false" prefHeight="33.0" prefWidth="18.0" />
+                            </children>
+                        </HBox>
+                        <HBox layoutX="10.0" layoutY="76.0" prefHeight="33.0" prefWidth="401.0" style="-fx-spacing: 30;">
+                            <children>
+                                <Text strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-weight: Bold;" text="SAP" textAlignment="CENTER" wrappingWidth="98.783203125">
+                                    <font>
+                                        <Font size="18.0" />
+                                    </font>
+                                </Text>
+                                <TextField fx:id="sapField" prefHeight="33.0" prefWidth="217.0" />
+                                <CheckBox fx:id="sapCheckBox" mnemonicParsing="false" prefHeight="33.0" prefWidth="18.0" />
+                            </children>
+                        </HBox>
+                        <HBox layoutX="10.0" layoutY="109.0" prefHeight="33.0" prefWidth="401.0" style="-fx-spacing: 30;">
+                            <children>
+                                <Text strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-weight: Bold;" text="MOQ" textAlignment="CENTER" wrappingWidth="98.783203125">
+                                    <font>
+                                        <Font size="18.0" />
+                                    </font>
+                                </Text>
+                                <TextField fx:id="moqField" prefHeight="33.0" prefWidth="217.0" />
+                                <CheckBox fx:id="moqCheckBox" mnemonicParsing="false" prefHeight="33.0" prefWidth="18.0" />
+                            </children>
+                        </HBox>
+                        <HBox prefHeight="33.0" prefWidth="401.0" style="-fx-spacing: 30;">
+                            <children>
+                                <Text strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-weight: Bold;" text="MSL" textAlignment="CENTER" wrappingWidth="98.783203125">
+                                    <font>
+                                        <Font size="18.0" />
+                                    </font>
+                                </Text>
+                                <TextField fx:id="mslField" prefHeight="33.0" prefWidth="217.0" />
+                                <CheckBox fx:id="mslCheckBox" mnemonicParsing="false" prefHeight="33.0" prefWidth="18.0" />
+                            </children>
+                        </HBox>
+                    </children>
+                </VBox>
+                <Text layoutX="119.0" layoutY="33.0" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-weight: Bold;" text="Import MOQ Data" wrappingWidth="207.0">
+                    <font>
+                        <Font size="24.0" />
+                    </font>
+                </Text>
+                <HBox layoutX="42.0" layoutY="61.0" spacing="10.0">
+                    <Button fx:id="chooseFileBtn" prefWidth="120.0" style="-fx-font-weight: Bold;" text="Choose File">
+                        <font>
+                            <Font size="13.0" />
+                        </font>
+                    </Button>
+                    <Text fx:id="fileNameLabel" text="No file selected" wrappingWidth="200.0">
+                        <font>
+                            <Font size="14.0" />
+                        </font></Text>
+                </HBox>
+                <Button fx:id="btnImportData" layoutX="147.0" layoutY="104.0" mnemonicParsing="false" prefHeight="40.0" prefWidth="130.0" style="-fx-font-weight: Bold;" text="Import Data">
+                    <font>
+                        <Font size="14.0" />
+                    </font>
+                </Button>
+                <Button fx:id="btnSearch" layoutX="167.0" layoutY="490.0" mnemonicParsing="false" prefHeight="40.0" prefWidth="130.0" style="-fx-font-weight: Bold;" text="Search">
+                    <font>
+                        <Font size="14.0" />
+                    </font>
+                </Button>
+            </children>
+        </Pane>
+        <Pane fx:id="StatusPane" layoutX="21.0" layoutY="674.0" prefHeight="109.0" prefWidth="422.0" />
+
+    </children>
+</AnchorPane>

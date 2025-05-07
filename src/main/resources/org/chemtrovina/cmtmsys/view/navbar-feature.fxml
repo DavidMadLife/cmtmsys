@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ToolBar?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<ToolBar prefHeight="31.0" prefWidth="1252.0" AnchorPane.leftAnchor="14.0" AnchorPane.rightAnchor="14.0" AnchorPane.topAnchor="3.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.chemtrovina.cmtmsys.controller.NavbarController">
+
+    <items>
+        <Button fx:id="btnInvoice" mnemonicParsing="false" prefHeight="27.0" prefWidth="126.0" style="-fx-font-weight: Bold;" text="Invoice" />
+        <Button fx:id="btnScan" mnemonicParsing="false" prefHeight="31.0" prefWidth="126.0" style="-fx-font-weight: Bold;" text="Scan" />
+        <Button fx:id="btnHistory" mnemonicParsing="false" prefHeight="31.0" prefWidth="126.0" style="-fx-font-weight: Bold;" text="History" />
+        <Button fx:id="btnMOQ" mnemonicParsing="false" prefHeight="31.0" prefWidth="126.0" style="-fx-font-weight: Bold;" text="MOQ" />
+    </items>
+</ToolBar>
