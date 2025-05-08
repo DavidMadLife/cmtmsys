@@ -66,4 +66,9 @@ public class MOQServiceImpl implements MOQService {
         moqRepository.add(moq);
     }
 
+    @Override
+    public MOQ getMOQbySAPPN(String sapPN) {
+        return moqRepository.findBySapPN(sapPN);
+    }
+
 }

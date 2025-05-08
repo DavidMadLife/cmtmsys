@@ -11,4 +11,12 @@ public interface InvoiceRepository extends GenericRepository<Invoice> {
     List<Invoice> search(String invoiceNo, LocalDate invoiceDate, String status);
     void saveInvoiceWithDetails(Invoice invoice, List<InvoiceDetail> details);
     boolean existsByInvoiceNo(String invoiceNo);
+    List<InvoiceDetail> getInvoiceDetails(String invoiceNo);
+    void updateInvoiceDetails(String invoiceNo, List<InvoiceDetail> details);
+    void deleteInvoiceDetail(int invoiceId, String sapPN);
+    List<Invoice> findByDateAndInvoiceNo(LocalDate date, String invoiceNo);
+
+
+
+
 }

@@ -1,14 +1,99 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import java.util.*?>
-<?import javafx.scene.*?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
 
-<AnchorPane xmlns="http://javafx.com/javafx"
-            xmlns:fx="http://javafx.com/fxml"
-            fx:controller="org.chemtrovina.cmtmsys.controller.ScanController"
-            prefHeight="400.0" prefWidth="600.0">
-
+<AnchorPane prefHeight="832.0" prefWidth="1280.0" style="-fx-background-color: #456F92;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.chemtrovina.cmtmsys.controller.ScanController">
+   <children>
+      <HBox fx:id="hbTopFilter" layoutX="22.0" layoutY="33.0" prefHeight="26.0" prefWidth="490.0" spacing="10.0" style="-fx-background-radius: 10;">
+         <children>
+            <HBox fx:id="hbDate" prefHeight="19.0" prefWidth="240.0" style="-fx-background-color: #ffffff; -fx-background-radius: 5;">
+               <children>
+                  <Text fx:id="txtDate" strokeType="OUTSIDE" strokeWidth="0.0" text="Date" textAlignment="CENTER" wrappingWidth="92.13671875">
+                     <font>
+                        <Font size="16.0" />
+                     </font>
+                  </Text>
+                  <DatePicker fx:id="dpDate" prefHeight="31.0" prefWidth="147.0" />
+               </children>
+            </HBox>
+            <HBox fx:id="hbInvoice" layoutX="260.0" layoutY="10.0" prefHeight="19.0" prefWidth="240.0" style="-fx-background-color: #ffffff; -fx-background-radius: 5;">
+               <children>
+                  <Text fx:id="txtInvoiceLabel" strokeType="OUTSIDE" strokeWidth="0.0" text="Invoice No" textAlignment="CENTER" wrappingWidth="92.13671875">
+                     <font>
+                        <Font size="16.0" />
+                     </font>
+                  </Text>
+                  <ComboBox fx:id="cbInvoiceNo1" prefHeight="25.0" prefWidth="148.0" />
+               </children>
+            </HBox>
+         </children>
+      </HBox>
+      <HBox fx:id="hbScanInput" layoutX="272.0" layoutY="94.0" prefHeight="25.0" prefWidth="298.0" style="-fx-background-color: #ffffff; -fx-background-radius: 5;">
+         <children>
+            <Text fx:id="txtID" strokeType="OUTSIDE" strokeWidth="0.0" text="ID" textAlignment="CENTER" wrappingWidth="92.13671875">
+               <font>
+                  <Font size="16.0" />
+               </font>
+            </Text>
+            <TextField fx:id="txtScanInput" />
+            <Button fx:id="btnOnOff" mnemonicParsing="false" prefHeight="25.0" prefWidth="56.0" style="-fx-background-color: #545ffc;" text="ON" textFill="WHITE" />
+         </children>
+      </HBox>
+      <TableView fx:id="tblScanDetails" layoutX="22.0" layoutY="210.0" prefHeight="549.0" prefWidth="678.0">
+         <columns>
+            <TableColumn fx:id="colMakerCode" maxWidth="500.0" prefWidth="113.0" text="Maker Code" />
+            <TableColumn fx:id="colSapCode" maxWidth="500.0" prefWidth="113.0" text="SAP Code" />
+            <TableColumn fx:id="colMaker" maxWidth="500.0" prefWidth="100.0" text="Maker" />
+            <TableColumn fx:id="colMOQ" maxWidth="500.0" prefWidth="90.0" text="MOQ" />
+            <TableColumn fx:id="colQty" maxWidth="500.0" prefWidth="90.0" text="Qty" />
+            <TableColumn fx:id="colReelQty" maxWidth="500.0" prefWidth="90.0" text="Reel Qty" />
+            <TableColumn fx:id="colInvoice" maxWidth="500.0" text="Invoice" />
+         </columns>
+      </TableView>
+      <TableView fx:id="tblInvoiceList" layoutX="22.0" layoutY="94.0" prefHeight="88.0" prefWidth="240.0">
+         <columns>
+            <TableColumn fx:id="colDate" prefWidth="102.0" text="Date" />
+            <TableColumn fx:id="colInvoiceNo" prefWidth="137.0" text="Invoice No" />
+         </columns>
+      </TableView>
+      <Pane fx:id="paneScanResult" layoutX="771.0" layoutY="217.0" prefHeight="466.0" prefWidth="444.0" style="-fx-background-color: #aeadad; -fx-background-radius: 10;">
+         <children>
+            <Text fx:id="txtScanStatus" fill="#807a7a" layoutX="144.0" layoutY="256.0" strokeType="OUTSIDE" strokeWidth="0.0" text="None">
+               <font>
+                  <Font size="64.0" />
+               </font>
+            </Text>
+         </children>
+      </Pane>
+      <Button fx:id="btnKeepGoing" layoutX="771.0" layoutY="713.0" mnemonicParsing="false" prefHeight="46.0" prefWidth="209.0" style="-fx-background-color: #22d73a; -fx-font-weight: Bold; -fx-background-radius: 10;" text="Keep going" textAlignment="CENTER">
+         <font>
+            <Font size="18.0" />
+         </font>
+      </Button>
+      <Button fx:id="btnError" layoutX="1006.0" layoutY="713.0" mnemonicParsing="false" prefHeight="46.0" prefWidth="209.0" style="-fx-font-weight: Bold; -fx-background-color: #f54d4d; -fx-background-radius: 10;" text="Button" textFill="WHITE">
+         <font>
+            <Font size="18.0" />
+         </font>
+      </Button>
+      <Pane fx:id="paneScanTitle" layoutX="841.0" layoutY="119.0" prefHeight="67.0" prefWidth="304.0" style="-fx-background-color: #3789e1; -fx-background-radius: 10;">
+         <children>
+            <Text fx:id="txtScanResultTitle" fill="WHITE" layoutX="24.0" layoutY="43.0" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-weight: Bold;" text="Scan Result" textAlignment="CENTER" wrappingWidth="256.13671875">
+               <font>
+                  <Font size="24.0" />
+               </font>
+            </Text>
+         </children>
+      </Pane>
+      <Button fx:id="btnSearch" layoutX="518.0" layoutY="34.0" mnemonicParsing="false" text="Search" />
+   </children>
 </AnchorPane>

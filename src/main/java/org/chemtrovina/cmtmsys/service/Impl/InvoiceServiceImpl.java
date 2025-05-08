@@ -5,6 +5,7 @@ import org.chemtrovina.cmtmsys.model.InvoiceDetail;
 import org.chemtrovina.cmtmsys.repository.base.InvoiceRepository;
 import org.chemtrovina.cmtmsys.service.base.InvoiceService;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public class InvoiceServiceImpl implements InvoiceService {
@@ -16,6 +17,23 @@ public class InvoiceServiceImpl implements InvoiceService {
     public InvoiceServiceImpl(InvoiceRepository invoiceRepository) {
         this.invoiceRepository = invoiceRepository;
     }
+
+    @Override
+    public List<Invoice> findByDateAndInvoiceNo(LocalDate date, String invoiceNo) {
+        return invoiceRepository.findByDateAndInvoiceNo(date, invoiceNo);
+    }
+
+
+    @Override
+    public void updateInvoiceDetails(String invoiceNo, List<InvoiceDetail> details) {
+        invoiceRepository.updateInvoiceDetails(invoiceNo, details);
+    }
+
+    @Override
+    public void deleteInvoiceDetail(int invoiceId, String sapPN) {
+        invoiceRepository.deleteInvoiceDetail(invoiceId, sapPN);
+    }
+
 
     @Override
     public void add(Invoice invoice) {
@@ -53,5 +71,9 @@ public class InvoiceServiceImpl implements InvoiceService {
         return true;
     }
 
+    @Override
+    public List<InvoiceDetail> getInvoiceDetails(String invoiceNo) {
+        return invoiceRepository.getInvoiceDetails(invoiceNo);
+    }
 
 }

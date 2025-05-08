@@ -7,6 +7,7 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.chemtrovina.cmtmsys.model.MOQ;
 import org.chemtrovina.cmtmsys.repository.base.MOQRepository;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 
@@ -22,6 +23,14 @@ public class MOQRepositoryImpl extends GenericRepositoryImpl<MOQ> implements MOQ
 
     public MOQRepositoryImpl(JdbcTemplate jdbcTemplate) {
         super(jdbcTemplate, new MOQRowMapper(), "MOQ");
+    }
+
+    //Find by SAP code
+    @Override
+    public MOQ findBySapPN(String sapPN) {
+        String sql = "SELECT * FROM MOQ WHERE SapPN = ?";
+        List<MOQ> result = jdbcTemplate.query(sql, new MOQRowMapper(), sapPN);
+        return result.isEmpty() ? null : result.get(0);
     }
 
     @Override

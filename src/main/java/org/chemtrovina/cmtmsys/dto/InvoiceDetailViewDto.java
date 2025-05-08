@@ -3,6 +3,7 @@ package org.chemtrovina.cmtmsys.dto;
 import java.time.LocalDate;
 
 public class InvoiceDetailViewDto {
+    private int invoiceId;
     private LocalDate invoiceDate;
     private String invoiceNo;
     private String sapCode;
@@ -13,13 +14,21 @@ public class InvoiceDetailViewDto {
     public InvoiceDetailViewDto() {
     }
 
-    public InvoiceDetailViewDto(LocalDate invoiceDate, String invoiceNo, String sapCode, int quantity, int moq, int reelQty) {
+    public InvoiceDetailViewDto( int invoiceId ,LocalDate invoiceDate, String invoiceNo, String sapCode, int quantity, int moq, int reelQty) {
+        this.invoiceId = invoiceId;
         this.invoiceDate = invoiceDate;
         this.invoiceNo = invoiceNo;
         this.sapCode = sapCode;
         this.quantity = quantity;
         this.moq = moq;
         this.reelQty = reelQty;
+    }
+
+    public int getInvoiceId() {
+        return invoiceId;
+    }
+    public void setInvoiceId(int invoiceId) {
+        this.invoiceId = invoiceId;
     }
 
     public LocalDate getInvoiceDate() {

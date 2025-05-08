@@ -29,28 +29,9 @@ public class InvoiceDetailRepositoryImpl extends GenericRepositoryImpl<InvoiceDe
     }
 
     @Override
-    public void update(InvoiceDetail detail) {
-        StringBuilder sql = new StringBuilder("UPDATE InvoiceDetail SET ");
-        List<Object> params = new ArrayList<>();
-
-        if (detail.getInvoiceId() != 0) {
-            sql.append("InvoiceId = ?, ");
-            params.add(detail.getInvoiceId());
-        }
-        if (detail.getSapPN() != null && !detail.getSapPN().isBlank()) {
-            sql.append("SapPN = ?, ");
-            params.add(detail.getSapPN());
-        }
-        sql.append("Quantity = ?, MOQ = ?, Status = ?, TotalReel = ? ");
-        params.add(detail.getQuantity());
-        params.add(detail.getMoq());
-        params.add(detail.getStatus());
-        params.add(detail.getTotalReel());
-
-        sql.append("WHERE Id = ?");
-        params.add(detail.getId());
-
-        jdbcTemplate.update(sql.toString(), params.toArray());
+    public void updateInvoiceDetail(int detailId, InvoiceDetail newDetail) {
+        String sql = "UPDATE InvoiceDetail SET Quantity = ?, MOQ = ?, TotalReel = ?, Status = ? WHERE Id = ?";
+        jdbcTemplate.update(sql, newDetail.getQuantity(), newDetail.getMoq(), newDetail.getTotalReel(), newDetail.getStatus(), detailId);
     }
 
     @Override

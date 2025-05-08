@@ -11,13 +11,95 @@ import org.springframework.jdbc.support.KeyHolder;
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class InvoiceRepositoryImpl extends GenericRepositoryImpl<Invoice> implements InvoiceRepository {
 
     public InvoiceRepositoryImpl(JdbcTemplate jdbcTemplate) {
         super(jdbcTemplate, new InvoiceRowMapper(), "Invoice");
     }
+
+    @Override
+    public List<Invoice> findByDateAndInvoiceNo(LocalDate date, String invoiceNo) {
+        String sql = "SELECT * FROM Invoice WHERE invoiceDate = ? AND invoiceNo = ?";
+        return jdbcTemplate.query(sql, new Object[]{date, invoiceNo}, new InvoiceRowMapper());
+    }
+
+
+    @Override
+    public void deleteInvoiceDetail(int invoiceId, String sapPN) {
+        String sql = "DELETE FROM InvoiceDetail WHERE invoiceId = ? AND sapPN = ?";
+        jdbcTemplate.update(sql, invoiceId, sapPN);
+    }
+
+
+    @Override
+    public void updateInvoiceDetails(String invoiceNo, List<InvoiceDetail> details) {
+        // ⚠️ Kiểm tra trùng sapPN trong danh sách details
+        Set<String> uniqueSapCodes = new HashSet<>();
+        for (InvoiceDetail detail : details) {
+            if (!uniqueSapCodes.add(detail.getSapPN())) {
+                throw new IllegalArgumentException("Duplicate SAP Code found: " + detail.getSapPN());
+            }
+        }
+
+        // Tìm invoiceId theo invoiceNo
+        String findInvoiceIdSql = "SELECT id FROM Invoice WHERE invoiceNo = ?";
+        Long invoiceId = jdbcTemplate.queryForObject(findInvoiceIdSql, Long.class, invoiceNo);
+
+        if (invoiceId == null) {
+            throw new IllegalArgumentException("InvoiceNo not found: " + invoiceNo);
+        }
+
+        // Xoá detail cũ
+        String deleteSql = "DELETE FROM InvoiceDetail WHERE invoiceId = ?";
+        jdbcTemplate.update(deleteSql, invoiceId);
+
+        // Insert lại
+        String insertSql = "INSERT INTO InvoiceDetail (invoiceId, sapPN, quantity, moq, totalReel, status) VALUES (?, ?, ?, ?, ?, ?)";
+        for (InvoiceDetail detail : details) {
+            jdbcTemplate.update(insertSql,
+                    invoiceId,
+                    detail.getSapPN(),
+                    detail.getQuantity(),
+                    detail.getMoq(),
+                    detail.getTotalReel(),
+                    detail.getStatus());
+        }
+    }
+
+
+
+
+    @Override
+    public List<InvoiceDetail> getInvoiceDetails(String invoiceNo) {
+        String sql = """
+        SELECT d.id, d.invoiceId, d.sapPN, d.quantity, d.moq, d.totalReel, d.status
+        FROM InvoiceDetail d
+        JOIN Invoice i ON d.invoiceId = i.id
+        WHERE i.invoiceNo = ?
+        """;
+
+
+        List<InvoiceDetail> details = jdbcTemplate.query(sql, new Object[]{invoiceNo}, (rs, rowNum) -> {
+            InvoiceDetail detail = new InvoiceDetail();
+            detail.setId(rs.getInt("id"));
+            detail.setInvoiceId(rs.getInt("invoiceId"));
+            detail.setSapPN(rs.getString("sapPN"));
+            detail.setQuantity(rs.getInt("quantity"));
+            detail.setMoq(rs.getInt("moq"));
+            detail.setTotalReel(rs.getInt("totalReel"));
+            detail.setStatus(rs.getString("status"));
+            return detail;
+        });
+
+
+        return details.isEmpty() ? null : details;
+    }
+
+
 
     @Override
     public boolean existsByInvoiceNo(String invoiceNo) {
@@ -29,6 +111,15 @@ public class InvoiceRepositoryImpl extends GenericRepositoryImpl<Invoice> implem
 
     @Override
     public void saveInvoiceWithDetails(Invoice invoice, List<InvoiceDetail> details) {
+
+        // Check trùng SapPN trong danh sách details
+        Set<String> sapPNSet = new HashSet<>();
+        for (InvoiceDetail detail : details) {
+            if (!sapPNSet.add(detail.getSapPN())) {
+                throw new IllegalArgumentException("SAP code '" + detail.getSapPN() + "' is existing in this invoice.");
+            }
+        }
+
         // Lưu invoice, lấy id sinh ra
         String invoiceSql = "INSERT INTO Invoice (InvoiceNo, InvoiceDate, CreatedAt, Status) VALUES (?, ?, ?, ?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();

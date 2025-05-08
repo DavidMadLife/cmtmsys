@@ -11,4 +11,5 @@ public interface MOQService {
     void deleteById(int id);
     void updateImportedData(MOQ moq);
     void createMOQ(MOQ moq);
+    MOQ getMOQbySAPPN(String sapPN);
 }

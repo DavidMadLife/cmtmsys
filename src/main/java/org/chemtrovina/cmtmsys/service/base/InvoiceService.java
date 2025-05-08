@@ -3,6 +3,7 @@ package org.chemtrovina.cmtmsys.service.base;
 import org.chemtrovina.cmtmsys.model.Invoice;
 import org.chemtrovina.cmtmsys.model.InvoiceDetail;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface InvoiceService {
@@ -16,5 +17,13 @@ public interface InvoiceService {
     void saveInvoiceWithDetails(Invoice invoice, List<InvoiceDetail> details);
 
     boolean existsByInvoiceNo(String invoiceNo);
+
+    List<InvoiceDetail> getInvoiceDetails(String invoiceNo);
+    void updateInvoiceDetails(String invoiceNo, List<InvoiceDetail> details);
+
+    void deleteInvoiceDetail(int invoiceId, String sapPN);
+
+    List<Invoice> findByDateAndInvoiceNo(LocalDate date, String invoiceNo);
+
 
 }

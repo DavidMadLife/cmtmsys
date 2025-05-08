@@ -10,4 +10,5 @@ public interface InvoiceDetailRepository extends GenericRepository<InvoiceDetail
 
     InvoiceDetail findById(int id);
     List<InvoiceDetail> findAll();
+    void updateInvoiceDetail(int detailId, InvoiceDetail newDetail);
 }

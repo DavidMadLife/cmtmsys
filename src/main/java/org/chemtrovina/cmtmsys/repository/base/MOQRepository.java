@@ -12,4 +12,5 @@ public interface MOQRepository extends GenericRepository<MOQ> {
     List<MOQ> importMoqFromExcel(File file);
     void saveAll(List<MOQ> moqList);
     void updateAll(List<MOQ> moqList);
+    MOQ findBySapPN(String sapPN);
 }
