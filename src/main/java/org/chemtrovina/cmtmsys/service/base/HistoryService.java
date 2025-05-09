@@ -1,5 +1,6 @@
 package org.chemtrovina.cmtmsys.service.base;
 
+import org.chemtrovina.cmtmsys.dto.HistoryDetailViewDto;
 import org.chemtrovina.cmtmsys.model.History;
 
 import java.time.LocalDate;
@@ -27,5 +28,8 @@ public interface HistoryService {
     boolean isScanning(String scanCode, String makerPN);
 
     String extractRealMakerPN(String makerPNInput);
+
+    List<HistoryDetailViewDto> getHistoryDetailsByInvoiceId(int id);
+
 
 }

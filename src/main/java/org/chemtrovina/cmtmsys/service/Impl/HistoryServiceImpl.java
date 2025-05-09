@@ -1,5 +1,6 @@
 package org.chemtrovina.cmtmsys.service.Impl;
 
+import org.chemtrovina.cmtmsys.dto.HistoryDetailViewDto;
 import org.chemtrovina.cmtmsys.model.History;
 import org.chemtrovina.cmtmsys.model.MOQ;
 import org.chemtrovina.cmtmsys.repository.base.HistoryRepository;
@@ -10,6 +11,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class HistoryServiceImpl implements HistoryService {
     private final HistoryRepository historyRepository;
@@ -83,6 +85,26 @@ public class HistoryServiceImpl implements HistoryService {
 
 
     }
+
+    public List<HistoryDetailViewDto> getHistoryDetailsByInvoiceId(int invoiceId) {
+        // Truy vấn lịch sử từ repository dựa trên InvoiceNo
+        List<History> historyList = historyRepository.findByInvoiceId(invoiceId);
+
+        // Chuyển đổi List<History> thành List<HistoryDetailViewDto>
+        return historyList.stream()
+                .map(history -> new HistoryDetailViewDto(
+                        history.getId(),
+                        history.getMakerPN(),
+                        history.getSapPN(),
+                        history.getMaker(),
+                        history.getQuantity(),
+                        0,
+                        0,
+                        false
+                ))
+                .collect(Collectors.toList());
+    }
+
 
 
     @Override

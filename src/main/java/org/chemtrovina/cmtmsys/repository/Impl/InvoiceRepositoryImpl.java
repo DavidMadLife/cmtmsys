@@ -21,11 +21,26 @@ public class InvoiceRepositoryImpl extends GenericRepositoryImpl<Invoice> implem
         super(jdbcTemplate, new InvoiceRowMapper(), "Invoice");
     }
 
-    @Override
-    public List<Invoice> findByDateAndInvoiceNo(LocalDate date, String invoiceNo) {
-        String sql = "SELECT * FROM Invoice WHERE invoiceDate = ? AND invoiceNo = ?";
+    public List<Invoice> findInvoicesByDate(LocalDate date) {
+        String sql = "SELECT * FROM Invoice WHERE InvoiceDate = ?";
+        return jdbcTemplate.query(sql, new Object[]{date}, new InvoiceRowMapper());
+    }
+
+    public List<Invoice> findInvoicesByInvoiceNo(String invoiceNo) {
+        String sql = "SELECT * FROM Invoice WHERE InvoiceNo = ?";
+        return jdbcTemplate.query(sql, new Object[]{invoiceNo}, new InvoiceRowMapper());
+    }
+
+    public List<Invoice> findInvoicesByDateAndInvoiceNo(LocalDate date, String invoiceNo) {
+        String sql = "SELECT * FROM Invoice WHERE InvoiceDate = ? AND InvoiceNo = ?";
         return jdbcTemplate.query(sql, new Object[]{date, invoiceNo}, new InvoiceRowMapper());
     }
+
+    public List<String> findAllInvoiceNos() {
+        String sql = "SELECT DISTINCT InvoiceNo FROM Invoice";
+        return jdbcTemplate.queryForList(sql, String.class);
+    }
+
 
 
     @Override

@@ -80,7 +80,7 @@
             <Font size="18.0" />
          </font>
       </Button>
-      <Button fx:id="btnError" layoutX="1006.0" layoutY="713.0" mnemonicParsing="false" prefHeight="46.0" prefWidth="209.0" style="-fx-font-weight: Bold; -fx-background-color: #f54d4d; -fx-background-radius: 10;" text="Button" textFill="WHITE">
+      <Button fx:id="btnCallSuperV" layoutX="1006.0" layoutY="713.0" mnemonicParsing="false" prefHeight="46.0" prefWidth="209.0" style="-fx-font-weight: Bold; -fx-background-color: #f54d4d; -fx-background-radius: 10;" text="Call Super-V" textFill="WHITE">
          <font>
             <Font size="18.0" />
          </font>
@@ -95,5 +95,16 @@
          </children>
       </Pane>
       <Button fx:id="btnSearch" layoutX="518.0" layoutY="34.0" mnemonicParsing="false" text="Search" />
+      <Button fx:id="btnClear" layoutX="578.0" layoutY="34.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="52.0" text="Clear" />
+      <HBox layoutX="272.0" layoutY="126.0" prefHeight="25.0" prefWidth="240.0" style="-fx-background-color: #ffffff; -fx-background-radius: 5;">
+         <children>
+            <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Scan Code" textAlignment="CENTER" wrappingWidth="92.13671875">
+               <font>
+                  <Font size="16.0" />
+               </font>
+            </Text>
+            <TextField fx:id="txtScanCode" prefHeight="25.0" prefWidth="163.0" />
+         </children>
+      </HBox>
    </children>
 </AnchorPane>

@@ -17,6 +17,8 @@ public class HistoryRepositoryImpl extends GenericRepositoryImpl<History> implem
         super(jdbcTemplate, new HistoryRowMapper(), "History"); // "History" là tên bảng trong database
     }
 
+
+
     @Override
     public void add(History history) {
         String sql = "INSERT INTO History (InvoiceId, Date, Time, Maker, MakerPN, SapPN, Quantity, EmployeeId, Status, ScanCode, MSL) " +
@@ -153,6 +155,12 @@ public class HistoryRepositoryImpl extends GenericRepositoryImpl<History> implem
         String sql = "SELECT COUNT(*) FROM History WHERE ScanCode = ? AND MakerPN = ?";
         Integer count = jdbcTemplate.queryForObject(sql, Integer.class, scanCode, makerPN);
         return count != null && count > 0;
+    }
+
+    @Override
+    public List<History> findByInvoiceId(int invoiceId) {
+        String sql = "SELECT * FROM History WHERE InvoiceId = ?";
+        return jdbcTemplate.query(sql, new Object[]{invoiceId}, new HistoryRowMapper());
     }
 
     static class HistoryRowMapper implements RowMapper<History> {

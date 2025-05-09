@@ -18,10 +18,22 @@ public class InvoiceServiceImpl implements InvoiceService {
         this.invoiceRepository = invoiceRepository;
     }
 
-    @Override
-    public List<Invoice> findByDateAndInvoiceNo(LocalDate date, String invoiceNo) {
-        return invoiceRepository.findByDateAndInvoiceNo(date, invoiceNo);
+    public List<Invoice> getInvoicesByDate(LocalDate date) {
+        return invoiceRepository.findInvoicesByDate(date);
     }
+
+    public List<Invoice> getInvoicesByInvoiceNo(String invoiceNo) {
+        return invoiceRepository.findInvoicesByInvoiceNo(invoiceNo);
+    }
+
+    public List<Invoice> getInvoicesByDateAndInvoiceNo(LocalDate date, String invoiceNo) {
+        return invoiceRepository.findInvoicesByDateAndInvoiceNo(date, invoiceNo);
+    }
+
+    public List<String> getAllInvoiceNos() {
+        return invoiceRepository.findAllInvoiceNos();
+    }
+
 
 
     @Override

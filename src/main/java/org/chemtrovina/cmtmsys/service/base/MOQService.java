@@ -12,4 +12,5 @@ public interface MOQService {
     void updateImportedData(MOQ moq);
     void createMOQ(MOQ moq);
     MOQ getMOQbySAPPN(String sapPN);
+    MOQ getMOQbyMakerPN(String makerPN);
 }

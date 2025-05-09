@@ -3,7 +3,7 @@ package org.chemtrovina.cmtmsys.dto;
 public class HistoryDetailViewDto {
     private int id;
     private String makerCode;
-    private String makerName;
+    private String maker;
     private String sapCode;
     private int moq;
     private int qty;
@@ -13,10 +13,10 @@ public class HistoryDetailViewDto {
 
     }
 
-    public HistoryDetailViewDto(int id, String makerCode, String sapCode, String makerName, int moq, int qty, int reelQty, Boolean invoice) {
+    public HistoryDetailViewDto(int id, String makerCode, String sapCode, String maker, int moq, int qty, int reelQty, Boolean invoice) {
         this.id = id;
         this.makerCode = makerCode;
-        this.makerName = makerName;
+        this.maker = maker;
         this.sapCode = sapCode;
         this.moq = moq;
         this.qty = qty;
@@ -36,11 +36,11 @@ public class HistoryDetailViewDto {
     public void setMakerCode(String makerCode) {
         this.makerCode = makerCode;
     }
-    public String getMakerName() {
-        return makerName;
+    public String getMaker() {
+        return maker;
     }
-    public void setMakerName(String makerName) {
-        this.makerName = makerName;
+    public void setMaker(String maker) {
+        this.maker = maker;
     }
 
     public String getSapCode() {

@@ -287,7 +287,7 @@ public class InvoiceController {
                 int quantity = parseIntSafe(qtyField.getText());
 
                 if (sapCode.isEmpty() || quantity <= 0) {
-                    showAlert("Lỗi", "Vui lòng nhập SAP Code và Quantity hợp lệ", Alert.AlertType.ERROR);
+                    showAlert("Warning", "Vui lòng nhập SAP Code và Quantity hợp lệ", Alert.AlertType.ERROR);
                     return null;
                 }
 

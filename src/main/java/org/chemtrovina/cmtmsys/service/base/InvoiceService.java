@@ -1,5 +1,6 @@
 package org.chemtrovina.cmtmsys.service.base;
 
+import org.chemtrovina.cmtmsys.dto.HistoryDetailViewDto;
 import org.chemtrovina.cmtmsys.model.Invoice;
 import org.chemtrovina.cmtmsys.model.InvoiceDetail;
 
@@ -23,7 +24,12 @@ public interface InvoiceService {
 
     void deleteInvoiceDetail(int invoiceId, String sapPN);
 
-    List<Invoice> findByDateAndInvoiceNo(LocalDate date, String invoiceNo);
+    //List<Invoice> findByDateAndInvoiceNo(LocalDate date, String invoiceNo);
+
+    List<Invoice> getInvoicesByDate(LocalDate date);
+    List<Invoice> getInvoicesByInvoiceNo(String invoiceNo);
+    List<Invoice> getInvoicesByDateAndInvoiceNo(LocalDate date, String invoiceNo);
+    List<String> getAllInvoiceNos();
 
 
 }
