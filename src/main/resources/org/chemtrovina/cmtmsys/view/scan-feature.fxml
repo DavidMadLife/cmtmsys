@@ -45,7 +45,7 @@
                   <Font size="16.0" />
                </font>
             </Text>
-            <TextField fx:id="txtEmployeeId" />
+            <TextField fx:id="txtScanInput" />
             <Button fx:id="btnOnOff" mnemonicParsing="false" prefHeight="25.0" prefWidth="56.0" style="-fx-background-color: #545ffc;" text="ON" textFill="WHITE" />
          </children>
       </HBox>
