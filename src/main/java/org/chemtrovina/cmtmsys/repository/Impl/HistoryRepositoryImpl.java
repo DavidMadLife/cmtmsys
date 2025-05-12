@@ -146,8 +146,20 @@ public class HistoryRepositoryImpl extends GenericRepositoryImpl<History> implem
             sql.append("AND h.MSL = ? ");
             params.add(MSL);
         }
+        List<History> list = jdbcTemplate.query(sql.toString(), params.toArray(), new HistoryRowMapper());
 
-        return jdbcTemplate.query(sql.toString(), params.toArray(), new HistoryRowMapper());
+        for (History history : list) {
+            if (history.getInvoiceId() != null) {
+                String invNo = jdbcTemplate.queryForObject(
+                        "SELECT InvoiceNo FROM Invoice WHERE Id = ?",
+                        new Object[]{history.getInvoiceId()},
+                        String.class
+                );
+                history.setInvoiceNo(invNo);
+            }
+        }
+
+        return list;
     }
 
     @Override
@@ -162,6 +174,33 @@ public class HistoryRepositoryImpl extends GenericRepositoryImpl<History> implem
         String sql = "SELECT * FROM History WHERE InvoiceId = ?";
         return jdbcTemplate.query(sql, new Object[]{invoiceId}, new HistoryRowMapper());
     }
+
+
+    @Override
+    public int getTotalScannedQuantityBySapPN(String sapPN, int invoiceId) {
+        String sql = "SELECT SUM(Quantity) FROM History WHERE SapPN = ? AND InvoiceId = ?";
+        Integer totalQuantity = jdbcTemplate.queryForObject(sql, new Object[]{sapPN, invoiceId}, Integer.class);
+        return totalQuantity != null ? totalQuantity : 0; // Trả về 0 nếu không có bản ghi nào
+    }
+
+
+    @Override
+    public void deleteLastByMakerPNAndInvoiceId(String makerPN, int invoiceId) {
+        String sql = "SELECT TOP 1 Id FROM History WHERE MakerPN = ? AND InvoiceId = ? ORDER BY Date DESC, Time DESC";
+
+
+        List<Integer> ids = jdbcTemplate.query(sql, new Object[]{makerPN, invoiceId},
+                (rs, rowNum) -> rs.getInt("Id"));
+
+        if (!ids.isEmpty()) {
+            int idToDelete = ids.get(0);
+            String sqlDelete = "DELETE FROM History WHERE Id = ?";
+            jdbcTemplate.update(sqlDelete, idToDelete);
+        }
+    }
+
+
+
 
     static class HistoryRowMapper implements RowMapper<History> {
         @Override

@@ -39,4 +39,9 @@ public class InvoiceDetailServiceImpl implements InvoiceDetailService {
         return invoiceDetailRepository.findByInvoiceId(invoiceId);
     }
 
+    @Override
+    public InvoiceDetail getInvoiceDetailBySapPNAndInvoiceId(String sapPN, int invoiceId) {
+        return invoiceDetailRepository.findBySapPNAndInvoiceId(sapPN, invoiceId);
+    }
+
 }

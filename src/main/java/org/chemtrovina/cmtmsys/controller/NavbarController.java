@@ -17,7 +17,7 @@ public class NavbarController {
     @FXML
     public void initialize() {
         btnScan.setOnAction(this::handleScanButton);
-        btnHistory.setOnAction(this::handleHistoryButton);
+        btnHistory.setOnAction(this::handleHistoryListButton);
         btnInvoice.setOnAction(this::handleInvoiceButton);
         btnMOQ.setOnAction(this::handleMOQButton);
     }
@@ -26,8 +26,8 @@ public class NavbarController {
         navigateTo("/org/chemtrovina/cmtmsys/view/scan-feature.fxml");
     }
 
-    private void handleHistoryButton(ActionEvent event) {
-        navigateTo("/org/chemtrovina/cmtmsys/view/history-feature.fxml");
+    private void handleHistoryListButton(ActionEvent event) {
+        navigateTo("/org/chemtrovina/cmtmsys/view/historyList-feature.fxml");
     }
 
     private void handleInvoiceButton(ActionEvent event) {

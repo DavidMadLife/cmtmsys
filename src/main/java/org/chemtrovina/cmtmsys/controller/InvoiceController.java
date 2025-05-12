@@ -234,6 +234,10 @@ public class InvoiceController {
     private void loadInvoiceDetails(String invoiceNo) {
         invoiceDetailDtoList.clear(); // clear dữ liệu cũ
 
+        Invoice invoice = invoiceService.findByInvoiceNo(invoiceNo); // Thêm dòng này
+        if (invoice == null) return;
+        dpDate.setValue(invoice.getInvoiceDate());
+
         List<InvoiceDetail> details = invoiceService.getInvoiceDetails(invoiceNo);
         if (details == null) {
             return;
@@ -243,7 +247,7 @@ public class InvoiceController {
             InvoiceDetailViewDto dto = new InvoiceDetailViewDto();
             dto.setInvoiceId(d.getInvoiceId());
             dto.setInvoiceNo(invoiceNo);
-            dto.setInvoiceDate(dpDate.getValue()); // hoặc d.getInvoice().getInvoiceDate() nếu có
+            dto.setInvoiceDate(invoice.getInvoiceDate()); // hoặc d.getInvoice().getInvoiceDate() nếu có
             dto.setSapCode(d.getSapPN());
             dto.setQuantity(d.getQuantity());
             dto.setMoq(d.getMoq());

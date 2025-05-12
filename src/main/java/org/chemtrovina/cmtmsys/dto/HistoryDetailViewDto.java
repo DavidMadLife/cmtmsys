@@ -8,12 +8,12 @@ public class HistoryDetailViewDto {
     private int moq;
     private int qty;
     private int reelQty;
-    private Boolean invoice;
+    private String invoice;
     public HistoryDetailViewDto() {
 
     }
 
-    public HistoryDetailViewDto(int id, String makerCode, String sapCode, String maker, int moq, int qty, int reelQty, Boolean invoice) {
+    public HistoryDetailViewDto(int id, String makerCode, String sapCode, String maker, int moq, int qty, int reelQty, String invoice) {
         this.id = id;
         this.makerCode = makerCode;
         this.maker = maker;
@@ -67,10 +67,10 @@ public class HistoryDetailViewDto {
     public void setReelQty(int reelQty) {
         this.reelQty = reelQty;
     }
-    public Boolean getInvoice() {
+    public String getInvoice() {
         return invoice;
     }
-    public void setInvoice(Boolean invoice) {
+    public void setInvoice(String invoice) {
         this.invoice = invoice;
     }
 

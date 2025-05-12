@@ -11,4 +11,5 @@ public interface InvoiceDetailService {
     InvoiceDetail findById(int id);
     List<InvoiceDetail> findAll();
     List<InvoiceDetail> findByInvoiceId(String invoiceId);
+    InvoiceDetail getInvoiceDetailBySapPNAndInvoiceId(String sapPN, int invoiceId);
 }

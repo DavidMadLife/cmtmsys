@@ -41,6 +41,30 @@ public class InvoiceRepositoryImpl extends GenericRepositoryImpl<Invoice> implem
         return jdbcTemplate.queryForList(sql, String.class);
     }
 
+    @Override
+    public Invoice findInvoiceById(int invoiceId) {
+        String sql = "SELECT * FROM Invoice WHERE Id = ?";
+        return jdbcTemplate.queryForObject(sql, new Object[]{invoiceId}, new InvoiceRowMapper());
+    }
+
+    @Override
+    public List<InvoiceDetail> getInvoiceDetailsByInvoiceId(int invoiceId) {
+        String sql = "SELECT * FROM InvoiceDetail WHERE InvoiceId = ?";
+
+        // Sử dụng JdbcTemplate để thực thi câu lệnh SQL và ánh xạ kết quả thành danh sách các đối tượng InvoiceDetail
+        return jdbcTemplate.query(sql, new Object[]{invoiceId}, (rs, rowNum) -> {
+            InvoiceDetail detail = new InvoiceDetail();
+            detail.setId(rs.getInt("id"));
+            detail.setInvoiceId(rs.getInt("invoiceId"));
+            detail.setSapPN(rs.getString("sapPN"));
+            detail.setQuantity(rs.getInt("quantity"));
+            detail.setMoq(rs.getInt("moq"));
+            detail.setTotalReel(rs.getInt("totalReel"));
+            detail.setStatus(rs.getString("status"));
+            return detail;
+        });
+    }
+
 
 
     @Override
@@ -113,6 +137,8 @@ public class InvoiceRepositoryImpl extends GenericRepositoryImpl<Invoice> implem
 
         return details.isEmpty() ? null : details;
     }
+
+
 
 
 

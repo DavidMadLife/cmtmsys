@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
+
+<AnchorPane prefHeight="832.0" prefWidth="1280.0" style="-fx-background-color: #456F92;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.chemtrovina.cmtmsys.controller.HistoryListController">
+    <children>
+        <!--<fx:include source="navbar.fxml" />-->
+        <TableView fx:id="historyDateTableView" fixedCellSize="0.0" layoutX="457.0" layoutY="28.0" prefHeight="702.0" prefWidth="823.0" AnchorPane.rightAnchor="14.0" AnchorPane.topAnchor="28.0">
+            <columns>
+                <TableColumn fx:id="dateColumn" prefWidth="90.0" text="Date" />
+                <TableColumn fx:id="timeColumn" maxWidth="100.0" prefWidth="90.0" text="Time" />
+                <TableColumn fx:id="invoiceNoColumn" prefWidth="100.0" text="Invoice No" />
+                <TableColumn fx:id="makerColumn" prefWidth="100.0" text="Maker" />
+                <TableColumn fx:id="makerPNColumn" prefWidth="140.0" text="Maker P/N" />
+                <TableColumn fx:id="sapPNColumn" prefWidth="140.0" text="SAP P/N" />
+                <TableColumn fx:id="quantityColumn" maxWidth="500.0" prefWidth="104.0" text="Quantity" />
+                <TableColumn fx:id="mslColumn" maxWidth="141.0" prefWidth="58.0" text="MSL" />
+            </columns>
+        </TableView>
+        <HBox alignment="CENTER" spacing="10" />
+
+        <Pane layoutX="26.0" layoutY="138.0" prefHeight="452.0" prefWidth="415.0" style="-fx-background-color: #B9B9B9;">
+            <children>
+                <VBox layoutX="14.0" layoutY="14.0" prefHeight="200.0" prefWidth="382.0" style="-fx-spacing: 42;">
+                    <children>
+                        <HBox prefHeight="33.0" prefWidth="401.0" style="-fx-spacing: 30;">
+                            <children>
+                                <Text strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-weight: Bold;" text="Invoice No" textAlignment="CENTER" wrappingWidth="98.783203125">
+                                    <font>
+                                        <Font size="18.0" />
+                                    </font>
+                                </Text>
+                                <TextField fx:id="invoiceNoField" prefHeight="33.0" prefWidth="217.0" />
+                                <CheckBox fx:id="invoiceNoCheckBox" mnemonicParsing="false" prefHeight="33.0" prefWidth="18.0" />
+                            </children>
+                        </HBox>
+                        <HBox layoutX="10.0" layoutY="109.0" prefHeight="33.0" prefWidth="401.0" style="-fx-spacing: 30;">
+                            <children>
+                                <Text strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-weight: Bold;" text="Date" textAlignment="CENTER" wrappingWidth="98.783203125">
+                                    <font>
+                                        <Font size="18.0" />
+                                    </font>
+                                </Text>
+                                <DatePicker fx:id="dateTimePicker" prefHeight="25.0" prefWidth="218.0" />
+                                <CheckBox fx:id="dateCheckBox" mnemonicParsing="false" prefHeight="33.0" prefWidth="18.0" />
+                            </children>
+                        </HBox>
+                        <HBox layoutX="10.0" layoutY="76.0" prefHeight="33.0" prefWidth="401.0" style="-fx-spacing: 30;">
+                            <children>
+                                <Text strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-weight: Bold;" text="SAP" textAlignment="CENTER" wrappingWidth="98.783203125">
+                                    <font>
+                                        <Font size="18.0" />
+                                    </font>
+                                </Text>
+                                <TextField fx:id="sapField" prefHeight="33.0" prefWidth="217.0" />
+                                <CheckBox fx:id="sapCheckBox" mnemonicParsing="false" prefHeight="33.0" prefWidth="18.0" />
+                            </children>
+                        </HBox>
+                        <HBox layoutX="10.0" layoutY="43.0" prefHeight="33.0" prefWidth="401.0" style="-fx-spacing: 30;">
+                            <children>
+                                <Text strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-weight: Bold;" text="P/N" textAlignment="CENTER" wrappingWidth="98.783203125">
+                                    <font>
+                                        <Font size="18.0" />
+                                    </font>
+                                </Text>
+                                <TextField fx:id="pnField" prefHeight="33.0" prefWidth="217.0" />
+                                <CheckBox fx:id="pnCheckBox" mnemonicParsing="false" prefHeight="33.0" prefWidth="18.0" />
+                            </children>
+                        </HBox>
+                        <HBox layoutX="10.0" layoutY="10.0" prefHeight="33.0" prefWidth="401.0" style="-fx-spacing: 30;">
+                            <children>
+                                <Text strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-weight: Bold;" text="Maker" textAlignment="CENTER" wrappingWidth="98.783203125">
+                                    <font>
+                                        <Font size="18.0" />
+                                    </font>
+                                </Text>
+                                <TextField fx:id="makerField" prefHeight="33.0" prefWidth="217.0" />
+                                <CheckBox fx:id="makerCheckBox" mnemonicParsing="false" prefHeight="33.0" prefWidth="18.0" />
+                            </children>
+                        </HBox>
+                        <HBox layoutX="10.0" layoutY="278.0" prefHeight="33.0" prefWidth="401.0" style="-fx-spacing: 30;">
+                            <children>
+                                <Text strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-weight: Bold;" text="MSL" textAlignment="CENTER" wrappingWidth="98.783203125">
+                                    <font>
+                                        <Font size="18.0" />
+                                    </font>
+                                </Text>
+                                <TextField fx:id="mslField" prefHeight="33.0" prefWidth="217.0" />
+                                <CheckBox fx:id="mslCheckBox" mnemonicParsing="false" prefHeight="33.0" prefWidth="18.0" />
+                            </children>
+                        </HBox>
+                    </children>
+                </VBox>
+                <Button fx:id="searchBtn" layoutX="30.0" layoutY="395.0" mnemonicParsing="false" prefHeight="41.0" prefWidth="164.0" style="-fx-background-color: #BF3C3C; -fx-font-weight: Bold;" text="Search" textFill="WHITE">
+                    <font>
+                        <Font size="18.0" />
+                    </font>
+                </Button>
+                <Button fx:id="clearBtn" layoutX="237.0" layoutY="395.0" mnemonicParsing="false" prefHeight="41.0" prefWidth="164.0" style="-fx-font-weight: Bold;" text="Clear">
+                    <font>
+                        <Font size="18.0" />
+                    </font>
+                </Button>
+            </children>
+        </Pane>
+        <Pane layoutX="26.0" layoutY="90.0" prefHeight="48.0" prefWidth="415.0" style="-fx-background-color: #2D3748;">
+            <children>
+                <Text fill="WHITE" layoutX="167.0" layoutY="33.0" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-weight: Bold;" text="Search ">
+                    <font>
+                        <Font size="24.0" />
+                    </font>
+                </Text>
+            </children>
+        </Pane>
+        <Button fx:id="importExcelBtn" layoutX="1130.0" layoutY="730.0" mnemonicParsing="false" prefHeight="24.0" prefWidth="136.0" style="-fx-font-weight: Bold;" text="Export Data" />
+    </children>
+</AnchorPane>

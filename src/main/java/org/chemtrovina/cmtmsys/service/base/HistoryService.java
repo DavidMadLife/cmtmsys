@@ -5,6 +5,7 @@ import org.chemtrovina.cmtmsys.model.History;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface HistoryService {
@@ -20,7 +21,6 @@ public interface HistoryService {
     void createHistoryForScannedMakePN(String makerPN, String employeeId, String scanCode);
     void deleteById(int id);
 
-    //List<HistorySummaryViewModel> getSummaryBySapPN();
     boolean isValidMakerPN(String makerPN);
 
     List<History> searchHistory(String invoiceNo, String maker, String makerPN, String sapPN, LocalDate date, String MSL);
@@ -30,6 +30,10 @@ public interface HistoryService {
     String extractRealMakerPN(String makerPNInput);
 
     List<HistoryDetailViewDto> getHistoryDetailsByInvoiceId(int id);
+    int getTotalScannedQuantityBySapPN(String sapPN, int invoiceId);
+    List<HistoryDetailViewDto> getHistoryByInvoiceId(int invoiceId);
+    void deleteLastByMakerPNAndInvoiceId(String makerPN, int invoiceId);
+
 
 
 }

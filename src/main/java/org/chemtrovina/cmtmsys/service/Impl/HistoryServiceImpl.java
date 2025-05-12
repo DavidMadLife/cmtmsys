@@ -2,14 +2,19 @@ package org.chemtrovina.cmtmsys.service.Impl;
 
 import org.chemtrovina.cmtmsys.dto.HistoryDetailViewDto;
 import org.chemtrovina.cmtmsys.model.History;
+import org.chemtrovina.cmtmsys.model.Invoice;
+import org.chemtrovina.cmtmsys.model.InvoiceDetail;
 import org.chemtrovina.cmtmsys.model.MOQ;
 import org.chemtrovina.cmtmsys.repository.base.HistoryRepository;
+import org.chemtrovina.cmtmsys.repository.base.InvoiceRepository;
 import org.chemtrovina.cmtmsys.repository.base.MOQRepository;
 import org.chemtrovina.cmtmsys.service.base.HistoryService;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -21,6 +26,7 @@ public class HistoryServiceImpl implements HistoryService {
         this.historyRepository = historyRepository;
         this.moqRepository = moqRepository;
     }
+
 
     @Override
     public void addHistory(History history) {
@@ -100,11 +106,43 @@ public class HistoryServiceImpl implements HistoryService {
                         history.getQuantity(),
                         0,
                         0,
-                        false
+                        ""
                 ))
                 .collect(Collectors.toList());
     }
 
+    public int getTotalScannedQuantityBySapPN(String sapPN, int invoiceId) {
+        return historyRepository.getTotalScannedQuantityBySapPN(sapPN, invoiceId);
+    }
+
+    @Override
+    // Trong HistoryService
+    public List<HistoryDetailViewDto> getHistoryByInvoiceId(int invoiceId) {
+        // Giả sử bạn sử dụng JPA để truy vấn dữ liệu
+        List<History> historyList = historyRepository.findByInvoiceId(invoiceId);
+
+        // Chuyển đổi từ List<History> thành List<HistoryDetailViewDto>
+        List<HistoryDetailViewDto> dtoList = new ArrayList<>();
+        for (History history : historyList) {
+            HistoryDetailViewDto dto = new HistoryDetailViewDto();
+            dto.setId(history.getId());
+            dto.setMakerCode(history.getMakerPN());
+            dto.setSapCode(history.getSapPN());
+            dto.setMaker(history.getMaker());
+            dto.setMoq(history.getQuantity());
+            dto.setQty(history.getQuantity());
+            dto.setReelQty(history.getQuantity() / history.getQuantity()); // Cập nhật theo logic của bạn
+            dto.setInvoice("");
+            dtoList.add(dto);
+        }
+
+        return dtoList;
+    }
+
+    @Override
+    public void deleteLastByMakerPNAndInvoiceId(String makerPN, int invoiceId) {
+        historyRepository.deleteLastByMakerPNAndInvoiceId(makerPN, invoiceId);
+    }
 
 
     @Override
@@ -149,4 +187,6 @@ public class HistoryServiceImpl implements HistoryService {
 
 
     }
+
+
 }

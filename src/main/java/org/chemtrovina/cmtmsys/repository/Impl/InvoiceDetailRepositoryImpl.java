@@ -29,6 +29,16 @@ public class InvoiceDetailRepositoryImpl extends GenericRepositoryImpl<InvoiceDe
     }
 
     @Override
+    public InvoiceDetail findBySapPNAndInvoiceId(String sapPN, int invoiceId) {
+        String sql = "SELECT * FROM InvoiceDetail WHERE SapPN = ? AND InvoiceId = ?";
+        List<InvoiceDetail> results = jdbcTemplate.query(sql, new Object[]{sapPN, invoiceId}, new InvoiceDetailRowMapper());
+
+        return results.isEmpty() ? null : results.get(0);
+    }
+
+
+
+    @Override
     public void updateInvoiceDetail(int detailId, InvoiceDetail newDetail) {
         String sql = "UPDATE InvoiceDetail SET Quantity = ?, MOQ = ?, TotalReel = ?, Status = ? WHERE Id = ?";
         jdbcTemplate.update(sql, newDetail.getQuantity(), newDetail.getMoq(), newDetail.getTotalReel(), newDetail.getStatus(), detailId);

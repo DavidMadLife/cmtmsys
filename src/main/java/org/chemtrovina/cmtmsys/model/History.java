@@ -17,6 +17,9 @@ public class History {
     private String scanCode;
     private String MSL;
 
+    //When get into View
+    private String invoiceNo;
+
     public History() {
     }
 
@@ -36,6 +39,19 @@ public class History {
         this.scanCode = scanCode;
         this.MSL = MSL;
     }
+
+
+
+
+
+    //Using for View
+    public String getInvoiceNo() {
+        return invoiceNo;
+    }
+    public void setInvoiceNo(String invoiceNo) {
+        this.invoiceNo = invoiceNo;
+    }
+
 
     // Getter và Setter methods
     public int getId() {

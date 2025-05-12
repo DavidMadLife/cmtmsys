@@ -6,6 +6,7 @@ import org.chemtrovina.cmtmsys.model.InvoiceDetail;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 public interface InvoiceService {
 
@@ -30,6 +31,9 @@ public interface InvoiceService {
     List<Invoice> getInvoicesByInvoiceNo(String invoiceNo);
     List<Invoice> getInvoicesByDateAndInvoiceNo(LocalDate date, String invoiceNo);
     List<String> getAllInvoiceNos();
+
+    List<InvoiceDetail> getInvoiceDetailsByInvoiceId(int invoiceId);
+
 
 
 }

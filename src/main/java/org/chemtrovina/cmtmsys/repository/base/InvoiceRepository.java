@@ -19,6 +19,8 @@ public interface InvoiceRepository extends GenericRepository<Invoice> {
     List<Invoice> findInvoicesByInvoiceNo(String invoiceNo);
     List<Invoice> findInvoicesByDateAndInvoiceNo(LocalDate date, String invoiceNo);
     List<String> findAllInvoiceNos();
+    Invoice findInvoiceById(int invoiceId);
+    List<InvoiceDetail> getInvoiceDetailsByInvoiceId(int invoiceId);
 
 
 

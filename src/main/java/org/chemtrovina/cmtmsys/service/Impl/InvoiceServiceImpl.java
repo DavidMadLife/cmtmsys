@@ -7,6 +7,7 @@ import org.chemtrovina.cmtmsys.service.base.InvoiceService;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 public class InvoiceServiceImpl implements InvoiceService {
 
@@ -34,6 +35,11 @@ public class InvoiceServiceImpl implements InvoiceService {
         return invoiceRepository.findAllInvoiceNos();
     }
 
+    @Override
+    public List<InvoiceDetail> getInvoiceDetailsByInvoiceId(int invoiceId) {
+        return invoiceRepository.getInvoiceDetailsByInvoiceId(invoiceId);
+    }
+
 
 
     @Override
@@ -45,6 +51,8 @@ public class InvoiceServiceImpl implements InvoiceService {
     public void deleteInvoiceDetail(int invoiceId, String sapPN) {
         invoiceRepository.deleteInvoiceDetail(invoiceId, sapPN);
     }
+
+
 
 
     @Override
