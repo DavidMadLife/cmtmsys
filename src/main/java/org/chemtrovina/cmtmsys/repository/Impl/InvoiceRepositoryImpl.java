@@ -3,6 +3,7 @@ package org.chemtrovina.cmtmsys.repository.Impl;
 import org.chemtrovina.cmtmsys.model.Invoice;
 import org.chemtrovina.cmtmsys.model.InvoiceDetail;
 import org.chemtrovina.cmtmsys.repository.base.InvoiceRepository;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -252,8 +253,14 @@ public class InvoiceRepositoryImpl extends GenericRepositoryImpl<Invoice> implem
     @Override
     public Invoice findByInvoiceNo(String invoiceNo) {
         String sql = "SELECT * FROM Invoice WHERE InvoiceNo = ?";
-        return jdbcTemplate.queryForObject(sql, new Object[]{invoiceNo}, new InvoiceRowMapper());
+        try {
+            return jdbcTemplate.queryForObject(sql, new Object[]{invoiceNo}, new InvoiceRowMapper());
+        } catch (EmptyResultDataAccessException e) {
+            return null;
+        }
     }
+
+
 
     @Override
     public List<Invoice> search(String invoiceNo, LocalDate invoiceDate, String status) {

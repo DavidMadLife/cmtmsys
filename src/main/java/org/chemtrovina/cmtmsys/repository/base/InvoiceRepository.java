@@ -5,6 +5,7 @@ import org.chemtrovina.cmtmsys.model.InvoiceDetail;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 public interface InvoiceRepository extends GenericRepository<Invoice> {
     Invoice findByInvoiceNo(String invoiceNo);
