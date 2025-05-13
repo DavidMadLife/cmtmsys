@@ -104,10 +104,41 @@ public class ScanController {
 
     @FXML
     public void initialize() {
+        setupServices();
+        setupTableColumns();
+        setupInvoiceComboBox();
+        setupEventHandlers();
+        setupScanInputHandlers();
+
+    }
+
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    //Set up Scan Input
+    private void setupScanInputHandlers() {
+        txtScanCode.setOnAction(event -> {
+            if (!isScanEnabled) {
+                showAlert("Scan Disabled", "Please turn on button.");
+                return;
+            }
+
+            if (selectedInvoiceId == 0) {
+                showAlert("No Invoice", "Please select an invoice first.");
+                return;
+            }
+
+            String makerPN = txtScanCode.getText().trim();
+            if (!makerPN.isEmpty()) {
+                handleScanCode(makerPN);
+                txtScanCode.clear();
+            }
+        });
+    }
 
 
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    //Set up Service
+    private void setupServices(){
 
-        // Setup service
         DataSource dataSource = DataSourceConfig.getDataSource();
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
 
@@ -122,7 +153,11 @@ public class ScanController {
 
         InvoiceDetailRepository invoiceDetailRepository = new InvoiceDetailRepositoryImpl(jdbcTemplate);
         invoiceDetailService = new InvoiceDetailServiceImpl(invoiceDetailRepository);
+    }
 
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    //Set up TableColumns
+    private void setupTableColumns(){
         //Table Invoice
         colDate.setCellValueFactory(new PropertyValueFactory<>("invoiceDate"));
         colInvoiceNo.setCellValueFactory(new PropertyValueFactory<>("invoiceNo"));
@@ -135,10 +170,17 @@ public class ScanController {
         colQty.setCellValueFactory(new PropertyValueFactory<>("qty"));
         colReelQty.setCellValueFactory(new PropertyValueFactory<>("reelQty"));
         colInvoice.setCellValueFactory(new PropertyValueFactory<>("invoice"));
+    }
 
 
-        List<String> invoiceNos = invoiceService.getAllInvoiceNos();
-        cbInvoiceNo1.setItems(FXCollections.observableArrayList(invoiceNos));
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    //Set up Invoice ComboBox
+    private void setupInvoiceComboBox(){
+        loadInvoiceNosToComboBox();
+
+        cbInvoiceNo1.setOnShowing(event -> loadInvoiceNosToComboBox());
+
+        //cbInvoiceNo1.setItems(FXCollections.observableArrayList(invoiceNos));
 
         tblInvoiceList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
@@ -148,147 +190,159 @@ public class ScanController {
                 loadHistoryDetails(newValue);
             }
         });
+    }
+    private void loadInvoiceNosToComboBox() {
+        List<String> invoiceNos = invoiceService.getAllInvoiceNos();
+        cbInvoiceNo1.setItems(FXCollections.observableArrayList(invoiceNos));
+    }
 
+    private void updateFiltersFromInvoice(Invoice selectedInvoice) {
+        dpDate.setValue(selectedInvoice.getInvoiceDate());
+        cbInvoiceNo1.setValue(selectedInvoice.getInvoiceNo());
+    }
 
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    //Set up Event Handlers
+    private void setupEventHandlers() {
         btnSearch.setOnAction(event -> onSearch());
         btnClear.setOnAction(event -> onClear());
-        btnOnOff.setOnAction(event -> {
-            isScanEnabled = !isScanEnabled;
-            btnOnOff.setText(isScanEnabled ? "Off" : "On");
-            txtScanCode.setDisable(!isScanEnabled);
-        });
-
-        txtScanCode.setOnAction(event -> {
-            if (!isScanEnabled) {
-                showAlert("Scan Disabled", "Please turn on button.");
-                return;
-            }
-
-            if (selectedInvoiceId == 0) {
-                showAlert("No Invoice", "Please select a invoice first.");
-                return;
-            }
-
-            String makerPN = txtScanCode.getText().trim();
-            if (makerPN.isEmpty()) return;
-
-            handleScanCode(makerPN);
-            txtScanCode.clear();
-        });
-
-        //btnOnOff.setDisable(true);
-        btnOnOff.setOnAction(event -> {
-            isScanEnabled = !isScanEnabled;
-            btnOnOff.setText(isScanEnabled ? "Off" : "On");
-            txtScanCode.setDisable(!isScanEnabled);
-
-            if (isScanEnabled) {
-                currentScanId = txtScanInput.getText().trim(); // Lưu ID tại thời điểm nhấn On
-            }
-        });
-
-        btnOnOff.setDisable(true); // mặc định ban đầu
-        txtScanInput.textProperty().addListener((observable, oldValue, newValue) -> {
-            btnOnOff.setDisable(newValue.trim().isEmpty());
-        });
-
+        btnRefresh.setOnAction(event -> onRefresh());
         btnKeepGoing.setOnAction(event -> onKeptGoing());
-
-
         btnCallSuperV.setOnAction(event -> onCallSuperV());
 
-        btnRefresh.setOnAction(event -> onRefresh());
+        btnOnOff.setDisable(true); // ban đầu
+        btnOnOff.setOnAction(event -> toggleScanMode());
 
+        txtScanInput.textProperty().addListener((obs, oldVal, newVal) ->
+                btnOnOff.setDisable(newVal.trim().isEmpty()));
     }
+
+    //toggleScanMode
+    private void toggleScanMode() {
+        isScanEnabled = !isScanEnabled;
+        btnOnOff.setText(isScanEnabled ? "Off" : "On");
+        txtScanCode.setDisable(!isScanEnabled);
+
+        if (isScanEnabled) {
+            currentScanId = txtScanInput.getText().trim(); // Lưu ID khi bật
+        }
+    }
+
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     @FXML
     private void onRefresh() {
         if (selectedInvoice != null) {
-            loadHistoryDetails(selectedInvoice);
+            refreshHistoryTable();
         } else {
             showAlert("No invoice selected", "Please select an invoice to refresh data.");
         }
     }
 
-
-
-
-
-    //Call Super-V
+    private void refreshHistoryTable() {
+        loadHistoryDetails(selectedInvoice);
+    }
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    //On call Super-V
     private void onCallSuperV() {
         lastAcceptedMakerPN = null;
 
-        // Lấy danh sách hiện tại
-        ObservableList<HistoryDetailViewDto> currentItems = tblScanDetails.getItems();
-
-        // Tìm dòng tương ứng với lastScannedMakerPN
-        HistoryDetailViewDto matchedDto = null;
-        for (HistoryDetailViewDto dto : currentItems) {
-            if (dto.getMakerCode().equalsIgnoreCase(lastScannedMakerPN)) {
-                matchedDto = dto;
-                break;
-            }
-        }
-
+        HistoryDetailViewDto matchedDto = findMatchedDto(lastScannedMakerPN);
         if (matchedDto != null) {
-            // Giảm quantity
-            int newQty = matchedDto.getQty() - matchedDto.getMoq();
-
-            // Nếu còn dữ liệu thì cập nhật lại số lượng
-            if (newQty > 0) {
-                matchedDto.setQty(newQty);
-                matchedDto.setReelQty(newQty / matchedDto.getMoq());
-                tblScanDetails.refresh();
-            } else {
-                // Nếu hết thì xoá dòng đó khỏi bảng
-                currentItems.remove(matchedDto);
-            }
-
-            // Xoá bản ghi history tương ứng trong DB
+            adjustOrRemoveDto(matchedDto);
             historyService.deleteLastByMakerPNAndInvoiceId(lastScannedMakerPN, selectedInvoiceId);
-
         }
 
-        // Reset UI
+        resetScanUI();
+        refreshHistoryTable();
+    }
+
+    private HistoryDetailViewDto findMatchedDto(String makerPN) {
+        for (HistoryDetailViewDto dto : tblScanDetails.getItems()) {
+            if (dto.getMakerCode().equalsIgnoreCase(makerPN)) {
+                return dto;
+            }
+        }
+        return null;
+    }
+
+    private void adjustOrRemoveDto(HistoryDetailViewDto dto) {
+        int newQty = dto.getQty() - dto.getMoq();
+        if (newQty > 0) {
+            dto.setQty(newQty);
+            dto.setReelQty(newQty / dto.getMoq());
+            tblScanDetails.refresh();
+        } else {
+            tblScanDetails.getItems().remove(dto);
+        }
+    }
+
+    private void resetScanUI() {
         txtScanStatus.setText("None");
         txtScanStatus.setStyle("-fx-background-color: gray; -fx-text-fill: white;");
         paneScanResult.setStyle("-fx-background-color: lightgray;");
         btnKeepGoing.setDisable(true);
         btnCallSuperV.setDisable(true);
         txtScanCode.setDisable(false);
-        loadHistoryDetails(selectedInvoice);
     }
 
-
-    //Keep Going
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //On Keep Going
     private void onKeptGoing() {
-        lastAcceptedMakerPN = lastScannedMakerPN; // Sử dụng biến tạm đã lưu
+        lastAcceptedMakerPN = lastScannedMakerPN;
+        setScanStatusGood();
+        refreshHistoryTable();
+        txtScanCode.setDisable(false);
+        txtScanCode.requestFocus();
+    }
+
+    private void setScanStatusGood() {
         txtScanStatus.setText("Good");
         txtScanStatus.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white;");
         paneScanResult.setStyle("-fx-background-color: #23dc28;");
         btnKeepGoing.setDisable(true);
         btnCallSuperV.setDisable(true);
-        loadHistoryDetails(selectedInvoice);
-        txtScanCode.setDisable(false);
-        txtScanCode.requestFocus();
-
     }
 
-
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     //Scan
     private void handleScanCode(String makerPN) {
         MOQ moq = moqService.getMOQbyMakerPN(makerPN);
-
         if (moq == null) {
             showAlert("Wrong makerPN", "Not found.");
             return;
         }
 
-        // Gán lại để dùng nếu NG
         lastScannedMakerPN = makerPN;
+        String sapPN = moq.getSapPN();
+        InvoiceDetail invoiceDetail = invoiceDetailService.getInvoiceDetailBySapPNAndInvoiceId(sapPN, selectedInvoiceId);
 
-        // 1. Tạo bản ghi history mới
+        saveScanToHistory(makerPN, moq);
+        updateTableScanSummary(makerPN, moq);
+
+        if (invoiceDetail == null) {
+            handleNotExistInInvoice(sapPN);
+            return;
+        }
+
+        boolean isGood = isValidScan(makerPN);
+        if (!isGood) {
+            updateScanResultUI(false);
+            txtScanCode.setDisable(true);
+            return;
+        }
+
+        updateScanResultUI(true);
+        checkQuantityAndUpdateStatus(sapPN);
+
+        lastAcceptedMakerPN = makerPN;
+        txtScanCode.clear();
+        tblScanDetails.refresh();
+    }
+
+    private void saveScanToHistory(String makerPN, MOQ moq) {
         History history = new History();
         history.setInvoiceId(selectedInvoiceId);
         history.setMakerPN(makerPN);
@@ -303,21 +357,21 @@ public class ScanController {
         history.setTime(LocalTime.now());
 
         historyService.addHistory(history);
+    }
 
-        // 2. Kiểm tra và cập nhật DTO hiển thị
+    private void updateTableScanSummary(String makerPN, MOQ moq) {
         boolean found = false;
+
         for (HistoryDetailViewDto dto : tblScanDetails.getItems()) {
             if (dto.getMakerCode().equalsIgnoreCase(makerPN)) {
                 int newQty = dto.getQty() + moq.getMoq();
                 dto.setQty(newQty);
                 dto.setReelQty(newQty / moq.getMoq());
-                tblScanDetails.refresh();
                 found = true;
                 break;
             }
         }
 
-        // 3. Nếu chưa có dòng nào cho makerPN này, thêm mới
         if (!found) {
             HistoryDetailViewDto dto = new HistoryDetailViewDto();
             dto.setId(0);
@@ -327,89 +381,18 @@ public class ScanController {
             dto.setMoq(moq.getMoq());
             dto.setQty(moq.getMoq());
             dto.setReelQty(1);
-            dto.setInvoice("");
+            dto.setInvoice(""); // Tạm thời
             tblScanDetails.getItems().add(dto);
         }
 
-        // 4. Kiểm tra NG hay GOOD
-        boolean isGood = isValidScan(makerPN);
-        if (!isGood) {
-            updateScanResultUI(false);
-            txtScanCode.setDisable(true);
-
-            return; // NG -> chờ xử lý
-        }
-
-        if (isGood) {
-            updateScanResultUI(true);
-            checkQuantityAndUpdateStatus(moq.getSapPN());
-
-        }
-
-        lastAcceptedMakerPN = makerPN;
-
-        txtScanCode.clear();
         tblScanDetails.refresh();
     }
 
 
-
-    //Check quantity
-    /*private void checkQuantityAndUpdateStatus(String sapPN) {
-        // 1. Tính tổng số lượng đã quét từ bảng History
-        int totalScannedQty = historyService.getTotalScannedQuantityBySapPN(sapPN, selectedInvoiceId);
-
-        // 2. Lấy chi tiết Invoice để so sánh
-        InvoiceDetail invoiceDetail = invoiceDetailService.getInvoiceDetailBySapPNAndInvoiceId(sapPN, selectedInvoiceId);
-
-        if (invoiceDetail != null) {
-            int expectedQty = invoiceDetail.getQuantity();
-
-            if (totalScannedQty > expectedQty) {
-                // Dư -> NG ngay lập tức
-                updateInvoiceColumnStatus(sapPN, "X", "#D01029");
-                updateScanResultUI(false); // NG UI
-                txtScanStatus.setText("Over");
-                txtScanStatus.setStyle("-fx-background-color: red; -fx-text-fill: white;");
-                paneScanResult.setStyle("-fx-background-color: red;");
-                txtScanCode.setDisable(true);
-                btnKeepGoing.setDisable(true);
-                btnCallSuperV.setDisable(false);
-                return;
-            }
-
-            if (totalScannedQty == expectedQty) {
-                // Đủ
-                updateInvoiceColumnStatus(sapPN, "O", "#4CAF50");
-                btnKeepGoing.setDisable(true);
-            } else {
-                // Thiếu
-                updateInvoiceColumnStatus(sapPN, "X", "#D01029");
-                btnKeepGoing.setDisable(true);
-            }
-
-        }
-        *//*else {
-
-            updateInvoiceColumnStatus(sapPN, "Z", "#caaa12");
-            updateScanResultUI(false);
-            txtScanStatus.setText("Not Exíst");
-            txtScanStatus.setStyle("-fx-background-color: #ffffff; -fx-text-fill: white;");
-            paneScanResult.setStyle("-fx-background-color: #d1d624;");
-            btnKeepGoing.setDisable(true);
-            txtScanCode.setDisable(true);
-            btnCallSuperV.setDisable(false);
-        }*//*
-    }*/
-
     private void checkQuantityAndUpdateStatus(String sapPN) {
-        // 1. Lấy chi tiết Invoice để so sánh
         InvoiceDetail invoiceDetail = invoiceDetailService.getInvoiceDetailBySapPNAndInvoiceId(sapPN, selectedInvoiceId);
-
-        // 2. Nếu không tìm thấy mã SAP trong invoice -> "Z"
         if (invoiceDetail == null) {
             updateInvoiceColumnStatus(sapPN, "Z", "#CAAA12"); // Z màu vàng
-            updateScanResultUI(false); // Đổi UI NG
             txtScanStatus.setText("Not Exist");
             txtScanStatus.setStyle("-fx-background-color: #CAAA12; -fx-text-fill: black;");
             paneScanResult.setStyle("-fx-background-color: #CAAA12;");
@@ -444,7 +427,7 @@ public class ScanController {
         } else {
             // Thiếu
             updateInvoiceColumnStatus(sapPN, "X", "#D01029");
-            btnKeepGoing.setDisable(false);
+            btnKeepGoing.setDisable(true);
         }
     }
 
@@ -459,6 +442,29 @@ public class ScanController {
             }
         }
     }
+
+
+    //Valid Scan
+    private boolean isValidScan(String makerPN) {
+        if (lastAcceptedMakerPN == null) return true;
+        return makerPN.equalsIgnoreCase(lastAcceptedMakerPN);
+    }
+
+    private void handleNotExistInInvoice(String sapPN) {
+        updateInvoiceColumnStatus(sapPN, "Z", "#CAAA12");
+        txtScanStatus.setText("Not Exist");
+        txtScanStatus.setStyle("-fx-background-color: #CAAA12; -fx-text-fill: black;");
+        paneScanResult.setStyle("-fx-background-color: #CAAA12;");
+        txtScanCode.setDisable(true);
+        btnKeepGoing.setDisable(true);
+        btnCallSuperV.setDisable(false);
+        btnRefresh.setDisable(true);
+    }
+
+
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //Load History
 
 
     private void loadHistoryDetails(Invoice selectedInvoice) {
@@ -515,7 +521,6 @@ public class ScanController {
             dto.setInvoice(status);
         }
 
-        // Gán dữ liệu vào bảng
         tblScanDetails.setItems(FXCollections.observableArrayList(groupedMap.values()));
         tblScanDetails.refresh();
 
@@ -541,6 +546,63 @@ public class ScanController {
     }
 
 
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //On clear
+    private void onClear() {
+        resetFilters();
+        resetInvoiceTable();
+        resetUI();
+    }
+    private void resetFilters() {
+        dpDate.setValue(null);
+        cbInvoiceNo1.setValue(null);
+    }
+
+    private void resetInvoiceTable() {
+        tblInvoiceList.getItems().clear();
+    }
+
+    private void resetUI() {
+        txtScanStatus.setText("None");
+        txtScanStatus.setStyle("-fx-background-color: gray; -fx-text-fill: white;");
+        paneScanResult.setStyle("-fx-background-color: lightgray;");
+        tblScanDetails.getItems().clear();
+        btnKeepGoing.setDisable(true);
+        btnCallSuperV.setDisable(true);
+    }
+
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //Search
+    private void onSearch() {
+        List<Invoice> searchResults = searchInvoices(dpDate.getValue(), cbInvoiceNo1.getValue());
+        tblInvoiceList.setItems(FXCollections.observableArrayList(searchResults));
+    }
+
+
+    private List<Invoice> searchInvoices(LocalDate date, String invoiceNo) {
+        if (date != null && invoiceNo != null) {
+            return invoiceService.getInvoicesByDateAndInvoiceNo(date, invoiceNo);
+        } else if (date != null) {
+            return invoiceService.getInvoicesByDate(date);
+        } else if (invoiceNo != null) {
+            return invoiceService.getInvoicesByInvoiceNo(invoiceNo);
+        } else {
+            return invoiceService.findAll();
+        }
+    }
+
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //Alert
+    private void showAlert(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
     //UI
     // Cập nhật kết quả quét UI
     private void updateScanResultUI(boolean isGood) {
@@ -563,81 +625,6 @@ public class ScanController {
             btnKeepGoing.setDisable(false);
             btnCallSuperV.setDisable(false);
         }
-    }
-
-
-    //Valid Scan
-    private boolean isValidScan(String makerPN) {
-        if (lastAcceptedMakerPN == null) return true;
-        return makerPN.equalsIgnoreCase(lastAcceptedMakerPN);
-    }
-
-
-    private void onClear() {
-        // Reset DatePicker
-        dpDate.setValue(null);  // Xóa ngày đã chọn trong DatePicker
-
-        // Reset ComboBox
-        cbInvoiceNo1.setValue(null);  // Xóa lựa chọn trong ComboBox
-        tblInvoiceList.getItems().clear();
-        txtScanStatus.setText("None");
-        txtScanStatus.setStyle("-fx-background-color: gray; -fx-text-fill: white;");
-        paneScanResult.setStyle("-fx-background-color: lightgray;");
-        tblScanDetails.getItems().clear();
-        btnKeepGoing.setDisable(true);
-        btnCallSuperV.setDisable(true);
-    }
-
-
-    private void updateFiltersFromInvoice(Invoice selectedInvoice) {
-        // Cập nhật DatePicker với giá trị ngày của invoice đã chọn
-        dpDate.setValue(selectedInvoice.getInvoiceDate());
-
-        // Cập nhật ComboBox với InvoiceNo của invoice đã chọn
-        cbInvoiceNo1.setValue(selectedInvoice.getInvoiceNo());
-    }
-
-
-    private void onSearch() {
-        LocalDate selectedDate = dpDate.getValue();
-        String selectedInvoiceNo = cbInvoiceNo1.getValue();
-
-        List<Invoice> searchResults;
-
-        if (selectedDate != null && selectedInvoiceNo != null) {
-            searchResults = invoiceService.getInvoicesByDateAndInvoiceNo(selectedDate, selectedInvoiceNo);
-        } else if (selectedDate != null) {
-            searchResults = invoiceService.getInvoicesByDate(selectedDate);
-        } else if (selectedInvoiceNo != null) {
-            searchResults = invoiceService.getInvoicesByInvoiceNo(selectedInvoiceNo);
-        } else {
-            searchResults = invoiceService.findAll();  // Nếu không có filter nào, lấy tất cả invoices
-        }
-
-        tblInvoiceList.setItems(FXCollections.observableArrayList(searchResults));
-    }
-
-    private String determineStatus(String sapPN) {
-        int totalScannedQty = historyService.getTotalScannedQuantityBySapPN(sapPN, selectedInvoiceId);
-        InvoiceDetail invoiceDetail = invoiceDetailService.getInvoiceDetailBySapPNAndInvoiceId(sapPN, selectedInvoiceId);
-
-        if (invoiceDetail != null && totalScannedQty == invoiceDetail.getQuantity()) {
-            return "O"; // Đủ
-        } else {
-            return "X"; // Thiếu hoặc dư
-        }
-    }
-
-
-
-
-    //Alert
-    private void showAlert(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
     }
 
 
