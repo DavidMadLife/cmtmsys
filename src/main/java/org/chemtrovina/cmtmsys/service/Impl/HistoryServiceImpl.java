@@ -12,10 +12,7 @@ import org.chemtrovina.cmtmsys.service.base.HistoryService;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class HistoryServiceImpl implements HistoryService {
@@ -53,13 +50,12 @@ public class HistoryServiceImpl implements HistoryService {
         return historyRepository.findAll().stream()
                 .filter(history -> (date == null || history.getDate().equals(date)) &&
                         (sapPN == null || history.getSapPN().equals(sapPN)) &&
-                        (status == null || history.getStatus().equals(status)))
+                        (status == null || history. getStatus().equals(status)))
                 .toList();
     }
 
     @Override
-    public void createHistoryForScannedMakePN(String makerPNInput, String employeeId, String scanCode) {
-        // Tách đúng mã MakerPN từ chuỗi bị "dính"
+    public void createHistoryForScannedMakePN(String makerPNInput, String employeeId, String scanCode, int InvoiceId) {
         String realMakerPN = extractRealMakerPN(makerPNInput);
 
         if (realMakerPN != null) {
@@ -71,6 +67,7 @@ public class HistoryServiceImpl implements HistoryService {
 
                 History history = new History();
                 history.setMaker(moq.getMaker());
+                history.setInvoiceId(InvoiceId);
                 history.setMakerPN(realMakerPN);
                 history.setSapPN(moq.getSapPN());
                 history.setQuantity(moq.getMoq());
@@ -170,23 +167,19 @@ public class HistoryServiceImpl implements HistoryService {
     @Override
     public String extractRealMakerPN(String makerPNInput) {
         List<String> allMakerPNs = moqRepository.findAllMakerPNs();
-
-        // Làm sạch input (loại bỏ ký tự không phải chữ số và chữ cái)
+        // Normalize input: bỏ ký tự không phải chữ-số, viết hoa
+        // Normalize input
         String cleanedInput = makerPNInput.replaceAll("[^A-Za-z0-9]", "").toUpperCase();
 
         System.out.println("Cleaned input: " + cleanedInput);
-        System.out.println("Danh sách MakerPN trong DB: ");
-        allMakerPNs.forEach(System.out::println);
-
 
         return allMakerPNs.stream()
-                .map(String::toUpperCase) // normalize tất cả MakerPN trong DB
-                .filter(cleanedInput::contains) // kiểm tra xem chuỗi input có chứa MakerPN không
-                .max((a, b) -> Integer.compare(a.length(), b.length())) // lấy chuỗi dài nhất (khả năng đúng cao hơn)
-                .orElse(null);
-
+                .filter(dbMPN -> {
+                    String normalized = dbMPN.replaceAll("[^A-Za-z0-9]", "").toUpperCase();
+                    return cleanedInput.contains(normalized);
+                })
+                .max(Comparator.comparingInt(mpn -> mpn.replaceAll("[^A-Za-z0-9]", "").length()))
+                .orElse(null); // Trả về MakerPN gốc (có khoảng trắng) để dùng với DB
 
     }
-
-
 }

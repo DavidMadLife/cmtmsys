@@ -2,6 +2,7 @@ package org.chemtrovina.cmtmsys.repository.Impl;
 
 import org.chemtrovina.cmtmsys.model.History;
 import org.chemtrovina.cmtmsys.repository.base.HistoryRepository;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 
@@ -150,12 +151,18 @@ public class HistoryRepositoryImpl extends GenericRepositoryImpl<History> implem
 
         for (History history : list) {
             if (history.getInvoiceId() != null) {
-                String invNo = jdbcTemplate.queryForObject(
-                        "SELECT InvoiceNo FROM Invoice WHERE Id = ?",
-                        new Object[]{history.getInvoiceId()},
-                        String.class
-                );
-                history.setInvoiceNo(invNo);
+                try {
+                    String invNo = jdbcTemplate.queryForObject(
+                            "SELECT InvoiceNo FROM Invoice WHERE Id = ?",
+                            new Object[]{history.getInvoiceId()},
+                            String.class
+                    );
+                    history.setInvoiceNo(invNo);
+                } catch (EmptyResultDataAccessException e) {
+                    // Không tìm thấy invoice -> giữ nguyên hoặc log cảnh báo
+                    System.out.println("Không tìm thấy InvoiceNo cho InvoiceId = " + history.getInvoiceId());
+                }
+
             }
         }
 

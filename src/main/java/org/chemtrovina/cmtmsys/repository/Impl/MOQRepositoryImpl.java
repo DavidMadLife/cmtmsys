@@ -34,6 +34,30 @@ public class MOQRepositoryImpl extends GenericRepositoryImpl<MOQ> implements MOQ
     }
 
     @Override
+    public List<String> getAllSapCodes() {
+        String sql = "SELECT DISTINCT SapPN FROM MOQ WHERE SapPN IS NOT NULL";
+        return jdbcTemplate.queryForList(sql, String.class);
+    }
+
+    @Override
+    public List<String> getAllMakers() {
+        String sql = "SELECT DISTINCT Maker FROM MOQ WHERE Maker IS NOT NULL";
+        return jdbcTemplate.queryForList(sql, String.class);
+    }
+
+    @Override
+    public List<String> getAllMakerPNs() {
+        String sql = "SELECT DISTINCT MakerPN FROM MOQ WHERE MakerPN IS NOT NULL";
+        return jdbcTemplate.queryForList(sql, String.class);
+    }
+
+    @Override
+    public List<String> getAllMSLs() {
+        String sql = "SELECT DISTINCT MSQL FROM MOQ WHERE MSQL IS NOT NULL";
+        return jdbcTemplate.queryForList(sql, String.class);
+    }
+
+    @Override
     public void add(MOQ moq) {
         String sql = "INSERT INTO MOQ (Maker, MakerPN, SapPN, MOQ, MSQL, Spec) VALUES (?, ?, ?, ?, ?, ?)";
         jdbcTemplate.update(sql,

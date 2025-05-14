@@ -3,6 +3,7 @@ package org.chemtrovina.cmtmsys.controller;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.geometry.Side;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.GridPane;
@@ -20,12 +21,16 @@ import org.chemtrovina.cmtmsys.service.Impl.InvoiceServiceImpl;
 import org.chemtrovina.cmtmsys.service.Impl.MOQServiceImpl;
 import org.chemtrovina.cmtmsys.service.base.InvoiceService;
 import org.chemtrovina.cmtmsys.service.base.MOQService;
+import org.chemtrovina.cmtmsys.utils.AutoCompleteUtils;
+import org.controlsfx.control.textfield.TextFields;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import javax.sql.DataSource;
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class InvoiceController {
 
@@ -257,16 +262,23 @@ public class InvoiceController {
         }
 
     }
-
+    //////////////////////////////////////////////////////////////////////////////////////////////
 
     //Update dialog
     private void showUpdateDialog(InvoiceDetailViewDto dto) {
         Dialog<InvoiceDetailViewDto> dialog = new Dialog<>();
         dialog.setTitle("Update Invoice Detail");
 
+        List<String> sapCodeSuggestions = moqService.getAllSapCodes(); // giả sử hàm này trả về List<String>
+
+
         // Các field nhập liệu
         TextField sapCodeField = new TextField(dto.getSapCode());
         TextField qtyField = new TextField(String.valueOf(dto.getQuantity()));
+
+
+        AutoCompleteUtils.setupAutoComplete(sapCodeField, sapCodeSuggestions);
+
 
         // Các field tự động tính - không cho chỉnh sửa
         TextField moqField = new TextField();
@@ -291,13 +303,13 @@ public class InvoiceController {
                 int quantity = parseIntSafe(qtyField.getText());
 
                 if (sapCode.isEmpty() || quantity <= 0) {
-                    showAlert("Warning", "Vui lòng nhập SAP Code và Quantity hợp lệ", Alert.AlertType.ERROR);
+                    showAlert("Warning", "Please input SAP Code and Quantity available !", Alert.AlertType.ERROR);
                     return null;
                 }
 
                 MOQ moq = moqService.getMOQbySAPPN(sapCode);
                 if (moq == null || moq.getMoq() == null || moq.getMoq() == 0) {
-                    showAlert("Lỗi", "Không tìm thấy MOQ hợp lệ cho SAP Code: " + sapCode, Alert.AlertType.ERROR);
+                    showAlert("Warning", "Not found MOQ for SAP Code: " + sapCode, Alert.AlertType.ERROR);
                     return null;
                 }
 
@@ -318,6 +330,8 @@ public class InvoiceController {
 
         dialog.showAndWait();
     }
+
+    //////////////////////////////////////////////////////////////////////////////////////////////
 
 
 
@@ -390,13 +404,6 @@ public class InvoiceController {
             d.setStatus("New");
             return d;
         }).toList();
-
-        /*try {
-            invoiceService.saveInvoiceWithDetails(invoice, details);
-            showAlert("Success", "Saved invoice successfully", Alert.AlertType.INFORMATION);
-        } catch (Exception e) {
-            showAlert("Error", "Failed to save invoice: " + e.getMessage(), Alert.AlertType.ERROR);
-        }*/
 
         try {
             if (invoiceExists(invoice.getInvoiceNo())) {

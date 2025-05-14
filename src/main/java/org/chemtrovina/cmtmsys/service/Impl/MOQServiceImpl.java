@@ -76,4 +76,24 @@ public class MOQServiceImpl implements MOQService {
         return moqRepository.findByMakerPN(makerPN);
     }
 
+    @Override
+    public List<String> getAllSapCodes() {
+        return moqRepository.getAllSapCodes();
+    }
+
+    @Override
+    public List<String> getAllMakers() {
+        return moqRepository.getAllMakers();
+    }
+    @Override
+    public List<String> getAllMakerPNs() {
+        return moqRepository.getAllMakerPNs();
+    }
+
+    @Override
+    public List<String> getAllMSLs() {
+        return moqRepository.getAllMSLs();
+    }
+
+
 }

@@ -96,24 +96,33 @@
                             <Font size="13.0" />
                         </font>
                     </Button>
-                    <Text fx:id="fileNameLabel" text="No file selected" wrappingWidth="200.0">
+                    <Text fx:id="fileNameLabel" text="No file selected" wrappingWidth="107.0">
                         <font>
                             <Font size="14.0" />
                         </font></Text>
+                   <Button fx:id="btnImportData" mnemonicParsing="false" prefHeight="32.0" prefWidth="120.0" style="-fx-font-weight: Bold;" text="Import Data">
+                       <font>
+                           <Font size="14.0" />
+                       </font>
+                   </Button>
                 </HBox>
-                <Button fx:id="btnImportData" layoutX="147.0" layoutY="104.0" mnemonicParsing="false" prefHeight="40.0" prefWidth="130.0" style="-fx-font-weight: Bold;" text="Import Data">
+                <Button fx:id="btnSearch" layoutX="37.0" layoutY="494.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="130.0" style="-fx-font-weight: Bold; -fx-background-color: #e11313;" text="Search" textFill="WHITE">
                     <font>
                         <Font size="14.0" />
                     </font>
                 </Button>
-                <Button fx:id="btnSearch" layoutX="167.0" layoutY="490.0" mnemonicParsing="false" prefHeight="40.0" prefWidth="130.0" style="-fx-font-weight: Bold;" text="Search">
-                    <font>
-                        <Font size="14.0" />
-                    </font>
-                </Button>
+            <Button fx:id="btnCreate" layoutX="42.0" layoutY="112.0" mnemonicParsing="false" prefHeight="32.0" prefWidth="120.0" style="-fx-font-weight: Bold;" text="Create">
+               <font>
+                  <Font size="14.0" />
+               </font>
+            </Button>
+            <Button fx:id="btnClear" layoutX="232.0" layoutY="494.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="130.0" style="-fx-font-weight: Bold;" text="Clear">
+               <font>
+                  <Font size="14.0" />
+               </font>
+            </Button>
             </children>
         </Pane>
-        <Pane fx:id="StatusPane" layoutX="21.0" layoutY="674.0" prefHeight="109.0" prefWidth="422.0" />
 
     </children>
 </AnchorPane>

@@ -1,5 +1,7 @@
 package org.chemtrovina.cmtmsys.controller;
 
+import javafx.animation.PauseTransition;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -8,6 +10,7 @@ import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
 import javafx.scene.text.Text;
+import javafx.util.Duration;
 import javafx.util.StringConverter;
 import org.chemtrovina.cmtmsys.config.DataSourceConfig;
 import org.chemtrovina.cmtmsys.dto.HistoryDetailViewDto;
@@ -99,6 +102,8 @@ public class ScanController {
 
     private Invoice selectedInvoice;
 
+    private PauseTransition idleTimer;
+
 
 
 
@@ -109,7 +114,41 @@ public class ScanController {
         setupInvoiceComboBox();
         setupEventHandlers();
         setupScanInputHandlers();
+        setupButton();
+        setupIdleTimer();
+        setupActivityListeners();
 
+    }
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    //Set time out
+    private void setupIdleTimer() {
+        idleTimer = new PauseTransition(Duration.minutes(30));
+        idleTimer.setOnFinished(event -> onIdleTimeout());
+        idleTimer.play(); // Start initially
+    }
+
+    private void resetIdleTimer() {
+        idleTimer.stop();
+        idleTimer.playFromStart();
+    }
+
+    private void onIdleTimeout() {
+        btnOnOff.setDisable(true);
+        txtScanInput.clear();
+        txtScanCode.clear();
+        System.out.println("Idle timeout! Scan disabled.");
+    }
+
+    private void setupActivityListeners() {
+        txtScanInput.setOnKeyTyped(event -> resetIdleTimer());
+        txtScanInput.setOnMouseClicked(event -> resetIdleTimer());
+        btnOnOff.setOnMouseClicked(event -> resetIdleTimer());
+    }
+
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    private void setupButton(){
+        btnKeepGoing.setDisable(true);
+        btnCallSuperV.setDisable(true);
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////
@@ -213,21 +252,43 @@ public class ScanController {
         btnOnOff.setDisable(true); // ban đầu
         btnOnOff.setOnAction(event -> toggleScanMode());
 
-        txtScanInput.textProperty().addListener((obs, oldVal, newVal) ->
-                btnOnOff.setDisable(newVal.trim().isEmpty()));
+        // Lắng nghe nội dung thay đổi để bật nút On/Off
+        txtScanInput.textProperty().addListener((obs, oldVal, newVal) -> {
+            boolean isEmpty = newVal.trim().isEmpty();
+            btnOnOff.setDisable(isEmpty);
+        });
+
+        // Khi scan xong (nhấn Enter), bật chế độ scan và focus
+        txtScanInput.setOnAction(event -> {
+            String input = txtScanInput.getText().trim();
+
+            if (!input.isEmpty() && !isScanEnabled) {
+                toggleScanMode();
+            }
+
+            updateScanCodeState();
+            txtScanCode.requestFocus();
+        });
     }
+
 
     //toggleScanMode
     private void toggleScanMode() {
         isScanEnabled = !isScanEnabled;
         btnOnOff.setText(isScanEnabled ? "Off" : "On");
-        txtScanCode.setDisable(!isScanEnabled);
 
         if (isScanEnabled) {
-            currentScanId = txtScanInput.getText().trim(); // Lưu ID khi bật
+            currentScanId = txtScanInput.getText().trim();
         }
+
+        updateScanCodeState();
     }
 
+    //updateScanCode
+    private void updateScanCodeState() {
+        boolean hasScanInput = !txtScanInput.getText().trim().isEmpty();
+        txtScanCode.setDisable(!(hasScanInput && isScanEnabled));
+    }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -308,26 +369,34 @@ public class ScanController {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     //Scan
-    private void handleScanCode(String makerPN) {
-        MOQ moq = moqService.getMOQbyMakerPN(makerPN);
+    private void handleScanCode(String rawInput) {
+
+        String extractedMakerPN = historyService.extractRealMakerPN(rawInput);
+        if (extractedMakerPN == null) {
+            showAlert("Scan NG", "Không nhận diện được MakerPN từ chuỗi: " + rawInput);
+            return;
+        }
+
+        // Bước 2: lấy MOQ theo makerPN chuẩn
+        MOQ moq = moqService.getMOQbyMakerPN(extractedMakerPN);
         if (moq == null) {
             showAlert("Wrong makerPN", "Not found.");
             return;
         }
 
-        lastScannedMakerPN = makerPN;
+        saveScanToHistory(extractedMakerPN, moq);
+        lastScannedMakerPN = extractedMakerPN;
         String sapPN = moq.getSapPN();
         InvoiceDetail invoiceDetail = invoiceDetailService.getInvoiceDetailBySapPNAndInvoiceId(sapPN, selectedInvoiceId);
 
-        saveScanToHistory(makerPN, moq);
-        updateTableScanSummary(makerPN, moq);
+        updateTableScanSummary(extractedMakerPN, moq);
 
         if (invoiceDetail == null) {
             handleNotExistInInvoice(sapPN);
             return;
         }
 
-        boolean isGood = isValidScan(makerPN);
+        boolean isGood = isValidScan(extractedMakerPN);
         if (!isGood) {
             updateScanResultUI(false);
             txtScanCode.setDisable(true);
@@ -337,26 +406,14 @@ public class ScanController {
         updateScanResultUI(true);
         checkQuantityAndUpdateStatus(sapPN);
 
-        lastAcceptedMakerPN = makerPN;
+        lastAcceptedMakerPN = extractedMakerPN;
         txtScanCode.clear();
         tblScanDetails.refresh();
+
     }
 
     private void saveScanToHistory(String makerPN, MOQ moq) {
-        History history = new History();
-        history.setInvoiceId(selectedInvoiceId);
-        history.setMakerPN(makerPN);
-        history.setSapPN(moq.getSapPN());
-        history.setMaker(moq.getMaker());
-        history.setQuantity(moq.getMoq());
-        history.setMSL(moq.getMsql());
-        history.setStatus("Scanned");
-        history.setEmployeeId(currentScanId);
-        history.setScanCode("ScanCode");
-        history.setDate(LocalDate.now());
-        history.setTime(LocalTime.now());
-
-        historyService.addHistory(history);
+        historyService.createHistoryForScannedMakePN(makerPN, currentScanId, "Scan Code", selectedInvoiceId);
     }
 
     private void updateTableScanSummary(String makerPN, MOQ moq) {

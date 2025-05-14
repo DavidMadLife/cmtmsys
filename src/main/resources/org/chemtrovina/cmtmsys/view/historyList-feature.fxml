@@ -102,14 +102,14 @@
                         </HBox>
                     </children>
                 </VBox>
-                <Button fx:id="searchBtn" layoutX="30.0" layoutY="395.0" mnemonicParsing="false" prefHeight="41.0" prefWidth="164.0" style="-fx-background-color: #BF3C3C; -fx-font-weight: Bold;" text="Search" textFill="WHITE">
+                <Button fx:id="searchBtn" layoutX="30.0" layoutY="395.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="130.0" style="-fx-background-color: #BF3C3C; -fx-font-weight: Bold;" text="Search" textFill="WHITE">
                     <font>
-                        <Font size="18.0" />
+                        <Font size="14.0" />
                     </font>
                 </Button>
-                <Button fx:id="clearBtn" layoutX="237.0" layoutY="395.0" mnemonicParsing="false" prefHeight="41.0" prefWidth="164.0" style="-fx-font-weight: Bold;" text="Clear">
+                <Button fx:id="clearBtn" layoutX="237.0" layoutY="395.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="130.0" style="-fx-font-weight: Bold;" text="Clear">
                     <font>
-                        <Font size="18.0" />
+                        <Font size="14.0" />
                     </font>
                 </Button>
             </children>

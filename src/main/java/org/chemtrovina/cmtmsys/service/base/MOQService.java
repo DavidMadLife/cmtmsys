@@ -13,4 +13,8 @@ public interface MOQService {
     void createMOQ(MOQ moq);
     MOQ getMOQbySAPPN(String sapPN);
     MOQ getMOQbyMakerPN(String makerPN);
+    List<String> getAllSapCodes();
+    List<String> getAllMakerPNs();
+    List<String> getAllMakers();
+    List<String> getAllMSLs();
 }

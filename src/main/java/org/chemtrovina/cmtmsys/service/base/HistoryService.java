@@ -18,7 +18,7 @@ public interface HistoryService {
     Optional<History> getHistoryById(int id);
 
     List<History> searchHistory(LocalDate date, String sapPN, String status);
-    void createHistoryForScannedMakePN(String makerPN, String employeeId, String scanCode);
+    void createHistoryForScannedMakePN(String makerPN, String employeeId, String scanCode, int InvoiceId);
     void deleteById(int id);
 
     boolean isValidMakerPN(String makerPN);

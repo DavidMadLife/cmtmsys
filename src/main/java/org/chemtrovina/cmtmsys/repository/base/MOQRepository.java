@@ -13,4 +13,8 @@ public interface MOQRepository extends GenericRepository<MOQ> {
     void saveAll(List<MOQ> moqList);
     void updateAll(List<MOQ> moqList);
     MOQ findBySapPN(String sapPN);
+    List<String> getAllSapCodes();
+    List<String> getAllMakers();
+    List<String> getAllMakerPNs();
+    List<String> getAllMSLs();
 }

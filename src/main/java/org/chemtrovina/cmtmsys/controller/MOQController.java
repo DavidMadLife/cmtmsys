@@ -15,6 +15,7 @@ import org.chemtrovina.cmtmsys.repository.Impl.MOQRepositoryImpl;
 import org.chemtrovina.cmtmsys.repository.base.MOQRepository;
 import org.chemtrovina.cmtmsys.service.Impl.MOQServiceImpl;
 import org.chemtrovina.cmtmsys.service.base.MOQService;
+import org.chemtrovina.cmtmsys.utils.AutoCompleteUtils;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import javax.sql.DataSource;
@@ -47,6 +48,8 @@ public class MOQController {
     @FXML private Button chooseFileBtn;
     @FXML private Button btnImportData;
     @FXML private Button btnSearch;
+    @FXML private Button btnCreate;
+    @FXML private Button btnClear;
     @FXML private Text fileNameLabel;
 
     private File selectedFile;
@@ -202,6 +205,13 @@ public class MOQController {
         TextField sapPNField = new TextField(moq.getSapPN());
         TextField moqField = new TextField(String.valueOf(moq.getMoq()));
         TextField mslField = new TextField(moq.getMsql());
+
+        AutoCompleteUtils.setupAutoComplete(makerField, moqService.getAllMakers());
+        /*AutoCompleteUtils.setupAutoComplete(makerPNField, moqService.getAllMakerPNs());
+        AutoCompleteUtils.setupAutoComplete(sapPNField, moqService.getAllSapCodes());*/
+
+
+        AutoCompleteUtils.setupAutoComplete(mslField, moqService.getAllMSLs());
 
         grid.add(new Label("Maker:"), 0, 0);
         grid.add(makerField, 1, 0);
