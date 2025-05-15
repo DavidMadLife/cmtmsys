@@ -89,6 +89,39 @@ public class HistoryServiceImpl implements HistoryService {
 
     }
 
+    @Override
+    public void createHistoryForScanOddReel(String makerPNInput, String employeeId, String scanCode, int InvoiceId, int quantity) {
+        String realMakerPN = extractRealMakerPN(makerPNInput);
+
+        if (realMakerPN != null) {
+            MOQ moq = moqRepository.findByMakerPN(realMakerPN);
+
+            if (moq != null) {
+                LocalDate currentDate = LocalDate.now();
+                LocalTime currentTime = LocalTime.now();
+
+                History history = new History();
+                history.setMaker(moq.getMaker());
+                history.setInvoiceId(InvoiceId);
+                history.setMakerPN(realMakerPN);
+                history.setSapPN(moq.getSapPN());
+                history.setQuantity(quantity);
+                history.setDate(currentDate);
+                history.setTime(currentTime);
+                history.setEmployeeId(employeeId);
+                history.setScanCode(scanCode);
+                history.setMSL(moq.getMsql());
+                history.setStatus("Scanned");
+
+                addHistory(history);
+            } else {
+                System.out.println("Không tìm thấy MOQ cho MakerPN: " + realMakerPN);
+            }
+        } else {
+            System.out.println("Không thể nhận diện MakerPN từ chuỗi: " + makerPNInput);
+        }
+    }
+
     public List<HistoryDetailViewDto> getHistoryDetailsByInvoiceId(int invoiceId) {
         // Truy vấn lịch sử từ repository dựa trên InvoiceNo
         List<History> historyList = historyRepository.findByInvoiceId(invoiceId);
@@ -101,7 +134,7 @@ public class HistoryServiceImpl implements HistoryService {
                         history.getSapPN(),
                         history.getMaker(),
                         history.getQuantity(),
-                        0,
+                        history.getQuantity(),
                         0,
                         ""
                 ))
@@ -140,6 +173,21 @@ public class HistoryServiceImpl implements HistoryService {
     public void deleteLastByMakerPNAndInvoiceId(String makerPN, int invoiceId) {
         historyRepository.deleteLastByMakerPNAndInvoiceId(makerPN, invoiceId);
     }
+
+    @Override
+    public int getLastScannedQuantityBySapPN(String sapPN, int invoiceId) {
+        List<History> historyList = historyRepository.findByInvoiceId(invoiceId).stream()
+                .filter(h -> sapPN.equals(h.getSapPN()))
+                .sorted(Comparator.comparing(History::getDate).thenComparing(History::getTime).reversed())
+                .toList();
+
+        if (!historyList.isEmpty()) {
+            return historyList.get(0).getQuantity(); // Bản ghi mới nhất
+        }
+
+        return 0;
+    }
+
 
 
     @Override

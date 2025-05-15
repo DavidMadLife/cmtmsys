@@ -19,6 +19,8 @@ public interface HistoryService {
 
     List<History> searchHistory(LocalDate date, String sapPN, String status);
     void createHistoryForScannedMakePN(String makerPN, String employeeId, String scanCode, int InvoiceId);
+    void createHistoryForScanOddReel(String makerPN, String employeeId, String scanCode, int InvoiceId, int quantity);
+
     void deleteById(int id);
 
     boolean isValidMakerPN(String makerPN);
@@ -34,6 +36,7 @@ public interface HistoryService {
     List<HistoryDetailViewDto> getHistoryByInvoiceId(int invoiceId);
     void deleteLastByMakerPNAndInvoiceId(String makerPN, int invoiceId);
 
+    int getLastScannedQuantityBySapPN(String sapPN, int invoiceId);
 
 
 }

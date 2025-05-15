@@ -107,5 +107,10 @@
          </children>
       </HBox>
       <Button fx:id="btnRefresh" layoutX="608.0" layoutY="759.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="92.0" text="Refresh" />
+      <Button fx:id="btnScanOddReel" layoutX="272.0" layoutY="161.0" mnemonicParsing="false" prefHeight="30.0" prefWidth="131.0" text="Scan odd reel">
+         <font>
+            <Font size="14.0" />
+         </font>
+      </Button>
    </children>
 </AnchorPane>

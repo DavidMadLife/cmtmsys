@@ -5,12 +5,14 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.util.Duration;
+import javafx.util.Pair;
 import javafx.util.StringConverter;
 import org.chemtrovina.cmtmsys.config.DataSourceConfig;
 import org.chemtrovina.cmtmsys.dto.HistoryDetailViewDto;
@@ -42,6 +44,7 @@ import java.time.LocalTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class ScanController {
 
@@ -70,6 +73,7 @@ public class ScanController {
     @FXML private Button btnSearch;
     @FXML private Button btnClear;
     @FXML private Button btnRefresh;
+    @FXML private Button btnScanOddReel;
     @FXML private TextField txtScanCode;
 
     // TableViews and Columns
@@ -143,12 +147,15 @@ public class ScanController {
         txtScanInput.setOnKeyTyped(event -> resetIdleTimer());
         txtScanInput.setOnMouseClicked(event -> resetIdleTimer());
         btnOnOff.setOnMouseClicked(event -> resetIdleTimer());
+        btnScanOddReel.setOnAction(event -> showOddReelScanDialog());
+
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     private void setupButton(){
         btnKeepGoing.setDisable(true);
         btnCallSuperV.setDisable(true);
+        btnScanOddReel.setDisable(true);
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////
@@ -258,6 +265,8 @@ public class ScanController {
             btnOnOff.setDisable(isEmpty);
         });
 
+
+
         // Khi scan xong (nhấn Enter), bật chế độ scan và focus
         txtScanInput.setOnAction(event -> {
             String input = txtScanInput.getText().trim();
@@ -288,6 +297,7 @@ public class ScanController {
     private void updateScanCodeState() {
         boolean hasScanInput = !txtScanInput.getText().trim().isEmpty();
         txtScanCode.setDisable(!(hasScanInput && isScanEnabled));
+        btnScanOddReel.setDisable(!(hasScanInput && isScanEnabled));
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -384,12 +394,12 @@ public class ScanController {
             return;
         }
 
-        saveScanToHistory(extractedMakerPN, moq);
+        saveScanToHistory(extractedMakerPN);
         lastScannedMakerPN = extractedMakerPN;
         String sapPN = moq.getSapPN();
         InvoiceDetail invoiceDetail = invoiceDetailService.getInvoiceDetailBySapPNAndInvoiceId(sapPN, selectedInvoiceId);
 
-        updateTableScanSummary(extractedMakerPN, moq);
+        updateTableScanSummary(extractedMakerPN, moq, moq.getMoq());
 
         if (invoiceDetail == null) {
             handleNotExistInInvoice(sapPN);
@@ -412,17 +422,20 @@ public class ScanController {
 
     }
 
-    private void saveScanToHistory(String makerPN, MOQ moq) {
+    private void saveScanToHistory(String makerPN) {
+        System.out.println(currentScanId.toString());
         historyService.createHistoryForScannedMakePN(makerPN, currentScanId, "Scan Code", selectedInvoiceId);
     }
 
-    private void updateTableScanSummary(String makerPN, MOQ moq) {
+
+    private void updateTableScanSummary(String makerPN, MOQ moq, int customQty) {
         boolean found = false;
 
         for (HistoryDetailViewDto dto : tblScanDetails.getItems()) {
             if (dto.getMakerCode().equalsIgnoreCase(makerPN)) {
-                int newQty = dto.getQty() + moq.getMoq();
+                int newQty = dto.getQty() + customQty;
                 dto.setQty(newQty);
+                System.out.println(newQty);
                 dto.setReelQty(newQty / moq.getMoq());
                 found = true;
                 break;
@@ -436,9 +449,9 @@ public class ScanController {
             dto.setSapCode(moq.getSapPN());
             dto.setMaker(moq.getMaker());
             dto.setMoq(moq.getMoq());
-            dto.setQty(moq.getMoq());
-            dto.setReelQty(1);
-            dto.setInvoice(""); // Tạm thời
+            dto.setQty(customQty);
+            dto.setReelQty(customQty / moq.getMoq());
+            dto.setInvoice("");
             tblScanDetails.getItems().add(dto);
         }
 
@@ -446,21 +459,9 @@ public class ScanController {
     }
 
 
+
     private void checkQuantityAndUpdateStatus(String sapPN) {
         InvoiceDetail invoiceDetail = invoiceDetailService.getInvoiceDetailBySapPNAndInvoiceId(sapPN, selectedInvoiceId);
-        if (invoiceDetail == null) {
-            updateInvoiceColumnStatus(sapPN, "Z", "#CAAA12"); // Z màu vàng
-            txtScanStatus.setText("Not Exist");
-            txtScanStatus.setStyle("-fx-background-color: #CAAA12; -fx-text-fill: black;");
-            paneScanResult.setStyle("-fx-background-color: #CAAA12;");
-            btnKeepGoing.setDisable(true);
-            txtScanCode.setDisable(true);
-            btnCallSuperV.setDisable(false);
-            btnRefresh.setDisable(true);
-            return;
-        }
-
-        // 3. Nếu tìm thấy, xử lý như bình thường
         int expectedQty = invoiceDetail.getQuantity();
         int totalScannedQty = historyService.getTotalScannedQuantityBySapPN(sapPN, selectedInvoiceId);
 
@@ -518,6 +519,98 @@ public class ScanController {
         btnRefresh.setDisable(true);
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    private void showOddReelScanDialog() {
+        if (selectedInvoice == null) {
+            showAlert("No Invoice Selected", "Please select an invoice before scanning odd reel.");
+            return;
+        }
+
+        Dialog<Pair<String, String>> dialog = createOddReelDialog();
+        Optional<Pair<String, String>> result = dialog.showAndWait();
+
+        result.ifPresent(pair -> processOddReelInput(pair.getKey().trim(), pair.getValue().trim()));
+    }
+
+    private Dialog<Pair<String, String>> createOddReelDialog() {
+        Dialog<Pair<String, String>> dialog = new Dialog<>();
+        dialog.setTitle("Scan Odd Reel");
+        dialog.setHeaderText("Nhập MakerPN (Scan Code) và Quantity");
+
+        ButtonType submitButtonType = new ButtonType("Submit", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(submitButtonType, ButtonType.CANCEL);
+
+        TextField txtMakerPN = new TextField();
+        txtMakerPN.setPromptText("MakerPN");
+
+        TextField txtQuantity = new TextField();
+        txtQuantity.setPromptText("Quantity");
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20, 150, 10, 10));
+        grid.add(new Label("MakerPN:"), 0, 0);
+        grid.add(txtMakerPN, 1, 0);
+        grid.add(new Label("Quantity:"), 0, 1);
+        grid.add(txtQuantity, 1, 1);
+
+        dialog.getDialogPane().setContent(grid);
+        dialog.setResultConverter(dialogButton -> dialogButton == submitButtonType
+                ? new Pair<>(txtMakerPN.getText(), txtQuantity.getText())
+                : null);
+
+        return dialog;
+    }
+
+    private void processOddReelInput(String makerPN, String qtyStr) {
+        if (makerPN.isEmpty() || qtyStr.isEmpty()) {
+            showAlert("Missing Data", "Both MakerPN and Quantity are required.");
+            return;
+        }
+
+        int qty;
+        try {
+            qty = Integer.parseInt(qtyStr);
+            if (qty <= 0) throw new NumberFormatException();
+        } catch (NumberFormatException e) {
+            showAlert("Invalid Quantity", "Quantity must be a positive number.");
+            return;
+        }
+
+        MOQ moq = moqService.getMOQbyMakerPN(makerPN);
+        if (moq == null) {
+            showAlert("Invalid MakerPN", "Không tìm thấy MakerPN trong MOQ.");
+            return;
+        }
+
+        String extractedMakerPN = historyService.extractRealMakerPN(makerPN);
+        saveScanOddReel(makerPN, qty);
+        lastScannedMakerPN = extractedMakerPN;
+
+        String sapPN = moq.getSapPN();
+        InvoiceDetail invoiceDetail = invoiceDetailService.getInvoiceDetailBySapPNAndInvoiceId(sapPN, selectedInvoiceId);
+        updateTableScanSummary(makerPN, moq, qty);
+
+        if (invoiceDetail == null) {
+            handleNotExistInInvoice(sapPN);
+            return;
+        }
+
+        boolean isGood = isValidScan(extractedMakerPN);
+        updateScanResultUI(isGood);
+        txtScanCode.setDisable(!isGood);
+
+        if (isGood) {
+            checkQuantityAndUpdateStatus(sapPN);
+            lastAcceptedMakerPN = extractedMakerPN;
+        }
+    }
+
+    private void saveScanOddReel(String makerPN, int quantity) {
+        historyService.createHistoryForScanOddReel(makerPN, currentScanId, "Scan Code", selectedInvoiceId, quantity);
+    }
 
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -534,24 +627,16 @@ public class ScanController {
         for (HistoryDetailViewDto dto : rawList) {
             String makerCode = dto.getMakerCode();
             int moq = dto.getMoq();
+            int qty = dto.getQty();
+
+            System.out.println(qty);
 
             if (groupedMap.containsKey(makerCode)) {
                 HistoryDetailViewDto existing = groupedMap.get(makerCode);
-                int newReelQty = existing.getReelQty() + 1;
-                int newQty = moq * newReelQty;
-
-                existing.setQty(newQty);
-                existing.setReelQty(newReelQty);
+                existing.setQty(existing.getQty() + qty);         // cộng dồn qty thật
+                System.out.println(existing.getQty());
+                existing.setReelQty(existing.getReelQty() + 1);   // tăng reel count
             } else {
-                int qty = moq;
-                int reelQty = 1;
-
-                if (moq == 0) {
-                    // Tránh chia cho 0
-                    qty = 0;
-                    reelQty = 0;
-                }
-
                 groupedMap.put(makerCode, new HistoryDetailViewDto(
                         0,
                         dto.getMakerCode(),
@@ -559,11 +644,12 @@ public class ScanController {
                         dto.getMaker(),
                         moq,
                         qty,
-                        reelQty,
-                        "" // sẽ cập nhật trạng thái sau
+                        1,     // reel đầu tiên
+                        ""     // sẽ cập nhật trạng thái sau
                 ));
             }
         }
+
 
         // Kiểm tra trạng thái O/X cho từng mã và cập nhật vào invoice field
         for (HistoryDetailViewDto dto : groupedMap.values()) {
@@ -683,8 +769,5 @@ public class ScanController {
             btnCallSuperV.setDisable(false);
         }
     }
-
-
-
 
 }

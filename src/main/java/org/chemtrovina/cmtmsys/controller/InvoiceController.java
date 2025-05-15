@@ -30,6 +30,7 @@ import javax.sql.DataSource;
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class InvoiceController {
@@ -315,6 +316,27 @@ public class InvoiceController {
 
                 int moqValue = moq.getMoq();
                 int reelQty = quantity / moqValue;
+
+                if (quantity % moqValue != 0) {
+
+                    Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+                    alert.setTitle("Uneven Quantity");
+                    alert.setHeaderText("Quantity is not evenly divisible by MOQ (" + moqValue + ")");
+                    alert.setContentText("Do you want to keep it and round up the reel count, or re-enter quantity?");
+
+                    ButtonType keepButton = new ButtonType("Keep", ButtonBar.ButtonData.OK_DONE);
+                    ButtonType retryButton = new ButtonType("Re-enter", ButtonBar.ButtonData.CANCEL_CLOSE);
+
+                    alert.getButtonTypes().setAll(keepButton, retryButton);
+
+                    Optional<ButtonType> result = alert.showAndWait();
+                    if (result.isPresent() && result.get() == retryButton) {
+                        return null;
+                    }
+
+                    // Nếu chọn Keep thì làm tròn cuộn (lấy trần)
+                    reelQty = (int) Math.ceil((double) quantity / moqValue);
+                }
 
                 moqField.setText(String.valueOf(moqValue));
                 reelQtyField.setText(String.valueOf(reelQty));
