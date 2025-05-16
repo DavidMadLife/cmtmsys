@@ -134,6 +134,7 @@ public class MOQController {
         btnImportData.setOnAction(e -> importDataFromExcel());
         btnSearch.setOnAction(e -> onSearch());
         btnCreate.setOnAction(e -> showCreateDialog()); // đã thêm nút tạo mới
+        btnClear.setOnAction(e -> OnClear());
     }
 
 
@@ -254,6 +255,20 @@ public class MOQController {
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     private void onSearch() {
+
+        List<String> sapCodeSuggestions = moqService.getAllSapCodes();
+        AutoCompleteUtils.setupAutoComplete(sapField, sapCodeSuggestions);
+
+        List<String> makerSuggestions = moqService.getAllMakers();
+        AutoCompleteUtils.setupAutoComplete(makerField, makerSuggestions);
+
+        List<String> makerPNSuggestions = moqService.getAllMakerPNs();
+        AutoCompleteUtils.setupAutoComplete(pnField, makerPNSuggestions);
+
+        List<String> mslSuggestions = moqService.getAllMSLs();
+        AutoCompleteUtils.setupAutoComplete(mslField, mslSuggestions);
+
+
         String maker = makerCheckBox.isSelected() ? makerField.getText() : null;
         String pn = pnCheckBox.isSelected() ? pnField.getText() : null;
         String sap = sapCheckBox.isSelected() ? sapField.getText() : null;
@@ -264,6 +279,21 @@ public class MOQController {
         ObservableList<MOQ> observableList = FXCollections.observableArrayList(results);
         moqTableView.setItems(observableList);
 
+    }
+
+    private void OnClear(){
+        moqTableView.getItems().clear();
+        makerField.clear();
+        pnField.clear();
+        sapField.clear();
+        mslField.clear();
+        moqObservableList.clear();
+        makerCheckBox.setSelected(false);
+        pnCheckBox.setSelected(false);
+        sapCheckBox.setSelected(false);
+        mslCheckBox.setSelected(false);
+        moqField.clear();
+        moqCheckBox.setSelected(false);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////

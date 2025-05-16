@@ -9,6 +9,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.GridPane;
 import javafx.util.StringConverter;
 import org.chemtrovina.cmtmsys.config.DataSourceConfig;
+import org.chemtrovina.cmtmsys.dto.InvoiceDataDto;
 import org.chemtrovina.cmtmsys.dto.InvoiceDetailViewDto;
 import org.chemtrovina.cmtmsys.model.Invoice;
 import org.chemtrovina.cmtmsys.model.InvoiceDetail;
@@ -49,6 +50,10 @@ public class InvoiceController {
     @FXML private TableColumn<InvoiceDetailViewDto, Integer> colMOQ;
     @FXML private TableColumn<InvoiceDetailViewDto, Integer> colReelQty;
     @FXML private TableColumn<InvoiceDetailViewDto, LocalDate> colDate;
+
+    @FXML private TableView<InvoiceDataDto> tblData;
+    @FXML private TableColumn<InvoiceDataDto, String> colInvoice;
+    @FXML private TableColumn<InvoiceDataDto, String> colItem;
 
     private InvoiceService invoiceService;
     private MOQService moqService;

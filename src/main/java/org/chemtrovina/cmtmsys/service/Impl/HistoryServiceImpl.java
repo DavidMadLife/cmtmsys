@@ -146,12 +146,11 @@ public class HistoryServiceImpl implements HistoryService {
     }
 
     @Override
-    // Trong HistoryService
+
     public List<HistoryDetailViewDto> getHistoryByInvoiceId(int invoiceId) {
-        // Giả sử bạn sử dụng JPA để truy vấn dữ liệu
+
         List<History> historyList = historyRepository.findByInvoiceId(invoiceId);
 
-        // Chuyển đổi từ List<History> thành List<HistoryDetailViewDto>
         List<HistoryDetailViewDto> dtoList = new ArrayList<>();
         for (History history : historyList) {
             HistoryDetailViewDto dto = new HistoryDetailViewDto();
@@ -215,8 +214,6 @@ public class HistoryServiceImpl implements HistoryService {
     @Override
     public String extractRealMakerPN(String makerPNInput) {
         List<String> allMakerPNs = moqRepository.findAllMakerPNs();
-        // Normalize input: bỏ ký tự không phải chữ-số, viết hoa
-        // Normalize input
         String cleanedInput = makerPNInput.replaceAll("[^A-Za-z0-9]", "").toUpperCase();
 
         System.out.println("Cleaned input: " + cleanedInput);

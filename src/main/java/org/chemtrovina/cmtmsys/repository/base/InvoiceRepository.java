@@ -26,4 +26,5 @@ public interface InvoiceRepository extends GenericRepository<Invoice> {
 
 
 
+
 }

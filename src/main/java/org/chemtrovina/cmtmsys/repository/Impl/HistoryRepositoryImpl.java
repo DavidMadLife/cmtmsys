@@ -206,9 +206,6 @@ public class HistoryRepositoryImpl extends GenericRepositoryImpl<History> implem
         }
     }
 
-
-
-
     static class HistoryRowMapper implements RowMapper<History> {
         @Override
         public History mapRow(ResultSet rs, int rowNum) throws SQLException {

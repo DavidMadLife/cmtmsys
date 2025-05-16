@@ -14,11 +14,18 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.chemtrovina.cmtmsys.config.DataSourceConfig;
 import org.chemtrovina.cmtmsys.model.History;
 import org.chemtrovina.cmtmsys.repository.Impl.HistoryRepositoryImpl;
+import org.chemtrovina.cmtmsys.repository.Impl.InvoiceRepositoryImpl;
 import org.chemtrovina.cmtmsys.repository.Impl.MOQRepositoryImpl;
 import org.chemtrovina.cmtmsys.repository.base.HistoryRepository;
+import org.chemtrovina.cmtmsys.repository.base.InvoiceRepository;
 import org.chemtrovina.cmtmsys.repository.base.MOQRepository;
 import org.chemtrovina.cmtmsys.service.Impl.HistoryServiceImpl;
+import org.chemtrovina.cmtmsys.service.Impl.InvoiceServiceImpl;
+import org.chemtrovina.cmtmsys.service.Impl.MOQServiceImpl;
 import org.chemtrovina.cmtmsys.service.base.HistoryService;
+import org.chemtrovina.cmtmsys.service.base.InvoiceService;
+import org.chemtrovina.cmtmsys.service.base.MOQService;
+import org.chemtrovina.cmtmsys.utils.AutoCompleteUtils;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 
@@ -61,6 +68,8 @@ public class HistoryListController {
 
 
     private HistoryService historyService;
+    private InvoiceService invoiceService;
+    private MOQService moqService;
     private final ObservableList<History> historyObservableList = FXCollections.observableArrayList(); // Inject nếu dùng DI
 
 
@@ -105,7 +114,11 @@ public class HistoryListController {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         HistoryRepository historyRepository = new HistoryRepositoryImpl(jdbcTemplate);
         MOQRepository moqRepository = new MOQRepositoryImpl(jdbcTemplate);
+        moqService = new MOQServiceImpl(moqRepository);
         historyService = new HistoryServiceImpl(historyRepository,moqRepository);
+        InvoiceRepository invoiceRepository = new InvoiceRepositoryImpl(jdbcTemplate);
+        invoiceService = new InvoiceServiceImpl(invoiceRepository);
+
 
         searchBtn.setOnAction(e -> onSearch());
 
@@ -132,6 +145,22 @@ public class HistoryListController {
     }
 
     private void onSearch() {
+
+        List<String> invoiceNoSuggestions = invoiceService.getAllInvoiceNos();
+        AutoCompleteUtils.setupAutoComplete(invoiceNoField, invoiceNoSuggestions);
+
+        List<String> sapCodeSuggestions = moqService.getAllSapCodes();
+        AutoCompleteUtils.setupAutoComplete(sapField, sapCodeSuggestions);
+
+        List<String> makerSuggestions = moqService.getAllMakers();
+        AutoCompleteUtils.setupAutoComplete(makerField, makerSuggestions);
+
+        List<String> makerPNSuggestions = moqService.getAllMakerPNs();
+        AutoCompleteUtils.setupAutoComplete(pnField, makerPNSuggestions);
+
+        List<String> mslSuggestions = moqService.getAllMSLs();
+        AutoCompleteUtils.setupAutoComplete(mslField, mslSuggestions);
+
         String invoiceNo = invoiceNoCheckBox.isSelected() ? invoiceNoField.getText() : null;
         String maker = makerCheckBox.isSelected() ? makerField.getText() : null;
         String pn = pnCheckBox.isSelected() ? pnField.getText() : null;
