@@ -51,17 +51,17 @@
       </HBox>
       <HBox layoutX="757.0" layoutY="33.0" prefHeight="26.0" prefWidth="391.0" spacing="10.0">
          <children>
-            <Button mnemonicParsing="false" prefHeight="26.0" prefWidth="92.0" text="Choose File" />
+            <Button fx:id="btnChooseFile" mnemonicParsing="false" prefHeight="26.0" prefWidth="92.0" text="Choose File" />
             <Pane prefHeight="25.0" prefWidth="185.0" style="-fx-background-color: #ffffff; -fx-background-radius: 5;">
                <children>
-                  <Text layoutX="57.0" layoutY="18.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Text" textAlignment="CENTER" wrappingWidth="72.0">
+                  <Text fx:id="txtFileName" layoutX="57.0" layoutY="18.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Text" textAlignment="CENTER" wrappingWidth="72.0">
                      <font>
                         <Font size="14.0" />
                      </font>
                   </Text>
                </children>
             </Pane>
-            <Button mnemonicParsing="false" prefHeight="25.0" prefWidth="96.0" text="Import Data" />
+            <Button fx:id="btnImportData" mnemonicParsing="false" prefHeight="25.0" prefWidth="96.0" text="Import Data" />
          </children>
       </HBox>
       <TableView fx:id="tblData" layoutX="757.0" layoutY="94.0" prefHeight="55.0" prefWidth="391.0">

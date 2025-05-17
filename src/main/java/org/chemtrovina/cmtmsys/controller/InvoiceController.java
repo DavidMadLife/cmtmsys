@@ -7,6 +7,9 @@ import javafx.geometry.Side;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.GridPane;
+import javafx.scene.text.Text;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 import javafx.util.StringConverter;
 import org.chemtrovina.cmtmsys.config.DataSourceConfig;
 import org.chemtrovina.cmtmsys.dto.InvoiceDataDto;
@@ -28,6 +31,7 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import javax.sql.DataSource;
+import java.io.File;
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
@@ -42,6 +46,9 @@ public class InvoiceController {
     @FXML private ComboBox<Invoice> cbInvoiceNo;
     @FXML private Button btnNew;
     @FXML private Button btnSave;
+    @FXML private Button btnImportData;
+    @FXML private Button btnChooseFile;
+    @FXML private Text txtFileName;
 
     @FXML private TableView<InvoiceDetailViewDto> tableView;
     @FXML private TableColumn<InvoiceDetailViewDto, String> colInvoiceNo;
@@ -55,11 +62,14 @@ public class InvoiceController {
     @FXML private TableColumn<InvoiceDataDto, String> colInvoice;
     @FXML private TableColumn<InvoiceDataDto, String> colItem;
 
+
     private InvoiceService invoiceService;
     private MOQService moqService;
 
     private boolean isDirty = false;
     private boolean isProcessingCancel = false;
+
+    private File selectedFile;
 
 
     private final ObservableList<InvoiceDetailViewDto> invoiceDetailDtoList = FXCollections.observableArrayList();
@@ -89,6 +99,7 @@ public class InvoiceController {
 
         btnNew.setOnAction(event -> CreateInvoice());
         btnSave.setOnAction(event -> SaveInvoice());
+        btnChooseFile.setOnAction(event -> chooseFile());
 
         cbInvoiceNo.setConverter(new StringConverter<Invoice>() {
             @Override
@@ -498,6 +509,25 @@ public class InvoiceController {
             return Integer.parseInt(text);
         } catch (NumberFormatException e) {
             return 0;
+        }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    private void chooseFile() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Select file Excel");
+
+        FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("Excel Files (*.xlsx)", "*.xlsx");
+        fileChooser.getExtensionFilters().add(extFilter);
+
+        Stage stage = (Stage) btnChooseFile.getScene().getWindow();
+
+        File file = fileChooser.showOpenDialog(stage);
+        if (file != null) {
+            selectedFile = file;
+            txtFileName.setText(file.getName());
+        } else {
+            txtFileName.setText("File not selected");
         }
     }
 
