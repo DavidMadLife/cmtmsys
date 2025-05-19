@@ -110,6 +110,35 @@ public class InvoiceRepositoryImpl extends GenericRepositoryImpl<Invoice> implem
         }
     }
 
+    @Override
+    public int countHistoryByInvoiceId(int invoiceId) {
+        String sql = "SELECT COUNT(*) FROM History WHERE InvoiceId = ?";
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, invoiceId);
+        return count != null ? count : 0;
+    }
+
+
+    @Override
+    public void deleteInvoice(int invoiceId) {
+        // 1. Kiểm tra xem có History không
+        String checkHistorySql = "SELECT COUNT(*) FROM History WHERE InvoiceId = ?";
+        Integer count = jdbcTemplate.queryForObject(checkHistorySql, Integer.class, invoiceId);
+
+        if (count != null && count > 0) {
+            throw new IllegalStateException("Cannot delete Invoice because it is referenced in History.");
+        }
+
+        // 2. Xóa chi tiết trước
+        String deleteDetails = "DELETE FROM InvoiceDetail WHERE InvoiceId = ?";
+        jdbcTemplate.update(deleteDetails, invoiceId);
+
+        // 3. Xóa Invoice
+        String deleteInvoice = "DELETE FROM Invoice WHERE Id = ?";
+        jdbcTemplate.update(deleteInvoice, invoiceId);
+    }
+
+
+
 
 
 

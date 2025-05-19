@@ -23,6 +23,12 @@ public interface InvoiceRepository extends GenericRepository<Invoice> {
     Invoice findInvoiceById(int invoiceId);
     List<InvoiceDetail> getInvoiceDetailsByInvoiceId(int invoiceId);
 
+    void deleteInvoice(int invoiceId);
+    int countHistoryByInvoiceId(int invoiceId);
+
+
+
+
 
 
 

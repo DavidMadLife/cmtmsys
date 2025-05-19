@@ -96,4 +96,16 @@ public class InvoiceServiceImpl implements InvoiceService {
         return invoiceRepository.getInvoiceDetails(invoiceNo);
     }
 
+    @Override
+    public void deleteInvoice(int invoiceId) {
+        invoiceRepository.deleteInvoice(invoiceId);
+    }
+
+    @Override
+    public int countHistoryByInvoiceId(int invoiceId) {
+        return invoiceRepository.countHistoryByInvoiceId(invoiceId);
+    }
+
+
+
 }

@@ -90,19 +90,24 @@
                         <Font size="24.0" />
                     </font>
                 </Text>
-                <HBox layoutX="42.0" layoutY="61.0" spacing="10.0">
-                    <Button fx:id="chooseFileBtn" prefWidth="120.0" style="-fx-font-weight: Bold;" text="Choose File">
+                <HBox layoutX="4.0" layoutY="61.0" prefHeight="32.0" prefWidth="407.0" spacing="10.0">
+                    <Button fx:id="chooseFileBtn" prefHeight="32.0" prefWidth="120.0" style="-fx-font-weight: Bold;" text="Choose File">
                         <font>
                             <Font size="13.0" />
                         </font>
                     </Button>
-                    <Text fx:id="fileNameLabel" text="No file selected" wrappingWidth="107.0">
+               <Pane prefHeight="32.0" prefWidth="145.0" style="-fx-background-color: #ffffff; -fx-background-radius: 5;">
+                  <children>
+                     <Text fx:id="fileNameLabel" layoutY="19.0" strokeType="OUTSIDE" strokeWidth="0.0" text="No file selected" textAlignment="CENTER" wrappingWidth="145.0">
                         <font>
-                            <Font size="14.0" />
-                        </font></Text>
+                           <Font size="14.0" />
+                        </font>
+                     </Text>
+                  </children>
+               </Pane>
                    <Button fx:id="btnImportData" mnemonicParsing="false" prefHeight="32.0" prefWidth="120.0" style="-fx-font-weight: Bold;" text="Import Data">
                        <font>
-                           <Font size="14.0" />
+                           <Font size="13.0" />
                        </font>
                    </Button>
                 </HBox>
@@ -111,7 +116,7 @@
                         <Font size="14.0" />
                     </font>
                 </Button>
-            <Button fx:id="btnCreate" layoutX="42.0" layoutY="112.0" mnemonicParsing="false" prefHeight="32.0" prefWidth="120.0" style="-fx-font-weight: Bold;" text="Create">
+            <Button fx:id="btnCreate" layoutX="4.0" layoutY="111.0" mnemonicParsing="false" prefHeight="32.0" prefWidth="120.0" style="-fx-font-weight: Bold;" text="Create">
                <font>
                   <Font size="14.0" />
                </font>

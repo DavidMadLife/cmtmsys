@@ -162,6 +162,53 @@ public class MOQRepositoryImpl extends GenericRepositoryImpl<MOQ> implements MOQ
         return moqList;
     }
 
+
+    //Save all
+    @Override
+    public void saveAll(List<MOQ> moqList) {
+        String sql = "INSERT INTO MOQ (Maker, MakerPN, SapPN, MOQ, MSQL, Spec) VALUES (?, ?, ?, ?, ?, ?)";
+
+        jdbcTemplate.batchUpdate(sql, new org.springframework.jdbc.core.BatchPreparedStatementSetter() {
+            @Override
+            public void setValues(java.sql.PreparedStatement ps, int i) throws SQLException {
+                MOQ moq = moqList.get(i);
+                ps.setString(1, moq.getMaker());
+                ps.setString(2, moq.getMakerPN());
+                ps.setString(3, moq.getSapPN());
+                ps.setInt(4, moq.getMoq());
+                ps.setString(5, moq.getMsql());
+                ps.setString(6, moq.getSpec());
+            }
+
+            @Override
+            public int getBatchSize() {
+                return moqList.size();
+            }
+        });
+    }
+
+    public void updateAll(List<MOQ> moqList) {
+        for (MOQ newMoq : moqList) {
+            MOQ oldMoq = findBySapPN(newMoq.getSapPN());
+            if (oldMoq == null) continue;
+
+            // Preserve fields if new data is blank
+            if (isBlank(newMoq.getMaker())) newMoq.setMaker(oldMoq.getMaker());
+            if (isBlank(newMoq.getMakerPN())) newMoq.setMakerPN(oldMoq.getMakerPN());
+            if (isBlank(newMoq.getMsql())) newMoq.setMsql(oldMoq.getMsql());
+            if (isBlank(newMoq.getSpec())) newMoq.setSpec(oldMoq.getSpec());
+            if (newMoq.getMoq() <= 0) newMoq.setMoq(oldMoq.getMoq());
+
+            newMoq.setId(oldMoq.getId()); // Gán lại ID để update
+        }
+
+        updateAll(moqList); // Gọi batch update chuẩn
+    }
+
+    private boolean isBlank(String s) {
+        return s == null || s.trim().isEmpty();
+    }
+
     private String getCellValueAsString(Cell cell) {
         if (cell == null) {
             return "";
@@ -199,52 +246,7 @@ public class MOQRepositoryImpl extends GenericRepositoryImpl<MOQ> implements MOQ
         return 0;
     }
 
-    //Save all
-    @Override
-    public void saveAll(List<MOQ> moqList) {
-        String sql = "INSERT INTO MOQ (Maker, MakerPN, SapPN, MOQ, MSQL, Spec) VALUES (?, ?, ?, ?, ?, ?)";
 
-        jdbcTemplate.batchUpdate(sql, new org.springframework.jdbc.core.BatchPreparedStatementSetter() {
-            @Override
-            public void setValues(java.sql.PreparedStatement ps, int i) throws SQLException {
-                MOQ moq = moqList.get(i);
-                ps.setString(1, moq.getMaker());
-                ps.setString(2, moq.getMakerPN());
-                ps.setString(3, moq.getSapPN());
-                ps.setInt(4, moq.getMoq());
-                ps.setString(5, moq.getMsql());
-                ps.setString(6, moq.getSpec());
-            }
-
-            @Override
-            public int getBatchSize() {
-                return moqList.size();
-            }
-        });
-    }
-
-    public void updateAll(List<MOQ> moqList) {
-        String sql = "UPDATE MOQ SET Maker = ?, MakerPN = ?, SapPN = ?, MOQ = ?, MSQL = ?, Spec = ? WHERE Id = ?";
-
-        jdbcTemplate.batchUpdate(sql, new org.springframework.jdbc.core.BatchPreparedStatementSetter() {
-            @Override
-            public void setValues(java.sql.PreparedStatement ps, int i) throws SQLException {
-                MOQ moq = moqList.get(i);
-                ps.setString(1, moq.getMaker());
-                ps.setString(2, moq.getMakerPN());
-                ps.setString(3, moq.getSapPN());
-                ps.setInt(4, moq.getMoq());
-                ps.setString(5, moq.getMsql());
-                ps.setString(6, moq.getSpec());
-                ps.setInt(7, moq.getId());
-            }
-
-            @Override
-            public int getBatchSize() {
-                return moqList.size();
-            }
-        });
-    }
 
     static class MOQRowMapper implements RowMapper<MOQ> {
         @Override

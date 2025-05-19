@@ -1,28 +1,28 @@
 package org.chemtrovina.cmtmsys.dto;
 
 public class InvoiceDataDto {
-    private String invoiceNo;
-    private int row;
+    private String sapCode;
+    private int quantity;
 
-    public InvoiceDataDto(String invoiceNo, int row) {
-        this.invoiceNo = invoiceNo;
-        this.row = row;
+    public InvoiceDataDto(String sapCode, int quantity) {
+        this.sapCode = sapCode;
+        this.quantity = quantity;
     }
 
     public InvoiceDataDto() {
 
     }
 
-    public String getInvoiceNo() {
-        return invoiceNo;
+    public String getSapCode() {
+        return sapCode;
     }
-    public void setInvoiceNo(String invoiceNo) {
-        this.invoiceNo = invoiceNo;
+    public void setSapCode(String sapCode) {
+        this.sapCode = sapCode;
     }
-    public int getRow() {
-        return row;
+    public int getQuantity() {
+        return quantity;
     }
-    public void setRow(int row) {
-        this.row = row;
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
     }
 }

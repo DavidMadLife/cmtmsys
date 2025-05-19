@@ -34,6 +34,10 @@ public interface InvoiceService {
 
     List<InvoiceDetail> getInvoiceDetailsByInvoiceId(int invoiceId);
 
+    void deleteInvoice(int invoiceId);
+    int countHistoryByInvoiceId(int invoiceId);
+
+
 
 
 }
