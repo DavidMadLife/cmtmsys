@@ -233,8 +233,6 @@ public class MOQController {
         }
 
         moqService.saveImportedData(selectedFile);
-
-        // Lấy lại toàn bộ dữ liệu sau khi import (nếu muốn hiển thị)
         List<MOQ> importedData = moqService.searchMOQ(null, null, null, null, null);
 
         if (importedData.isEmpty()) {

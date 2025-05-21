@@ -25,16 +25,15 @@ public class MOQServiceImpl implements MOQService {
     public void saveImportedData(File file) {
         List<MOQ> moqs = moqRepository.importMoqFromExcel(file);
 
-        // Lấy hết MakerPN đang có trong database
-        List<String> existingMakerPNs = moqRepository.findAllMakerPNs();
+        List<String> existingSapPNs = moqRepository.getAllSapCodes();
 
         List<MOQ> toInsert = new ArrayList<>();
         List<MOQ> toUpdate = new ArrayList<>();
 
         for (MOQ moq : moqs) {
-            if (existingMakerPNs.contains(moq.getMakerPN())) {
+            if (existingSapPNs.contains(moq.getSapPN())) {
                 // Tìm đúng ID để update
-                MOQ existing = moqRepository.findByMakerPN(moq.getMakerPN());
+                MOQ existing = moqRepository.findBySapPN(moq.getSapPN());
                 moq.setId(existing.getId());
                 toUpdate.add(moq);
             } else {
@@ -49,6 +48,11 @@ public class MOQServiceImpl implements MOQService {
         if (!toUpdate.isEmpty()) {
             moqRepository.updateAll(toUpdate);
         }
+
+        System.out.println("Tổng dòng đọc: " + moqs.size());
+        System.out.println("-> Dòng thêm mới: " + toInsert.size());
+        System.out.println("-> Dòng cập nhật: " + toUpdate.size());
+
     }
 
     @Override

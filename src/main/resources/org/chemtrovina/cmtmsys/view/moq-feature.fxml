@@ -17,11 +17,11 @@
         <TableView fx:id="moqTableView" fixedCellSize="0.0" layoutX="452.0" layoutY="27.0" prefHeight="730.0" prefWidth="806.0">
             <columns>
                 <TableColumn fx:id="noColumn" prefWidth="117.0" text="No" />
-                <TableColumn fx:id="makerColumn" prefWidth="123.0" text="Maker" />
-                <TableColumn fx:id="makerPNColumn" prefWidth="170.0" text="Maker P/N" />
-                <TableColumn fx:id="sapPNColumn" prefWidth="142.0" text="SAP P/N" />
-                <TableColumn fx:id="moqColumn" prefWidth="125.0" text="MOQ" />
-                <TableColumn fx:id="mslColumn" maxWidth="500.0" prefWidth="130.0" text="MSL" />
+                <TableColumn fx:id="makerColumn" prefWidth="199.0" text="Maker" />
+                <TableColumn fx:id="makerPNColumn" prefWidth="162.0" text="Maker P/N" />
+                <TableColumn fx:id="sapPNColumn" prefWidth="162.0" text="SAP P/N" />
+                <TableColumn fx:id="moqColumn" prefWidth="106.0" text="MOQ" />
+                <TableColumn fx:id="mslColumn" maxWidth="500.0" prefWidth="59.0" text="MSL" />
             </columns>
         </TableView>
         <Pane layoutX="23.0" layoutY="65.0" prefHeight="558.0" prefWidth="422.0" style="-fx-background-color: #B9B9B9;">

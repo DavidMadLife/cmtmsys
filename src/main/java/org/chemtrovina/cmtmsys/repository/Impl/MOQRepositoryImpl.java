@@ -130,6 +130,7 @@ public class MOQRepositoryImpl extends GenericRepositoryImpl<MOQ> implements MOQ
         return result.isEmpty() ? null : result.get(0);
     }
 
+
     @Override
     public List<MOQ> importMoqFromExcel(File file){
         List<MOQ> moqList = new ArrayList<>();
@@ -178,6 +179,11 @@ public class MOQRepositoryImpl extends GenericRepositoryImpl<MOQ> implements MOQ
                 ps.setInt(4, moq.getMoq());
                 ps.setString(5, moq.getMsql());
                 ps.setString(6, moq.getSpec());
+                System.out.printf("Saving MOQ row %d: SapPN=%s, MakerPN=%s, MOQ=%d%n",
+                        i + 1,
+                        moq.getSapPN(),
+                        moq.getMakerPN(),
+                        moq.getMoq());
             }
 
             @Override
@@ -188,26 +194,46 @@ public class MOQRepositoryImpl extends GenericRepositoryImpl<MOQ> implements MOQ
     }
 
     public void updateAll(List<MOQ> moqList) {
-        for (MOQ newMoq : moqList) {
-            MOQ oldMoq = findBySapPN(newMoq.getSapPN());
-            if (oldMoq == null) continue;
+        for (MOQ moq : moqList) {
+            StringBuilder sql = new StringBuilder("UPDATE MOQ SET ");
+            List<Object> params = new ArrayList<>();
 
-            // Preserve fields if new data is blank
-            if (isBlank(newMoq.getMaker())) newMoq.setMaker(oldMoq.getMaker());
-            if (isBlank(newMoq.getMakerPN())) newMoq.setMakerPN(oldMoq.getMakerPN());
-            if (isBlank(newMoq.getMsql())) newMoq.setMsql(oldMoq.getMsql());
-            if (isBlank(newMoq.getSpec())) newMoq.setSpec(oldMoq.getSpec());
-            if (newMoq.getMoq() <= 0) newMoq.setMoq(oldMoq.getMoq());
+            if (moq.getMaker() != null && !moq.getMaker().isBlank()) {
+                sql.append("Maker = ?, ");
+                params.add(moq.getMaker());
+            }
+            if (moq.getMakerPN() != null && !moq.getMakerPN().isBlank()) {
+                sql.append("MakerPN = ?, ");
+                params.add(moq.getMakerPN());
+            }
+            if (moq.getSapPN() != null && !moq.getSapPN().isBlank()) {
+                sql.append("SapPN = ?, ");
+                params.add(moq.getSapPN());
+            }
+            if (moq.getMoq() > 0) { // MOQ là int => kiểm tra khác 0 (tuỳ bạn quy định 0 là rỗng)
+                sql.append("MOQ = ?, ");
+                params.add(moq.getMoq());
+            }
+            if (moq.getMsql() != null && !moq.getMsql().isBlank()) {
+                sql.append("MSQL = ?, ");
+                params.add(moq.getMsql());
+            }
+            if (moq.getSpec() != null && !moq.getSpec().isBlank()) {
+                sql.append("Spec = ?, ");
+                params.add(moq.getSpec());
+            }
 
-            newMoq.setId(oldMoq.getId()); // Gán lại ID để update
+            // Nếu không có gì để update thì bỏ qua dòng này
+            if (params.isEmpty()) continue;
+
+            sql.setLength(sql.length() - 2); // Xoá dấu phẩy cuối
+            sql.append(" WHERE Id = ?");
+            params.add(moq.getId());
+
+            jdbcTemplate.update(sql.toString(), params.toArray());
         }
-
-        updateAll(moqList); // Gọi batch update chuẩn
     }
 
-    private boolean isBlank(String s) {
-        return s == null || s.trim().isEmpty();
-    }
 
     private String getCellValueAsString(Cell cell) {
         if (cell == null) {
