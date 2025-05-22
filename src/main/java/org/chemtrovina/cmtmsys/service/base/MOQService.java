@@ -3,6 +3,7 @@ package org.chemtrovina.cmtmsys.service.base;
 import org.chemtrovina.cmtmsys.model.MOQ;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 public interface MOQService {
@@ -17,4 +18,6 @@ public interface MOQService {
     List<String> getAllMakerPNs();
     List<String> getAllMakers();
     List<String> getAllMSLs();
+    void exportToExcel(List<MOQ> data, File file) throws IOException;
+
 }

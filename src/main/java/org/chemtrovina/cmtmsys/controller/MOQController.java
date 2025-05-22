@@ -20,6 +20,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 
 import javax.sql.DataSource;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,6 +51,7 @@ public class MOQController {
     @FXML private Button btnSearch;
     @FXML private Button btnCreate;
     @FXML private Button btnClear;
+    @FXML private Button btnExportData;
     @FXML private Text fileNameLabel;
 
     private File selectedFile;
@@ -135,6 +137,8 @@ public class MOQController {
         btnSearch.setOnAction(e -> onSearch());
         btnCreate.setOnAction(e -> showCreateDialog()); // đã thêm nút tạo mới
         btnClear.setOnAction(e -> OnClear());
+        btnExportData.setOnAction(e -> exportDataToExcel());
+
     }
 
 
@@ -393,6 +397,29 @@ public class MOQController {
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    private void exportDataToExcel() {
+        if (moqTableView.getItems().isEmpty()) {
+            showAlert(Alert.AlertType.WARNING, "No Data", "There is no data to export.");
+            return;
+        }
+
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Save Excel File");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel Files", "*.xlsx"));
+        fileChooser.setInitialFileName("moq_export.xlsx");
+
+        File file = fileChooser.showSaveDialog(btnExportData.getScene().getWindow());
+        if (file == null) return;
+
+        try {
+            moqService.exportToExcel(moqTableView.getItems(), file);
+            showAlert(Alert.AlertType.INFORMATION, "Export Successful", "Data exported to:\n" + file.getAbsolutePath());
+        } catch (IOException e) {
+            showAlert(Alert.AlertType.ERROR, "Export Failed", "Error: " + e.getMessage());
+        }
     }
 
 

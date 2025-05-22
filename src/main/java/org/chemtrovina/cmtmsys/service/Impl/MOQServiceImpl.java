@@ -1,10 +1,16 @@
 package org.chemtrovina.cmtmsys.service.Impl;
 
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.chemtrovina.cmtmsys.model.MOQ;
 import org.chemtrovina.cmtmsys.repository.base.MOQRepository;
 import org.chemtrovina.cmtmsys.service.base.MOQService;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -98,6 +104,40 @@ public class MOQServiceImpl implements MOQService {
     public List<String> getAllMSLs() {
         return moqRepository.getAllMSLs();
     }
+
+    @Override
+    public void exportToExcel(List<MOQ> data, File file) throws IOException {
+        try (Workbook workbook = new XSSFWorkbook()) {
+            Sheet sheet = workbook.createSheet("MOQ Data");
+
+            // Header
+            Row header = sheet.createRow(0);
+            String[] columns = {"Maker", "MakerPN", "SAP P/N", "MOQ", "MSL"};
+            for (int i = 0; i < columns.length; i++) {
+                header.createCell(i).setCellValue(columns[i]);
+            }
+
+            // Data rows
+            for (int i = 0; i < data.size(); i++) {
+                MOQ moq = data.get(i);
+                Row row = sheet.createRow(i + 1);
+                row.createCell(0).setCellValue(moq.getMaker() != null ? moq.getMaker() : "");
+                row.createCell(1).setCellValue(moq.getMakerPN() != null ? moq.getMakerPN() : "");
+                row.createCell(2).setCellValue(moq.getSapPN() != null ? moq.getSapPN() : "");
+                row.createCell(3).setCellValue(moq.getMoq());
+                row.createCell(4).setCellValue(moq.getMsql() != null ? moq.getMsql() : "");
+            }
+
+            for (int i = 0; i < columns.length; i++) {
+                sheet.autoSizeColumn(i);
+            }
+
+            try (FileOutputStream fileOut = new FileOutputStream(file)) {
+                workbook.write(fileOut);
+            }
+        }
+    }
+
 
 
 }
