@@ -12,7 +12,6 @@
 - Spring JDBC / Hibernate JPA (depending on module)
 - SQL Server
 - Lombok, MapStruct (AutoMapper-style mapping like in C#)
-- Clean Architecture + Maven multi-module structure
 
 ### 💡 Key Features:
 - Scan incoming material barcodes and validate against system data.
