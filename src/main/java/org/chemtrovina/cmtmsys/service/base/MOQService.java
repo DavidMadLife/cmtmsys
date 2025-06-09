@@ -19,5 +19,6 @@ public interface MOQService {
     List<String> getAllMakers();
     List<String> getAllMSLs();
     void exportToExcel(List<MOQ> data, File file) throws IOException;
+    List<MOQ> getAllMOQsByMakerPN(String makerPN);
 
 }

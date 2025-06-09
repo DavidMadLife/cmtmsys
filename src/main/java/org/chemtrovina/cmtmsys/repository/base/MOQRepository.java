@@ -17,4 +17,5 @@ public interface MOQRepository extends GenericRepository<MOQ> {
     List<String> getAllMakers();
     List<String> getAllMakerPNs();
     List<String> getAllMSLs();
+    List<MOQ> getAllMOQsByMakerPN(String makerPN);
 }
