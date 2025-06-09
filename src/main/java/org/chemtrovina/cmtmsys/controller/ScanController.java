@@ -458,15 +458,16 @@ public class ScanController {
     }
 
 
-    private void saveScanOddReel(String makerPN, int quantity) {
-        historyService.createHistoryForScanOddReel(makerPN, currentScanId, "Scan Code", selectedInvoiceId, quantity);
+    private void saveScanOddReel(MOQ moq, int quantity) {
+        historyService.createHistoryForScanOddReel(moq, currentScanId, "Scan Code", selectedInvoiceId, quantity);
     }
 
 
-    private void saveScanToHistory(String makerPN) {
-        System.out.println(currentScanId.toString());
-        historyService.createHistoryForScannedMakePN(makerPN, currentScanId, "Scan Code", selectedInvoiceId);
+
+    private void saveScanToHistory(MOQ moq) {
+        historyService.createHistoryForScannedMakePN(moq, currentScanId, "Scan Code", selectedInvoiceId);
     }
+
 
 
     private void refreshHistoryTable() {
@@ -523,24 +524,39 @@ public class ScanController {
             return;
         }
 
-        // Bước 2: lấy MOQ theo makerPN chuẩn
-        MOQ moq = moqService.getMOQbyMakerPN(extractedMakerPN);
-        if (moq == null) {
-            showAlert("Wrong makerPN", "Not found.");
+
+        List<MOQ> moqList = moqService.getAllMOQsByMakerPN(extractedMakerPN);
+
+        if (moqList == null || moqList.isEmpty()) {
+            showAlert("Wrong MakerPN", "Không tìm thấy MOQ.");
             return;
         }
 
-        saveScanToHistory(extractedMakerPN);
-        lastScannedMakerPN = extractedMakerPN;
-        String sapPN = moq.getSapPN();
-        InvoiceDetail invoiceDetail = invoiceDetailService.getInvoiceDetailBySapPNAndInvoiceId(sapPN, selectedInvoiceId);
+        MOQ matchedMOQ = null;
 
-        updateTableScanSummary(extractedMakerPN, moq, moq.getMoq());
+        for (MOQ moq : moqList) {
+            String sapPN = moq.getSapPN();
+            InvoiceDetail invoiceDetail = invoiceDetailService.getInvoiceDetailBySapPNAndInvoiceId(sapPN, selectedInvoiceId);
 
-        if (invoiceDetail == null) {
-            handleNotExistInInvoice(sapPN);
+            if (invoiceDetail != null) {
+                matchedMOQ = moq;
+                break; // tìm được mã SAP trùng trong invoice, dừng lại
+            }
+        }
+
+        if (matchedMOQ == null) {
+            MOQ fallbackMOQ = moqList.get(0); // lấy đại 1 bản MOQ bất kỳ để hiển thị
+            updateTableScanSummary(extractedMakerPN, fallbackMOQ, fallbackMOQ.getMoq());
+            handleNotExistInInvoice(fallbackMOQ.getSapPN());
+            lastScannedMakerPN = extractedMakerPN;
+            tblScanDetails.refresh();
             return;
         }
+
+        saveScanToHistory(matchedMOQ);
+        lastScannedMakerPN = matchedMOQ.getMakerPN();
+
+        updateTableScanSummary(extractedMakerPN, matchedMOQ, matchedMOQ.getMoq());
 
         boolean isGood = isValidScan(extractedMakerPN);
         if (!isGood) {
@@ -550,7 +566,7 @@ public class ScanController {
         }
 
         updateScanResultUI(true);
-        checkQuantityAndUpdateStatus(sapPN);
+        checkQuantityAndUpdateStatus(matchedMOQ.getSapPN());
 
         lastAcceptedMakerPN = extractedMakerPN;
         txtScanCode.clear();
@@ -677,34 +693,50 @@ public class ScanController {
             return;
         }
 
-        MOQ moq = moqService.getMOQbyMakerPN(makerPN);
-        if (moq == null) {
+        String extractedMakerPN = historyService.extractRealMakerPN(makerPN);
+        List<MOQ> moqList = moqService.getAllMOQsByMakerPN(extractedMakerPN);
+
+        if (moqList == null || moqList.isEmpty()) {
             showAlert("Invalid MakerPN", "Không tìm thấy MakerPN trong MOQ.");
             return;
         }
 
-        String extractedMakerPN = historyService.extractRealMakerPN(makerPN);
-        saveScanOddReel(makerPN, qty);
-        lastScannedMakerPN = extractedMakerPN;
+        MOQ matchedMOQ = null;
+        for (MOQ moq : moqList) {
+            InvoiceDetail detail = invoiceDetailService.getInvoiceDetailBySapPNAndInvoiceId(moq.getSapPN(), selectedInvoiceId);
+            if (detail != null) {
+                matchedMOQ = moq;
+                break;
+            }
+        }
 
-        String sapPN = moq.getSapPN();
-        InvoiceDetail invoiceDetail = invoiceDetailService.getInvoiceDetailBySapPNAndInvoiceId(sapPN, selectedInvoiceId);
-        updateTableScanSummary(makerPN, moq, qty);
+        // Nếu không match, lấy đại 1 cái để lưu "Z"
+        if (matchedMOQ == null) {
+            matchedMOQ = moqList.get(0);
+        }
 
+        saveScanOddReel(matchedMOQ, qty); // ✅ truyền MOQ đúng
+        lastScannedMakerPN = matchedMOQ.getMakerPN();
+
+        updateTableScanSummary(matchedMOQ.getMakerPN(), matchedMOQ, qty);
+
+        InvoiceDetail invoiceDetail = invoiceDetailService.getInvoiceDetailBySapPNAndInvoiceId(matchedMOQ.getSapPN(), selectedInvoiceId);
         if (invoiceDetail == null) {
-            handleNotExistInInvoice(sapPN);
+            handleNotExistInInvoice(matchedMOQ.getSapPN());
             return;
         }
 
-        boolean isGood = isValidScan(extractedMakerPN);
+        boolean isGood = isValidScan(matchedMOQ.getMakerPN());
         updateScanResultUI(isGood);
         txtScanCode.setDisable(!isGood);
 
         if (isGood) {
-            checkQuantityAndUpdateStatus(sapPN);
-            lastAcceptedMakerPN = extractedMakerPN;
+            checkQuantityAndUpdateStatus(matchedMOQ.getSapPN());
+            lastAcceptedMakerPN = matchedMOQ.getMakerPN();
         }
+        refreshHistoryTable();
     }
+
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
     //Search

@@ -9,6 +9,7 @@ import org.chemtrovina.cmtmsys.repository.base.HistoryRepository;
 import org.chemtrovina.cmtmsys.repository.base.InvoiceRepository;
 import org.chemtrovina.cmtmsys.repository.base.MOQRepository;
 import org.chemtrovina.cmtmsys.service.base.HistoryService;
+import org.chemtrovina.cmtmsys.service.base.InvoiceDetailService;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -55,72 +56,55 @@ public class HistoryServiceImpl implements HistoryService {
     }
 
     @Override
-    public void createHistoryForScannedMakePN(String makerPNInput, String employeeId, String scanCode, int InvoiceId) {
-        String realMakerPN = extractRealMakerPN(makerPNInput);
-
-        if (realMakerPN != null) {
-            MOQ moq = moqRepository.findByMakerPN(realMakerPN);
-
-            if (moq != null) {
-                LocalDate currentDate = LocalDate.now();
-                LocalTime currentTime = LocalTime.now();
-
-                History history = new History();
-                history.setMaker(moq.getMaker());
-                history.setInvoiceId(InvoiceId);
-                history.setMakerPN(realMakerPN);
-                history.setSapPN(moq.getSapPN());
-                history.setQuantity(moq.getMoq());
-                history.setDate(currentDate);
-                history.setTime(currentTime);
-                history.setEmployeeId(employeeId);
-                history.setScanCode(scanCode);
-                history.setMSL(moq.getMsql());
-                history.setStatus("Scanned");
-
-                addHistory(history);
-            } else {
-                System.out.println("Không tìm thấy MOQ cho MakerPN: " + realMakerPN);
-            }
-        } else {
-            System.out.println("Không thể nhận diện MakerPN từ chuỗi: " + makerPNInput);
+    public void createHistoryForScannedMakePN(MOQ moq, String employeeId, String scanCode, int invoiceId) {
+        if (moq == null) {
+            System.out.println("Không có MOQ để lưu.");
+            return;
         }
 
+        History history = new History();
+        history.setMaker(moq.getMaker());
+        history.setInvoiceId(invoiceId);
+        history.setMakerPN(moq.getMakerPN());
+        history.setSapPN(moq.getSapPN());
+        history.setQuantity(moq.getMoq());
+        history.setDate(LocalDate.now());
+        history.setTime(LocalTime.now());
+        history.setEmployeeId(employeeId);
+        history.setScanCode(scanCode);
+        history.setMSL(moq.getMsql());
+        history.setStatus("Scanned");
 
+        addHistory(history);
     }
+
 
     @Override
-    public void createHistoryForScanOddReel(String makerPNInput, String employeeId, String scanCode, int InvoiceId, int quantity) {
-        String realMakerPN = extractRealMakerPN(makerPNInput);
-
-        if (realMakerPN != null) {
-            MOQ moq = moqRepository.findByMakerPN(realMakerPN);
-
-            if (moq != null) {
-                LocalDate currentDate = LocalDate.now();
-                LocalTime currentTime = LocalTime.now();
-
-                History history = new History();
-                history.setMaker(moq.getMaker());
-                history.setInvoiceId(InvoiceId);
-                history.setMakerPN(realMakerPN);
-                history.setSapPN(moq.getSapPN());
-                history.setQuantity(quantity);
-                history.setDate(currentDate);
-                history.setTime(currentTime);
-                history.setEmployeeId(employeeId);
-                history.setScanCode(scanCode);
-                history.setMSL(moq.getMsql());
-                history.setStatus("Scanned");
-
-                addHistory(history);
-            } else {
-                System.out.println("Không tìm thấy MOQ cho MakerPN: " + realMakerPN);
-            }
-        } else {
-            System.out.println("Không thể nhận diện MakerPN từ chuỗi: " + makerPNInput);
+    public void createHistoryForScanOddReel(MOQ moq, String employeeId, String scanCode, int invoiceId, int quantity) {
+        if (moq == null) {
+            System.out.println("Không có MOQ để lưu.");
+            return;
         }
+
+        LocalDate currentDate = LocalDate.now();
+        LocalTime currentTime = LocalTime.now();
+
+        History history = new History();
+        history.setMaker(moq.getMaker());
+        history.setInvoiceId(invoiceId);
+        history.setMakerPN(moq.getMakerPN());
+        history.setSapPN(moq.getSapPN());
+        history.setQuantity(quantity);
+        history.setDate(currentDate);
+        history.setTime(currentTime);
+        history.setEmployeeId(employeeId);
+        history.setScanCode(scanCode);
+        history.setMSL(moq.getMsql());
+        history.setStatus("Scanned");
+
+        addHistory(history);
     }
+
 
     public List<HistoryDetailViewDto> getHistoryDetailsByInvoiceId(int invoiceId) {
         // Truy vấn lịch sử từ repository dựa trên InvoiceNo
@@ -212,19 +196,39 @@ public class HistoryServiceImpl implements HistoryService {
     }
 
     @Override
+    public Optional<MOQ> findMatchedMOQInInvoice(String makerPN, int invoiceId, InvoiceDetailService invoiceDetailService) {
+        List<MOQ> moqList = moqRepository.getAllMOQsByMakerPN(makerPN);
+
+        if (moqList == null || moqList.isEmpty()) {
+            return Optional.empty();
+        }
+
+        for (MOQ moq : moqList) {
+            String sapPN = moq.getSapPN();
+            InvoiceDetail detail = invoiceDetailService.getInvoiceDetailBySapPNAndInvoiceId(sapPN, invoiceId);
+            if (detail != null) {
+                return Optional.of(moq);
+            }
+        }
+
+        return Optional.of(moqList.get(0));
+    }
+
+
+    @Override
     public String extractRealMakerPN(String makerPNInput) {
         List<String> allMakerPNs = moqRepository.findAllMakerPNs();
         String cleanedInput = makerPNInput.replaceAll("[^A-Za-z0-9]", "").toUpperCase();
 
         System.out.println("Cleaned input: " + cleanedInput);
-
         return allMakerPNs.stream()
                 .filter(dbMPN -> {
+                    if (dbMPN == null || dbMPN.trim().isEmpty()) return false; // bảo vệ thêm
                     String normalized = dbMPN.replaceAll("[^A-Za-z0-9]", "").toUpperCase();
                     return cleanedInput.contains(normalized);
                 })
                 .max(Comparator.comparingInt(mpn -> mpn.replaceAll("[^A-Za-z0-9]", "").length()))
-                .orElse(null); // Trả về MakerPN gốc (có khoảng trắng) để dùng với DB
-
+                .orElse(null);
     }
+
 }

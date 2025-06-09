@@ -90,9 +90,10 @@ public class MOQRepositoryImpl extends GenericRepositoryImpl<MOQ> implements MOQ
 
     @Override
     public List<String> findAllMakerPNs() {
-        String sql = "SELECT MakerPN FROM MOQ";
+        String sql = "SELECT DISTINCT MakerPN FROM MOQ WHERE MakerPN IS NOT NULL AND TRIM(MakerPN) <> ''";
         return jdbcTemplate.queryForList(sql, String.class);
     }
+
 
     @Override
     public List<MOQ> searchMOQ(String maker, String makerPN, String sapPN, String MOQ, String MSL) {
@@ -161,6 +162,13 @@ public class MOQRepositoryImpl extends GenericRepositoryImpl<MOQ> implements MOQ
             e.printStackTrace();
         }
         return moqList;
+    }
+
+
+    @Override
+    public List<MOQ> getAllMOQsByMakerPN(String makerPN) {
+        String sql = "SELECT * FROM MOQ WHERE MakerPN = ?";
+        return jdbcTemplate.query(sql, new MOQRowMapper(), makerPN);
     }
 
 

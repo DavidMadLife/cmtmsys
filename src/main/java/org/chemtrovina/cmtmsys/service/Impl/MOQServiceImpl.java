@@ -72,6 +72,12 @@ public class MOQServiceImpl implements MOQService {
     }
 
     @Override
+    public List<MOQ> getAllMOQsByMakerPN(String makerPN) {
+        return moqRepository.getAllMOQsByMakerPN(makerPN);
+    }
+
+
+    @Override
     public void createMOQ(MOQ moq) {
         moqRepository.add(moq);
     }
