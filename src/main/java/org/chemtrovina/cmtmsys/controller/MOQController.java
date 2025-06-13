@@ -67,9 +67,18 @@ public class MOQController {
         setupServices();
         setupTableContextMenu();
         setupEventHandlers();
+        setupAutoCompleteFields();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    private void setupAutoCompleteFields() {
+        AutoCompleteUtils.setupAutoComplete(sapField, moqService.getAllSapCodes());
+        AutoCompleteUtils.setupAutoComplete(makerField, moqService.getAllMakers());
+        AutoCompleteUtils.setupAutoComplete(pnField, moqService.getAllMakerPNs());
+        AutoCompleteUtils.setupAutoComplete(mslField, moqService.getAllMSLs());
+    }
+
     private void setupTableColumns() {
         // Cột số thứ tự
         noColumn.setCellFactory(col -> new TableCell<>() {
@@ -259,16 +268,16 @@ public class MOQController {
     private void onSearch() {
 
         List<String> sapCodeSuggestions = moqService.getAllSapCodes();
-        AutoCompleteUtils.setupAutoComplete(sapField, sapCodeSuggestions);
+        //AutoCompleteUtils.setupAutoComplete(sapField, sapCodeSuggestions);
 
         List<String> makerSuggestions = moqService.getAllMakers();
-        AutoCompleteUtils.setupAutoComplete(makerField, makerSuggestions);
+        //AutoCompleteUtils.setupAutoComplete(makerField, makerSuggestions);
 
         List<String> makerPNSuggestions = moqService.getAllMakerPNs();
-        AutoCompleteUtils.setupAutoComplete(pnField, makerPNSuggestions);
+        //AutoCompleteUtils.setupAutoComplete(pnField, makerPNSuggestions);
 
         List<String> mslSuggestions = moqService.getAllMSLs();
-        AutoCompleteUtils.setupAutoComplete(mslField, mslSuggestions);
+        //AutoCompleteUtils.setupAutoComplete(mslField, mslSuggestions);
 
 
         String maker = makerCheckBox.isSelected() ? makerField.getText() : null;
@@ -412,6 +421,7 @@ public class MOQController {
         fileChooser.setInitialFileName("moq_export.xlsx");
 
         File file = fileChooser.showSaveDialog(btnExportData.getScene().getWindow());
+        if (file == null) return;
         if (file == null) return;
 
         try {

@@ -43,6 +43,9 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class InvoiceController {
@@ -82,6 +85,8 @@ public class InvoiceController {
 
     private final ObservableList<InvoiceDetailViewDto> invoiceDetailDtoList = FXCollections.observableArrayList();
 
+    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+
     @FXML
     public void initialize() {
         initServices();
@@ -89,6 +94,7 @@ public class InvoiceController {
         initEventHandlers();
         initComboBox();
         loadInvoiceList();
+        startAutoGC();
     }
 
     private void initServices() {
@@ -114,100 +120,45 @@ public class InvoiceController {
 
         tableView.setRowFactory(tv -> {
             TableRow<InvoiceDetailViewDto> row = new TableRow<>();
-            ContextMenu contextMenu = new ContextMenu();
 
-            MenuItem updateItem = new MenuItem("Update");
-            updateItem.setOnAction(e -> {
-                InvoiceDetailViewDto selected = row.getItem();
-                if (selected != null) {
-                    showUpdateDialog(selected);
-                    tableView.refresh();
-                }
-            });
-
-            MenuItem createItem = new MenuItem("Create New Row");
-            createItem.setOnAction(e -> {
-                Invoice invoice = cbInvoiceNo.getSelectionModel().getSelectedItem();
-                LocalDate date = dpDate.getValue();
-                if (invoice != null && date != null) {
-                    InvoiceDetailViewDto newDto = new InvoiceDetailViewDto();
-                    newDto.setInvoiceNo(invoice.getInvoiceNo());
-                    newDto.setInvoiceDate(date);
-                    invoiceDetailDtoList.add(newDto);
-                    isDirty = true;
+            row.itemProperty().addListener((obs, oldItem, newItem) -> {
+                if (newItem == null) {
+                    row.setContextMenu(null); // không tạo context nếu không có item
                 } else {
-                    showAlert("Error", "Please create or select an invoice first.", Alert.AlertType.ERROR);
-                }
-            });
+                    ContextMenu contextMenu = new ContextMenu();
 
-            MenuItem deleteItem = new MenuItem("Delete");
-            deleteItem.setOnAction(e -> {
-                InvoiceDetailViewDto selected = row.getItem();
-                if (selected != null) {
-                    // Kiểm tra liên kết đến History
-                    int invoiceId = selected.getInvoiceId();
-                    String invoiceNo = selected.getInvoiceNo();
-                    int historyCount = invoiceService.countHistoryByInvoiceId(invoiceId);
+                    MenuItem updateItem = new MenuItem("Update");
+                    updateItem.setOnAction(e -> {
+                        showUpdateDialog(newItem);
+                        tableView.refresh();
+                    });
 
-                    if (historyCount > 0) {
-                        showAlert("Cannot Delete", "Invoice '" + invoiceNo + "' is referenced in History. You cannot delete any items in this invoice.", Alert.AlertType.WARNING);
-                        return;
-                    }
-
-                    // Hỏi xác nhận xóa dòng
-                    Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-                    alert.setTitle("Confirm Delete");
-                    alert.setHeaderText("Do you really want to delete this item?");
-                    alert.setContentText("SAP Code: " + selected.getSapCode());
-
-                    alert.showAndWait().ifPresent(result -> {
-                        if (result == ButtonType.OK) {
-                            try {
-                                if (invoiceExists(invoiceNo)) {
-                                    invoiceService.deleteInvoiceDetail(invoiceId, selected.getSapCode());
-                                }
-                                invoiceDetailDtoList.remove(selected);
-
-                                // Nếu là dòng cuối cùng
-                                if (invoiceDetailDtoList.isEmpty()) {
-                                    Alert confirmDeleteInvoice = new Alert(Alert.AlertType.CONFIRMATION);
-                                    confirmDeleteInvoice.setTitle("Delete Invoice?");
-                                    confirmDeleteInvoice.setHeaderText("This is the last item in the invoice.");
-                                    confirmDeleteInvoice.setContentText("Do you want to delete the entire invoice?");
-
-                                    confirmDeleteInvoice.showAndWait().ifPresent(result2 -> {
-                                        if (result2 == ButtonType.OK) {
-                                            try {
-                                                invoiceService.deleteInvoice(invoiceId);
-                                                cbInvoiceNo.getItems().removeIf(i -> i.getInvoiceNo().equals(invoiceNo));
-                                                cbInvoiceNo.getSelectionModel().clearSelection();
-                                                dpDate.setValue(null);
-                                                invoiceDetailDtoList.clear();
-                                                showAlert("Deleted", "Invoice deleted successfully.", Alert.AlertType.INFORMATION);
-                                            } catch (IllegalStateException ex) {
-                                                showAlert("Cannot Delete Invoice", ex.getMessage(), Alert.AlertType.WARNING);
-                                            } catch (Exception ex) {
-                                                showAlert("Error", "Unexpected error during deletion: " + ex.getMessage(), Alert.AlertType.ERROR);
-                                            }
-                                        }
-                                    });
-                                }
-
-                                isDirty = false;
-
-                            } catch (Exception ex) {
-                                showAlert("Error", "Error deleting item: " + ex.getMessage(), Alert.AlertType.ERROR);
-                            }
+                    MenuItem createItem = new MenuItem("Create New Row");
+                    createItem.setOnAction(e -> {
+                        Invoice invoice = cbInvoiceNo.getSelectionModel().getSelectedItem();
+                        LocalDate date = dpDate.getValue();
+                        if (invoice != null && date != null) {
+                            InvoiceDetailViewDto newDto = new InvoiceDetailViewDto();
+                            newDto.setInvoiceNo(invoice.getInvoiceNo());
+                            newDto.setInvoiceDate(date);
+                            invoiceDetailDtoList.add(newDto);
+                            isDirty = true;
+                        } else {
+                            showAlert("Error", "Please create or select an invoice first.", Alert.AlertType.ERROR);
                         }
                     });
+
+                    MenuItem deleteItem = new MenuItem("Delete");
+                    deleteItem.setOnAction(e -> handleDelete(newItem));
+
+                    contextMenu.getItems().addAll(updateItem, createItem, deleteItem);
+                    row.setContextMenu(contextMenu);
                 }
             });
 
-
-            contextMenu.getItems().addAll(updateItem, createItem, deleteItem);
-            row.setContextMenu(contextMenu);
             return row;
         });
+
     }
 
 
@@ -287,6 +238,7 @@ public class InvoiceController {
 
 
     private void loadInvoiceList() {
+        cbInvoiceNo.getItems().clear(); // thêm dòng này trước khi set list
         List<Invoice> invoices = invoiceService.findAll();
         cbInvoiceNo.setItems(FXCollections.observableArrayList(invoices));
     }
@@ -296,7 +248,8 @@ public class InvoiceController {
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //Load invoice detail by invoice No
     private void loadInvoiceDetails(String invoiceNo) {
-        invoiceDetailDtoList.clear(); // clear dữ liệu cũ
+        invoiceDetailDtoList.clear();
+        tblData.getItems().clear();
 
         Invoice invoice = invoiceService.findByInvoiceNo(invoiceNo); // Thêm dòng này
         if (invoice == null) return;
@@ -336,7 +289,7 @@ public class InvoiceController {
         TextField qtyField = new TextField(String.valueOf(dto.getQuantity()));
 
 
-        AutoCompleteUtils.setupAutoComplete(sapCodeField, sapCodeSuggestions);
+        AutoCompleteUtils.AutoCompletionBinding binding = AutoCompleteUtils.setupAutoComplete(sapCodeField, sapCodeSuggestions);
 
 
         // Các field tự động tính - không cho chỉnh sửa
@@ -409,6 +362,7 @@ public class InvoiceController {
         });
 
         dialog.showAndWait();
+        dialog.setOnHidden(e -> binding.dispose());
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////
@@ -645,6 +599,7 @@ public class InvoiceController {
             }
 
             // Hiển thị lên tblData
+            tblData.getItems().clear();
             tblData.setItems(importedData);
             colSapCode.setCellValueFactory(new PropertyValueFactory<>("sapCode"));
             colQuantity.setCellValueFactory(new PropertyValueFactory<>("quantity"));
@@ -695,4 +650,90 @@ public class InvoiceController {
             }
         });
     }
+
+    private void clearUIState() {
+        cbInvoiceNo.getSelectionModel().clearSelection();
+        dpDate.setValue(null);
+        invoiceDetailDtoList.clear();
+        tblData.getItems().clear();
+        txtFileName.setText("");
+        btnImportData.setDisable(true);
+    }
+
+    private void handleDelete(InvoiceDetailViewDto selected) {
+        if (selected == null) return;
+
+        int invoiceId = selected.getInvoiceId();
+        String invoiceNo = selected.getInvoiceNo();
+        int historyCount = invoiceService.countHistoryByInvoiceId(invoiceId);
+
+        if (historyCount > 0) {
+            showAlert("Cannot Delete", "Invoice '" + invoiceNo + "' is referenced in History. You cannot delete any items in this invoice.", Alert.AlertType.WARNING);
+            return;
+        }
+
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Confirm Delete");
+        alert.setHeaderText("Do you really want to delete this item?");
+        alert.setContentText("SAP Code: " + selected.getSapCode());
+
+        alert.showAndWait().ifPresent(result -> {
+            if (result == ButtonType.OK) {
+                try {
+                    if (invoiceExists(invoiceNo)) {
+                        invoiceService.deleteInvoiceDetail(invoiceId, selected.getSapCode());
+                    }
+                    invoiceDetailDtoList.remove(selected);
+
+                    // Nếu là dòng cuối cùng
+                    if (invoiceDetailDtoList.isEmpty()) {
+                        Alert confirmDeleteInvoice = new Alert(Alert.AlertType.CONFIRMATION);
+                        confirmDeleteInvoice.setTitle("Delete Invoice?");
+                        confirmDeleteInvoice.setHeaderText("This is the last item in the invoice.");
+                        confirmDeleteInvoice.setContentText("Do you want to delete the entire invoice?");
+
+                        confirmDeleteInvoice.showAndWait().ifPresent(result2 -> {
+                            if (result2 == ButtonType.OK) {
+                                try {
+                                    invoiceService.deleteInvoice(invoiceId);
+                                    cbInvoiceNo.getItems().removeIf(i -> i.getInvoiceNo().equals(invoiceNo));
+                                    cbInvoiceNo.getSelectionModel().clearSelection();
+                                    clearUIState(); // gọi hàm dọn toàn bộ UI
+                                    showAlert("Deleted", "Invoice deleted successfully.", Alert.AlertType.INFORMATION);
+                                } catch (IllegalStateException ex) {
+                                    showAlert("Cannot Delete Invoice", ex.getMessage(), Alert.AlertType.WARNING);
+                                } catch (Exception ex) {
+                                    showAlert("Error", "Unexpected error during deletion: " + ex.getMessage(), Alert.AlertType.ERROR);
+                                }
+                            }
+                        });
+                    }
+
+                    isDirty = false;
+
+                } catch (Exception ex) {
+                    showAlert("Error", "Error deleting item: " + ex.getMessage(), Alert.AlertType.ERROR);
+                }
+            }
+        });
+    }
+
+
+
+    private void startAutoGC() {
+        scheduler.scheduleAtFixedRate(() -> {
+            System.gc();
+            System.out.println("Triggered GC at: " + java.time.LocalTime.now());
+        }, 30, 30, TimeUnit.SECONDS); // chạy mỗi 5 phút
+        long heapSize = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+        System.out.println("Heap used: " + heapSize / 1024 / 1024 + " MB");
+
+    }
+
+
+    public void shutdown() {
+        scheduler.shutdown();
+    }
+
+
 }
