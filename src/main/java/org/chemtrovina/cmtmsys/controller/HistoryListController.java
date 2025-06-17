@@ -1,6 +1,7 @@
 package org.chemtrovina.cmtmsys.controller;
 
 
+import javafx.beans.value.ChangeListener;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -81,22 +82,35 @@ public class HistoryListController {
             ContextMenu contextMenu = new ContextMenu();
 
             MenuItem updateItem = new MenuItem("Update");
-            updateItem.setOnAction(event -> showUpdateDialog(row.getItem()));
-
             MenuItem deleteItem = new MenuItem("Delete");
-            deleteItem.setOnAction(event -> showDeleteConfirm(row.getItem()));
-
             contextMenu.getItems().addAll(updateItem, deleteItem);
 
-            // Chỉ hiển thị menu nếu row không rỗng
+            // Listener cần remove sau
+            ChangeListener<History> listener = (obs, oldItem, newItem) -> {
+                if (newItem != null) {
+                    updateItem.setOnAction(e -> showUpdateDialog(newItem));
+                    deleteItem.setOnAction(e -> showDeleteConfirm(newItem));
+                }
+            };
+
+            row.itemProperty().addListener(listener);
+
             row.contextMenuProperty().bind(
                     javafx.beans.binding.Bindings.when(row.emptyProperty())
                             .then((ContextMenu) null)
                             .otherwise(contextMenu)
             );
 
+            // Khi row bị "detached" khỏi scene, remove listener
+            row.sceneProperty().addListener((sceneObs, oldScene, newScene) -> {
+                if (newScene == null) {
+                    row.itemProperty().removeListener(listener); // ✅ cleanup
+                }
+            });
+
             return row;
         });
+
 
 
 
@@ -141,25 +155,35 @@ public class HistoryListController {
 
         importExcelBtn.setOnAction(e -> onExportExcel());
 
+        setupAutoCompleteFields();
 
     }
+
+    private void setupAutoCompleteFields() {
+        AutoCompleteUtils.setupAutoComplete(invoiceNoField, invoiceService.getAllInvoiceNos());
+        AutoCompleteUtils.setupAutoComplete(sapField, moqService.getAllSapCodes());
+        AutoCompleteUtils.setupAutoComplete(makerField, moqService.getAllMakers());
+        AutoCompleteUtils.setupAutoComplete(pnField, moqService.getAllMakerPNs());
+        AutoCompleteUtils.setupAutoComplete(mslField, moqService.getAllMSLs());
+    }
+
 
     private void onSearch() {
 
         List<String> invoiceNoSuggestions = invoiceService.getAllInvoiceNos();
-        AutoCompleteUtils.setupAutoComplete(invoiceNoField, invoiceNoSuggestions);
+        //AutoCompleteUtils.setupAutoComplete(invoiceNoField, invoiceNoSuggestions);
 
         List<String> sapCodeSuggestions = moqService.getAllSapCodes();
-        AutoCompleteUtils.setupAutoComplete(sapField, sapCodeSuggestions);
+        //AutoCompleteUtils.setupAutoComplete(sapField, sapCodeSuggestions);
 
         List<String> makerSuggestions = moqService.getAllMakers();
-        AutoCompleteUtils.setupAutoComplete(makerField, makerSuggestions);
+        //AutoCompleteUtils.setupAutoComplete(makerField, makerSuggestions);
 
         List<String> makerPNSuggestions = moqService.getAllMakerPNs();
-        AutoCompleteUtils.setupAutoComplete(pnField, makerPNSuggestions);
+        //AutoCompleteUtils.setupAutoComplete(pnField, makerPNSuggestions);
 
         List<String> mslSuggestions = moqService.getAllMSLs();
-        AutoCompleteUtils.setupAutoComplete(mslField, mslSuggestions);
+        //AutoCompleteUtils.setupAutoComplete(mslField, mslSuggestions);
 
         String invoiceNo = invoiceNoCheckBox.isSelected() ? invoiceNoField.getText() : null;
         String maker = makerCheckBox.isSelected() ? makerField.getText() : null;

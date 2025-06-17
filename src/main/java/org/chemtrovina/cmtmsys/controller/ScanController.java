@@ -331,7 +331,6 @@ public class ScanController {
             adjustOrRemoveDto(matchedDto);
             historyService.deleteLastByMakerPNAndInvoiceId(lastScannedMakerPN, selectedInvoiceId);
         }
-
         resetScanUI();
         refreshHistoryTable();
     }
@@ -559,6 +558,8 @@ public class ScanController {
         updateTableScanSummary(extractedMakerPN, matchedMOQ, matchedMOQ.getMoq());
 
         boolean isGood = isValidScan(extractedMakerPN);
+
+
         if (!isGood) {
             updateScanResultUI(false);
             txtScanCode.setDisable(true);
@@ -566,16 +567,17 @@ public class ScanController {
         }
 
         updateScanResultUI(true);
-        checkQuantityAndUpdateStatus(matchedMOQ.getSapPN());
+        checkQuantityAndUpdateStatus(matchedMOQ.getSapPN(), extractedMakerPN); // ✅ truyền makerPN
 
-        lastAcceptedMakerPN = extractedMakerPN;
+
+        //lastAcceptedMakerPN = extractedMakerPN;
         txtScanCode.clear();
         tblScanDetails.refresh();
 
     }
 
 
-    private void checkQuantityAndUpdateStatus(String sapPN) {
+    private void checkQuantityAndUpdateStatus(String sapPN, String makerPN) {
         InvoiceDetail invoiceDetail = invoiceDetailService.getInvoiceDetailBySapPNAndInvoiceId(sapPN, selectedInvoiceId);
         int expectedQty = invoiceDetail.getQuantity();
         int totalScannedQty = historyService.getTotalScannedQuantityBySapPN(sapPN, selectedInvoiceId);
@@ -590,6 +592,9 @@ public class ScanController {
             txtScanCode.setDisable(true);
             btnKeepGoing.setDisable(true);
             btnCallSuperV.setDisable(false);
+
+
+
             return;
         }
 
@@ -602,6 +607,8 @@ public class ScanController {
             updateInvoiceColumnStatus(sapPN, "X", "#D01029");
             btnKeepGoing.setDisable(true);
         }
+
+        lastAcceptedMakerPN = makerPN;
     }
 
 
@@ -731,7 +738,7 @@ public class ScanController {
         txtScanCode.setDisable(!isGood);
 
         if (isGood) {
-            checkQuantityAndUpdateStatus(matchedMOQ.getSapPN());
+            checkQuantityAndUpdateStatus(matchedMOQ.getSapPN(), extractedMakerPN);
             lastAcceptedMakerPN = matchedMOQ.getMakerPN();
         }
         refreshHistoryTable();
