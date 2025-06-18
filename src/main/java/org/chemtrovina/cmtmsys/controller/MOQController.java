@@ -5,6 +5,7 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.GridPane;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
@@ -23,6 +24,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class MOQController {
     @FXML
@@ -32,7 +36,7 @@ public class MOQController {
     @FXML private TableColumn<MOQ, String> makerPNColumn;
     @FXML private TableColumn<MOQ, String> sapPNColumn;
     @FXML private TableColumn<MOQ, Integer> moqColumn;
-    @FXML private TableColumn<MOQ, String> mslColumn;
+    @FXML private TableColumn<MOQ, String> mslColumn, specColumn;
 
     @FXML private TextField makerField;
     @FXML private TextField pnField;
@@ -60,6 +64,7 @@ public class MOQController {
 
     private MOQService moqService;
     private final ObservableList<MOQ> moqObservableList = FXCollections.observableArrayList();
+    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
     @FXML
     public void initialize() {
@@ -68,6 +73,13 @@ public class MOQController {
         setupTableContextMenu();
         setupEventHandlers();
         setupAutoCompleteFields();
+        startAutoGC();
+
+        moqTableView.setOnKeyPressed(event -> {
+            if (event.isControlDown() && event.getCode() == KeyCode.F) {
+                openSearchDialog(); // Mở dialog tìm kiếm
+            }
+        });
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -98,6 +110,8 @@ public class MOQController {
         sapPNColumn.setCellValueFactory(new PropertyValueFactory<>("sapPN"));
         moqColumn.setCellValueFactory(new PropertyValueFactory<>("moq"));
         mslColumn.setCellValueFactory(new PropertyValueFactory<>("msql"));
+        specColumn.setCellValueFactory(new PropertyValueFactory<>("spec"));
+
     }
 
     private void setupServices() {
@@ -327,7 +341,7 @@ public class MOQController {
         TextField sapPNField = (TextField) grid.getChildren().get(5);
         TextField moqField = (TextField) grid.getChildren().get(7);
         TextField mslField = (TextField) grid.getChildren().get(9);
-
+        TextField specField = (TextField) grid.getChildren().get(11);
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == updateButtonType) {
                 try {
@@ -337,6 +351,7 @@ public class MOQController {
                     moq.setSapPN(sapPNField.getText().trim());
                     moq.setMoq(newMoq);
                     moq.setMsql(mslField.getText().trim());
+                    moq.setSpec(specField.getText().trim());
                     return moq;
                 } catch (NumberFormatException e) {
                     showAlert(Alert.AlertType.ERROR, "Invalid Input", "MOQ must be a number!");
@@ -363,6 +378,7 @@ public class MOQController {
         TextField sapPNField = new TextField(moq.getSapPN());
         TextField moqField = new TextField(String.valueOf(moq.getMoq()));
         TextField mslField = new TextField(moq.getMsql());
+        TextField specField = new TextField(moq.getSpec());
 
         AutoCompleteUtils.setupAutoComplete(makerField, moqService.getAllMakers());
         AutoCompleteUtils.setupAutoComplete(mslField, moqService.getAllMSLs());
@@ -377,6 +393,8 @@ public class MOQController {
         grid.add(moqField, 1, 3);
         grid.add(new Label("MSL:"), 0, 4);
         grid.add(mslField, 1, 4);
+        grid.add(new Label("Spec:"), 0, 5);  // Thêm Label cho Spec
+        grid.add(specField, 1, 5);  // Thêm trường nhập liệu Spec
 
         return grid;
     }
@@ -430,6 +448,74 @@ public class MOQController {
         } catch (IOException e) {
             showAlert(Alert.AlertType.ERROR, "Export Failed", "Error: " + e.getMessage());
         }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    private void startAutoGC() {
+        scheduler.scheduleAtFixedRate(() -> {
+            System.gc();
+            System.out.println("Triggered GC at: " + java.time.LocalTime.now());
+        }, 20, 20, TimeUnit.SECONDS);
+        long heapSize = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+        System.out.println("Heap used: " + heapSize / 1024 / 1024 + " MB");
+
+    }
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    private void openSearchDialog() {
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Search");
+        dialog.setHeaderText("Search by Maker, SAP Code, Maker PN, MOQ, MSL");
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+
+        TextField makerField = new TextField();
+        TextField makerPNField = new TextField();
+        TextField sapPNField = new TextField();
+        TextField moqField = new TextField();
+        TextField mslField = new TextField();
+
+        grid.add(new Label("Maker:"), 0, 0);
+        grid.add(makerField, 1, 0);
+        grid.add(new Label("Maker PN:"), 0, 1);
+        grid.add(makerPNField, 1, 1);
+        grid.add(new Label("SAP PN:"), 0, 2);
+        grid.add(sapPNField, 1, 2);
+        grid.add(new Label("MOQ:"), 0, 3);
+        grid.add(moqField, 1, 3);
+        grid.add(new Label("MSL:"), 0, 4);
+        grid.add(mslField, 1, 4);
+
+        dialog.getDialogPane().setContent(grid);
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == ButtonType.OK) {
+                // Khi nhấn OK, lấy dữ liệu và thực hiện tìm kiếm
+                String maker = makerField.getText().trim();
+                String makerPN = makerPNField.getText().trim();
+                String sapPN = sapPNField.getText().trim();
+                String moq = moqField.getText().trim();
+                String msl = mslField.getText().trim();
+
+                searchFromData(maker, makerPN, sapPN, moq, msl); // Tìm kiếm dữ liệu
+            }
+            return null;
+        });
+
+        dialog.showAndWait();
+    }
+
+
+    private void searchFromData(String maker, String makerPN, String sapPN, String moq, String msl) {
+        // Sử dụng service để tìm kiếm dữ liệu từ cơ sở dữ liệu
+        List<MOQ> result = moqService.searchMOQ(maker, makerPN, sapPN, moq, msl);
+
+        // Cập nhật lại ObservableList và TableView
+        ObservableList<MOQ> observableList = FXCollections.observableArrayList(result);
+        moqTableView.setItems(observableList);
     }
 
 

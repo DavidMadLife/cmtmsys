@@ -19,10 +19,12 @@ import java.util.stream.Collectors;
 public class HistoryServiceImpl implements HistoryService {
     private final HistoryRepository historyRepository;
     private final MOQRepository moqRepository;
+    private final InvoiceRepository invoiceRepository;
 
-    public HistoryServiceImpl(HistoryRepository historyRepository, MOQRepository moqRepository) {
+    public HistoryServiceImpl(HistoryRepository historyRepository, MOQRepository moqRepository, InvoiceRepository invoiceRepository) {
         this.historyRepository = historyRepository;
         this.moqRepository = moqRepository;
+        this.invoiceRepository = invoiceRepository;
     }
 
 
@@ -62,6 +64,8 @@ public class HistoryServiceImpl implements HistoryService {
             return;
         }
 
+        Invoice invoice = invoiceRepository.findById(invoiceId);
+
         History history = new History();
         history.setMaker(moq.getMaker());
         history.setInvoiceId(invoiceId);
@@ -73,7 +77,13 @@ public class HistoryServiceImpl implements HistoryService {
         history.setEmployeeId(employeeId);
         history.setScanCode(scanCode);
         history.setMSL(moq.getMsql());
+        history.setSpec(moq.getSpec());
         history.setStatus("Scanned");
+
+        if (invoice != null) {
+            history.setInvoicePN(invoice.getInvoicePN()); // Gán invoicePN
+        }
+
 
         addHistory(history);
     }
@@ -85,6 +95,8 @@ public class HistoryServiceImpl implements HistoryService {
             System.out.println("Không có MOQ để lưu.");
             return;
         }
+
+        Invoice invoice = invoiceRepository.findById(invoiceId);
 
         LocalDate currentDate = LocalDate.now();
         LocalTime currentTime = LocalTime.now();
@@ -100,7 +112,12 @@ public class HistoryServiceImpl implements HistoryService {
         history.setEmployeeId(employeeId);
         history.setScanCode(scanCode);
         history.setMSL(moq.getMsql());
+        history.setSpec(moq.getSpec());
         history.setStatus("Scanned");
+
+        if (invoice != null) {
+            history.setInvoicePN(invoice.getInvoicePN()); // Gán invoicePN
+        }
 
         addHistory(history);
     }
@@ -120,7 +137,8 @@ public class HistoryServiceImpl implements HistoryService {
                         history.getQuantity(),
                         history.getQuantity(),
                         0,
-                        ""
+                        "",
+                        history.getSpec()
                 ))
                 .collect(Collectors.toList());
     }
@@ -186,8 +204,8 @@ public class HistoryServiceImpl implements HistoryService {
     }
 
     @Override
-    public List<History> searchHistory(String invoiceNo, String maker, String makerPN, String sapPN, LocalDate date, String MSL) {
-        return historyRepository.search(invoiceNo, maker, makerPN, sapPN, date, MSL);
+    public List<History> searchHistory(String invoiceNo, String maker, String makerPN, String sapPN, LocalDate date, String MSL, String invoicePN) {
+        return historyRepository.search(invoiceNo, maker, makerPN, sapPN, date, MSL, invoicePN);
     }
 
     @Override

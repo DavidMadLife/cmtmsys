@@ -9,11 +9,12 @@ public class HistoryDetailViewDto {
     private int qty;
     private int reelQty;
     private String invoice;
+    private String spec;
     public HistoryDetailViewDto() {
 
     }
 
-    public HistoryDetailViewDto(int id, String makerCode, String sapCode, String maker, int moq, int qty, int reelQty, String invoice) {
+    public HistoryDetailViewDto(int id, String makerCode, String sapCode, String maker, int moq, int qty, int reelQty, String invoice, String spec) {
         this.id = id;
         this.makerCode = makerCode;
         this.maker = maker;
@@ -22,6 +23,14 @@ public class HistoryDetailViewDto {
         this.qty = qty;
         this.reelQty = reelQty;
         this.invoice = invoice;
+        this.spec = spec;
+    }
+
+    public String getSpec(){
+        return spec;
+    }
+    public void setSpec(String spec){
+        this.spec = spec;
     }
 
     public int getId() {

@@ -1,5 +1,6 @@
 package org.chemtrovina.cmtmsys.service.Impl;
 
+import org.chemtrovina.cmtmsys.dto.InvoiceDetailViewDto;
 import org.chemtrovina.cmtmsys.model.Invoice;
 import org.chemtrovina.cmtmsys.model.InvoiceDetail;
 import org.chemtrovina.cmtmsys.repository.base.InvoiceRepository;
@@ -26,6 +27,14 @@ public class InvoiceServiceImpl implements InvoiceService {
     public List<Invoice> getInvoicesByInvoiceNo(String invoiceNo) {
         return invoiceRepository.findInvoicesByInvoiceNo(invoiceNo);
     }
+    public Invoice getInvoicesByInvoicePN(String invoicePN) {
+        return invoiceRepository.findInvoicesByInvoicePN(invoicePN);
+    }
+
+
+    public Invoice getInvoiceByInvoiceNo(String invoiceNo) {
+        return invoiceRepository.findInvoiceByInvoiceNo(invoiceNo);
+    }
 
     public List<Invoice> getInvoicesByDateAndInvoiceNo(LocalDate date, String invoiceNo) {
         return invoiceRepository.findInvoicesByDateAndInvoiceNo(date, invoiceNo);
@@ -33,6 +42,10 @@ public class InvoiceServiceImpl implements InvoiceService {
 
     public List<String> getAllInvoiceNos() {
         return invoiceRepository.findAllInvoiceNos();
+    }
+
+    public List<String> getAllInvoicePNs() {
+        return invoiceRepository.findAllInvoicePNs();
     }
 
     @Override
@@ -104,6 +117,11 @@ public class InvoiceServiceImpl implements InvoiceService {
     @Override
     public int countHistoryByInvoiceId(int invoiceId) {
         return invoiceRepository.countHistoryByInvoiceId(invoiceId);
+    }
+
+
+    public List<InvoiceDetailViewDto> searchByFields(String invoicePN, String sapPN, String makerPN, LocalDate date) {
+        return invoiceRepository.advancedSearch(invoicePN, sapPN, makerPN, date);
     }
 
 

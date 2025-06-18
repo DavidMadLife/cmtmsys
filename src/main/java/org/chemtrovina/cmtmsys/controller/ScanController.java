@@ -9,6 +9,7 @@ import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.util.Duration;
@@ -45,6 +46,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class ScanController {
 
@@ -59,6 +63,7 @@ public class ScanController {
     // Controls
     @FXML private DatePicker dpDate;
     @FXML private ComboBox<String> cbInvoiceNo1;
+    @FXML private ComboBox<String> cbInvoicePN;
     @FXML private TextField txtScanInput, txtScanCode;
     @FXML private Button btnOnOff, btnKeepGoing, btnCallSuperV, btnSearch, btnClear, btnRefresh, btnScanOddReel;
 
@@ -68,8 +73,10 @@ public class ScanController {
     @FXML private TableColumn<Invoice, String> colInvoiceNo;
 
     @FXML private TableView<HistoryDetailViewDto> tblScanDetails;
-    @FXML private TableColumn<HistoryDetailViewDto, String> colMakerCode, colSapCode, colMaker, colInvoice;
+    @FXML private TableColumn<HistoryDetailViewDto, String> colMakerCode, colSapCode, colMaker, colInvoice, colSpec;
     @FXML private TableColumn<HistoryDetailViewDto, Integer> colMOQ, colQty, colReelQty;
+    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+
 
     // ======================== SERVICES ========================
     private InvoiceService invoiceService;
@@ -98,9 +105,23 @@ public class ScanController {
         setupButton();
         setupIdleTimer();
         setupActivityListeners();
+        loadInvoicePNsToComboBox();
+        startAutoGC();
+
+        setupSearchShortcut();
     }
 
     // ======================== SETUP ========================
+
+    private void setupSearchShortcut() {
+        // Lắng nghe sự kiện Ctrl + F
+        tblScanDetails.setOnKeyPressed(event -> {
+            if (event.isControlDown() && event.getCode() == KeyCode.F) {
+                openSearchDialog();
+            }
+        });
+    }
+
     private void setupServices() {
         DataSource dataSource = DataSourceConfig.getDataSource();
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
@@ -111,11 +132,13 @@ public class ScanController {
         MOQRepository moqRepository = new MOQRepositoryImpl(jdbcTemplate);
         moqService = new MOQServiceImpl(moqRepository);
 
-        HistoryRepository historyRepository = new HistoryRepositoryImpl(jdbcTemplate);
-        historyService = new HistoryServiceImpl(historyRepository, moqRepository);
-
         InvoiceDetailRepository invoiceDetailRepository = new InvoiceDetailRepositoryImpl(jdbcTemplate);
         invoiceDetailService = new InvoiceDetailServiceImpl(invoiceDetailRepository);
+
+        HistoryRepository historyRepository = new HistoryRepositoryImpl(jdbcTemplate);
+        historyService = new HistoryServiceImpl(historyRepository, moqRepository, invoiceRepository);
+
+
     }
 
     private void setupTableColumns(){
@@ -131,6 +154,7 @@ public class ScanController {
         colQty.setCellValueFactory(new PropertyValueFactory<>("qty"));
         colReelQty.setCellValueFactory(new PropertyValueFactory<>("reelQty"));
         colInvoice.setCellValueFactory(new PropertyValueFactory<>("invoice"));
+        colSpec.setCellValueFactory(new PropertyValueFactory<>("spec"));
     }
 
     private void setupButton(){
@@ -141,9 +165,10 @@ public class ScanController {
 
     private void setupInvoiceComboBox(){
         loadInvoiceNosToComboBox();
+        loadInvoicePNsToComboBox();
 
         cbInvoiceNo1.setOnShowing(event -> loadInvoiceNosToComboBox());
-
+        cbInvoicePN.setOnShowing(event -> loadInvoicePNsToComboBox());
         tblInvoiceList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
                 selectedInvoice = newValue;
@@ -275,6 +300,7 @@ public class ScanController {
     private void resetFilters() {
         dpDate.setValue(null);
         cbInvoiceNo1.setValue(null);
+        cbInvoicePN.setValue(null);
     }
 
     private void resetInvoiceTable() {
@@ -345,9 +371,52 @@ public class ScanController {
     // ======================== HELPER ========================
 
     private void loadInvoiceNosToComboBox() {
+        // Lấy danh sách các InvoiceNos từ invoiceService
         List<String> invoiceNos = invoiceService.getAllInvoiceNos();
         cbInvoiceNo1.setItems(FXCollections.observableArrayList(invoiceNos));
+
+        // Lắng nghe sự thay đổi trong ComboBox InvoiceNo
+        cbInvoiceNo1.setOnAction(event -> {
+            String selectedInvoiceNo = cbInvoiceNo1.getSelectionModel().getSelectedItem();
+            if (selectedInvoiceNo != null) {
+                // Lấy thông tin từ InvoiceService theo InvoiceNo
+                Invoice selectedInvoice = invoiceService.getInvoiceByInvoiceNo(selectedInvoiceNo);
+
+                // Cập nhật InvoicePN và DatePicker theo thông tin của Invoice
+                if (selectedInvoice != null) {
+                    // Cập nhật InvoicePN và DatePicker
+                    cbInvoicePN.setValue(selectedInvoice.getInvoicePN());
+                    dpDate.setValue(selectedInvoice.getInvoiceDate());
+                }
+            }
+        });
     }
+
+
+    private void loadInvoicePNsToComboBox() {
+        // Lấy danh sách các InvoicePN từ invoiceService
+        List<String> invoicePNs = invoiceService.getAllInvoicePNs();
+
+        // Đặt các InvoicePN vào ComboBox
+        cbInvoicePN.setItems(FXCollections.observableArrayList(invoicePNs));
+
+        // Lắng nghe sự thay đổi trong ComboBox InvoicePN
+        cbInvoicePN.setOnAction(event -> {
+            String selectedInvoicePN = cbInvoicePN.getSelectionModel().getSelectedItem();
+            if (selectedInvoicePN != null) {
+                // Khi chọn một InvoicePN, ta cần lấy thông tin liên quan như InvoiceNo và Date
+                Invoice selectedInvoice = invoiceService.getInvoicesByInvoicePN(selectedInvoicePN);
+
+                // Cập nhật ComboBox `cbInvoiceNo` và DatePicker `dpDate` theo thông tin của Invoice
+                if (selectedInvoice != null) {
+                    cbInvoiceNo1.getSelectionModel().select(selectedInvoice.getInvoiceNo());
+                    dpDate.setValue(selectedInvoice.getInvoiceDate());
+                }
+            }
+        });
+    }
+
+
 
     private void updateFiltersFromInvoice(Invoice selectedInvoice) {
         dpDate.setValue(selectedInvoice.getInvoiceDate());
@@ -402,7 +471,8 @@ public class ScanController {
                         moq,
                         qty,
                         1,     // reel đầu tiên
-                        ""     // sẽ cập nhật trạng thái sau
+                        "",     // sẽ cập nhật trạng thái sau
+                        dto.getSpec()
                 ));
             }
         }
@@ -765,4 +835,71 @@ public class ScanController {
         }
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    private void openSearchDialog() {
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Search");
+        dialog.setHeaderText("Search by SAP Code or Maker Code");
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+
+        TextField txtSapCode = new TextField();
+        TextField txtMakerCode = new TextField();
+
+        grid.add(new Label("SAP Code:"), 0, 0);
+        grid.add(txtSapCode, 1, 0);
+        grid.add(new Label("Maker Code:"), 0, 1);
+        grid.add(txtMakerCode, 1, 1);
+
+        dialog.getDialogPane().setContent(grid);
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == ButtonType.OK) {
+                String sapCode = txtSapCode.getText().trim();
+                String makerCode = txtMakerCode.getText().trim();
+                searchScanDetails(sapCode, makerCode);
+            }
+            return null;
+        });
+
+        dialog.showAndWait();
+    }
+
+    private void searchScanDetails(String sapCode, String makerCode) {
+        ObservableList<HistoryDetailViewDto> filteredList = FXCollections.observableArrayList();
+
+        for (HistoryDetailViewDto dto : tblScanDetails.getItems()) {
+            boolean match = false;
+
+            if (!sapCode.isEmpty() && dto.getSapCode().toLowerCase().contains(sapCode.toLowerCase())) {
+                match = true;
+            }
+
+            if (!makerCode.isEmpty() && dto.getMakerCode().toLowerCase().contains(makerCode.toLowerCase())) {
+                match = true;
+            }
+
+            if (match) {
+                filteredList.add(dto);
+            }
+        }
+
+        tblScanDetails.setItems(filteredList);
+        tblScanDetails.refresh();
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    private void startAutoGC() {
+        scheduler.scheduleAtFixedRate(() -> {
+            System.gc();
+            System.out.println("Triggered GC at: " + java.time.LocalTime.now());
+        }, 20, 20, TimeUnit.SECONDS);
+        long heapSize = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+        System.out.println("Heap used: " + heapSize / 1024 / 1024 + " MB");
+
+    }
 }

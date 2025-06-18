@@ -111,6 +111,11 @@ public class MOQServiceImpl implements MOQService {
         return moqRepository.getAllMSLs();
     }
 
+    /*@Override
+    public List<String> getAllInvoicePNs() {
+        return moqRepository.getAllInvoicePNs();
+    }*/
+
     @Override
     public void exportToExcel(List<MOQ> data, File file) throws IOException {
         try (Workbook workbook = new XSSFWorkbook()) {
@@ -118,7 +123,7 @@ public class MOQServiceImpl implements MOQService {
 
             // Header
             Row header = sheet.createRow(0);
-            String[] columns = {"Maker", "MakerPN", "SAP P/N", "MOQ", "MSL"};
+            String[] columns = {"Maker", "MakerPN", "SAP P/N", "MOQ", "MSL", "Spec"};
             for (int i = 0; i < columns.length; i++) {
                 header.createCell(i).setCellValue(columns[i]);
             }
@@ -132,6 +137,7 @@ public class MOQServiceImpl implements MOQService {
                 row.createCell(2).setCellValue(moq.getSapPN() != null ? moq.getSapPN() : "");
                 row.createCell(3).setCellValue(moq.getMoq());
                 row.createCell(4).setCellValue(moq.getMsql() != null ? moq.getMsql() : "");
+                row.createCell(5).setCellValue(moq.getSpec() != null ? moq.getSpec() : "");
             }
 
             for (int i = 0; i < columns.length; i++) {

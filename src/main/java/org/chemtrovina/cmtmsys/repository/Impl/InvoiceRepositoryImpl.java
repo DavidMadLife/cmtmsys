@@ -1,5 +1,6 @@
 package org.chemtrovina.cmtmsys.repository.Impl;
 
+import org.chemtrovina.cmtmsys.dto.InvoiceDetailViewDto;
 import org.chemtrovina.cmtmsys.model.Invoice;
 import org.chemtrovina.cmtmsys.model.InvoiceDetail;
 import org.chemtrovina.cmtmsys.repository.base.InvoiceRepository;
@@ -31,6 +32,16 @@ public class InvoiceRepositoryImpl extends GenericRepositoryImpl<Invoice> implem
         String sql = "SELECT * FROM Invoice WHERE InvoiceNo = ?";
         return jdbcTemplate.query(sql, new Object[]{invoiceNo}, new InvoiceRowMapper());
     }
+    public Invoice findInvoicesByInvoicePN(String invoicePN) {
+        String sql = "SELECT * FROM Invoice WHERE InvoicePN = ?";
+        return jdbcTemplate.queryForObject(sql, new Object[]{invoicePN}, new InvoiceRowMapper());
+    }
+
+    public Invoice findInvoiceByInvoiceNo(String invoiceNo) {
+        String sql = "SELECT * FROM Invoice WHERE InvoiceNo = ?";
+        return jdbcTemplate.queryForObject(sql, new Object[]{invoiceNo}, new InvoiceRowMapper());
+    }
+
 
     public List<Invoice> findInvoicesByDateAndInvoiceNo(LocalDate date, String invoiceNo) {
         String sql = "SELECT * FROM Invoice WHERE InvoiceDate = ? AND InvoiceNo = ?";
@@ -38,9 +49,15 @@ public class InvoiceRepositoryImpl extends GenericRepositoryImpl<Invoice> implem
     }
 
     public List<String> findAllInvoiceNos() {
-        String sql = "SELECT DISTINCT InvoiceNo FROM Invoice";
+        String sql = "SELECT DISTINCT InvoiceNo FROM Invoice WHERE InvoiceNo IS NOT NULL";
         return jdbcTemplate.queryForList(sql, String.class);
     }
+
+    public List<String> findAllInvoicePNs() {
+        String sql = "SELECT DISTINCT InvoicePN FROM Invoice WHERE InvoicePN IS NOT NULL";
+        return jdbcTemplate.queryForList(sql, String.class);
+    }
+
 
     @Override
     public Invoice findInvoiceById(int invoiceId) {
@@ -138,6 +155,47 @@ public class InvoiceRepositoryImpl extends GenericRepositoryImpl<Invoice> implem
     }
 
 
+    @Override
+    public List<InvoiceDetailViewDto> advancedSearch(String invoicePN, String sapPN, String makerPN, LocalDate date) {
+        StringBuilder sql = new StringBuilder("""
+        SELECT DISTINCT i.InvoiceNo, i.InvoicePN, i.InvoiceDate, d.SapPN, d.Quantity, d.MOQ, d.TotalReel
+        FROM Invoice i
+        JOIN InvoiceDetail d ON i.Id = d.InvoiceId
+        LEFT JOIN MOQ m ON d.SapPN = m.SapPN
+        WHERE 1=1
+    """);
+
+        List<Object> params = new ArrayList<>();
+
+        if (invoicePN != null && !invoicePN.trim().isEmpty()) {
+            sql.append(" AND i.InvoicePN = ? ");
+            params.add(invoicePN.trim());
+        }
+        if (sapPN != null && !sapPN.isEmpty()) {
+            sql.append(" AND d.SapPN = ? ");
+            params.add("%" + sapPN + "%");
+        }
+        if (makerPN != null && !makerPN.isEmpty()) {
+            sql.append(" AND m.MakerPN = ? ");
+            params.add("%" + makerPN + "%");
+        }
+        if (date != null) {
+            sql.append(" AND i.InvoiceDate = ? ");
+            params.add(date);
+        }
+
+        return jdbcTemplate.query(sql.toString(), params.toArray(), (rs, rowNum) -> {
+            InvoiceDetailViewDto dto = new InvoiceDetailViewDto();
+            dto.setInvoiceNo(rs.getString("InvoiceNo"));
+            dto.setInvoicePN(rs.getString("InvoicePN"));
+            dto.setInvoiceDate(rs.getDate("InvoiceDate").toLocalDate());
+            dto.setSapCode(rs.getString("SapPN"));
+            dto.setQuantity(rs.getInt("Quantity"));
+            dto.setMoq(rs.getInt("MOQ"));
+            dto.setReelQty(rs.getInt("TotalReel"));
+            return dto;
+        });
+    }
 
 
 
@@ -192,15 +250,16 @@ public class InvoiceRepositoryImpl extends GenericRepositoryImpl<Invoice> implem
         }
 
         // Lưu invoice, lấy id sinh ra
-        String invoiceSql = "INSERT INTO Invoice (InvoiceNo, InvoiceDate, CreatedAt, Status) VALUES (?, ?, ?, ?)";
+        String invoiceSql = "INSERT INTO Invoice (InvoiceNo, InvoicePN, InvoiceDate, CreatedAt, Status) VALUES (?, ?, ?, ?, ?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
         jdbcTemplate.update(connection -> {
             PreparedStatement ps = connection.prepareStatement(invoiceSql, Statement.RETURN_GENERATED_KEYS);
             ps.setString(1, invoice.getInvoiceNo());
-            ps.setDate(2, Date.valueOf(invoice.getInvoiceDate()));
-            ps.setDate(3, Date.valueOf(invoice.getCreatedAt()));
-            ps.setString(4, invoice.getStatus());
+            ps.setString(2, invoice.getInvoicePN());
+            ps.setDate(3, Date.valueOf(invoice.getInvoiceDate()));
+            ps.setDate(4, Date.valueOf(invoice.getCreatedAt()));
+            ps.setString(5, invoice.getStatus());
             return ps;
         }, keyHolder);
 
@@ -226,7 +285,7 @@ public class InvoiceRepositoryImpl extends GenericRepositoryImpl<Invoice> implem
 
     @Override
     public void add(Invoice invoice) {
-        String sql = "INSERT INTO Invoice (InvoiceNo, InvoiceDate, CreatedAt, Status) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO Invoice (InvoiceNo, InvoicePN, InvoiceDate, CreatedAt, Status) VALUES (?, ?, ?, ?, ?)";
         jdbcTemplate.update(sql,
                 invoice.getInvoiceNo(),
                 invoice.getInvoiceDate(),
@@ -243,6 +302,12 @@ public class InvoiceRepositoryImpl extends GenericRepositoryImpl<Invoice> implem
             sql.append("InvoiceNo = ?, ");
             params.add(invoice.getInvoiceNo());
         }
+
+        if (invoice.getInvoicePN() != null && !invoice.getInvoicePN().isBlank()) {
+            sql.append("InvoicePN = ?, ");
+            params.add(invoice.getInvoicePN());
+        }
+
         if (invoice.getInvoiceDate() != null) {
             sql.append("InvoiceDate = ?, ");
             params.add(invoice.getInvoiceDate());
@@ -273,6 +338,8 @@ public class InvoiceRepositoryImpl extends GenericRepositoryImpl<Invoice> implem
         return jdbcTemplate.queryForObject(sql, new Object[]{id}, new InvoiceRowMapper());
     }
 
+
+
     @Override
     public List<Invoice> findAll() {
         String sql = "SELECT * FROM Invoice";
@@ -288,6 +355,17 @@ public class InvoiceRepositoryImpl extends GenericRepositoryImpl<Invoice> implem
             return null;
         }
     }
+
+    @Override
+    public Invoice findByInvoicePN(String invoicePN) {
+        String sql = "SELECT * FROM Invoice WHERE InvoicePN = ?";
+        try {
+            return jdbcTemplate.queryForObject(sql, new Object[]{invoicePN}, new InvoiceRowMapper());
+        } catch (EmptyResultDataAccessException e) {
+            return null;
+        }
+    }
+
 
 
 
@@ -312,12 +390,15 @@ public class InvoiceRepositoryImpl extends GenericRepositoryImpl<Invoice> implem
         return jdbcTemplate.query(sql.toString(), params.toArray(), new InvoiceRowMapper());
     }
 
+
+
     static class InvoiceRowMapper implements RowMapper<Invoice> {
         @Override
         public Invoice mapRow(ResultSet rs, int rowNum) throws SQLException {
             return new Invoice(
                     rs.getInt("Id"),
                     rs.getString("InvoiceNo"),
+                    rs.getString("InvoicePN"),
                     rs.getDate("InvoiceDate").toLocalDate(),
                     rs.getDate("CreatedAt").toLocalDate(),
                     rs.getString("Status")

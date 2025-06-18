@@ -5,6 +5,7 @@ import java.time.LocalDate;
 public class Invoice {
     private int id;
     private String invoiceNo;
+    private String invoicePN;
     private LocalDate invoiceDate;
     private LocalDate createdAt;
     private String status;
@@ -13,12 +14,20 @@ public class Invoice {
     public Invoice(){
 
     }
-    public Invoice(int id, String invoiceNo, LocalDate invoiceDate, LocalDate createdAt, String status){
+    public Invoice(int id, String invoiceNo, String invoicePN, LocalDate invoiceDate, LocalDate createdAt, String status){
         this.id = id;
         this.invoiceNo = invoiceNo;
+        this.invoicePN = invoicePN;
         this.invoiceDate = invoiceDate;
         this.createdAt = createdAt;
         this.status = status;
+    }
+    public String getInvoicePN (){
+        return invoicePN;
+    }
+
+    public void setInvoicePN(String invoicePN){
+        this.invoicePN = invoicePN;
     }
 
     public int getId() {

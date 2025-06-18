@@ -27,7 +27,7 @@ public interface HistoryService {
 
     boolean isValidMakerPN(String makerPN);
 
-    List<History> searchHistory(String invoiceNo, String maker, String makerPN, String sapPN, LocalDate date, String MSL);
+    List<History> searchHistory(String invoiceNo, String maker, String makerPN, String sapPN, LocalDate date, String MSL, String invoicePN);
 
     boolean isScanning(String scanCode, String makerPN);
 

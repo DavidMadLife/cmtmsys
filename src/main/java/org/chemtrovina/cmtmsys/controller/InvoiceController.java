@@ -6,6 +6,7 @@ import javafx.fxml.FXML;
 import javafx.geometry.Side;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.GridPane;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
@@ -68,6 +69,12 @@ public class InvoiceController {
     @FXML private TableColumn<InvoiceDetailViewDto, Integer> colMOQ;
     @FXML private TableColumn<InvoiceDetailViewDto, Integer> colReelQty;
     @FXML private TableColumn<InvoiceDetailViewDto, LocalDate> colDate;
+    @FXML private TableColumn<InvoiceDetailViewDto, String> colInvoicePN;
+
+
+    @FXML private Text txtTotalQuantity;
+    @FXML private Text txtTotalReelQty;
+
 
     @FXML private TableView<InvoiceDataDto> tblData;
     @FXML private TableColumn<InvoiceDataDto, String> colSapCode;
@@ -109,6 +116,14 @@ public class InvoiceController {
     }
 
     private void initTableView() {
+        tableView.setOnKeyPressed(event -> {
+            if (event.isControlDown() && event.getCode() == KeyCode.F) {
+                openSearchDialog();
+            }
+        });
+
+
+        colInvoicePN.setCellValueFactory(new PropertyValueFactory<>("invoicePN"));
         colDate.setCellValueFactory(new PropertyValueFactory<>("invoiceDate"));
         colInvoiceNo.setCellValueFactory(new PropertyValueFactory<>("invoiceNo"));
         colSAPCode.setCellValueFactory(new PropertyValueFactory<>("sapCode"));
@@ -264,6 +279,7 @@ public class InvoiceController {
             InvoiceDetailViewDto dto = new InvoiceDetailViewDto();
             dto.setInvoiceId(d.getInvoiceId());
             dto.setInvoiceNo(invoiceNo);
+            dto.setInvoicePN(invoice.getInvoicePN());
             dto.setInvoiceDate(invoice.getInvoiceDate()); // hoặc d.getInvoice().getInvoiceDate() nếu có
             dto.setSapCode(d.getSapPN());
             dto.setQuantity(d.getQuantity());
@@ -272,6 +288,8 @@ public class InvoiceController {
 
             invoiceDetailDtoList.add(dto);
         }
+
+        updateTotals();
 
     }
     //////////////////////////////////////////////////////////////////////////////////////////////
@@ -372,47 +390,74 @@ public class InvoiceController {
 
     //Create new
     private void CreateInvoice() {
-        TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle("Create new Invoice");
-        dialog.setHeaderText("Are you want to create new Invoice?");
-        dialog.setContentText("Input quantity of Item:");
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Create New Invoice");
+        dialog.setHeaderText("Enter InvoicePN and Number of Items");
 
-        dialog.showAndWait().ifPresent(input -> {
-            try {
-                int detailCount = Integer.parseInt(input);
-                if (detailCount <= 0) {
-                    showAlert("Failed","Quantity must be greater than 0.", Alert.AlertType.ERROR);
+        Label labelPN = new Label("InvoicePN:");
+        TextField txtPN = new TextField();
+
+        Label labelQty = new Label("Item Quantity:");
+        TextField txtQty = new TextField();
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.add(labelPN, 0, 0);
+        grid.add(txtPN, 1, 0);
+        grid.add(labelQty, 0, 1);
+        grid.add(txtQty, 1, 1);
+
+        dialog.getDialogPane().setContent(grid);
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+        dialog.showAndWait().ifPresent(result -> {
+            if (result == ButtonType.OK) {
+                String invoicePN = txtPN.getText().trim();
+                String qtyInput = txtQty.getText().trim();
+
+                if (invoicePN.isEmpty() || qtyInput.isEmpty()) {
+                    showAlert("Input Error", "Please enter both InvoicePN and quantity.", Alert.AlertType.ERROR);
                     return;
                 }
 
-                // Tạo invoice mới
-                LocalDate today = LocalDate.now();
-                String invoiceNo = generateInvoiceNo(today);
-                Invoice invoice = new Invoice();
-                invoice.setInvoiceNo(invoiceNo);
-                invoice.setInvoiceDate(today);
+                try {
+                    int detailCount = Integer.parseInt(qtyInput);
+                    if (detailCount <= 0) {
+                        showAlert("Input Error", "Quantity must be greater than 0.", Alert.AlertType.ERROR);
+                        return;
+                    }
 
-                // Gán vào giao diện
-                dpDate.setValue(today);
-                cbInvoiceNo.getItems().add(invoice);
-                cbInvoiceNo.getSelectionModel().select(invoice);
+                    LocalDate today = LocalDate.now();
+                    String invoiceNo = generateInvoiceNo(today);
 
-                // Khởi tạo danh sách dòng rỗng
-                invoiceDetailDtoList.clear();
-                for (int i = 0; i < detailCount; i++) {
-                    InvoiceDetailViewDto dto = new InvoiceDetailViewDto();
-                    dto.setInvoiceNo(invoiceNo);
-                    dto.setInvoiceDate(today);
-                    invoiceDetailDtoList.add(dto);
+                    Invoice invoice = new Invoice();
+                    invoice.setInvoiceNo(invoiceNo);
+                    invoice.setInvoicePN(invoicePN);
+                    invoice.setInvoiceDate(today);
+
+                    dpDate.setValue(today);
+                    cbInvoiceNo.getItems().add(invoice);
+                    cbInvoiceNo.getSelectionModel().select(invoice);
+
+                    invoiceDetailDtoList.clear();
+                    for (int i = 0; i < detailCount; i++) {
+                        InvoiceDetailViewDto dto = new InvoiceDetailViewDto();
+                        dto.setInvoiceNo(invoiceNo);
+                        dto.setInvoicePN(invoicePN); // Gán vào DTO
+                        dto.setInvoiceDate(today);
+                        invoiceDetailDtoList.add(dto);
+                    }
+
+                    isDirty = true;
+
+                } catch (NumberFormatException e) {
+                    showAlert("Input Error", "Please enter a valid number for quantity.", Alert.AlertType.ERROR);
                 }
-
-            } catch (NumberFormatException e) {
-                showAlert("Failed","Please enter a valid number.", Alert.AlertType.ERROR);
             }
         });
-        isDirty = true;
-
     }
+
 
 
     //Save invoice
@@ -535,6 +580,19 @@ public class InvoiceController {
             return;
         }
 
+        // YÊU CẦU NHẬP InvoicePN
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("Enter InvoicePN");
+        dialog.setHeaderText("Please input InvoicePN for this import:");
+        dialog.setContentText("InvoicePN:");
+
+        Optional<String> result = dialog.showAndWait();
+        if (result.isEmpty() || result.get().trim().isEmpty()) {
+            showAlert("Error", "InvoicePN is required to import.", Alert.AlertType.ERROR);
+            return;
+        }
+        String invoicePN = result.get().trim();
+
         try (FileInputStream fis = new FileInputStream(selectedFile);
              Workbook workbook = new XSSFWorkbook(fis)) {
 
@@ -546,19 +604,20 @@ public class InvoiceController {
             String invoiceNo = generateInvoiceNo(LocalDate.now());
             Invoice invoice = new Invoice();
             invoice.setInvoiceNo(invoiceNo);
+            invoice.setInvoicePN(invoicePN); // gán InvoicePN người dùng nhập
             invoice.setInvoiceDate(LocalDate.now());
             invoice.setCreatedAt(LocalDate.now());
             invoice.setStatus("New");
 
             for (Row row : sheet) {
-                if (row.getRowNum() == 0) continue; // bỏ header
+                if (row.getRowNum() == 0) continue; // Bỏ qua header
 
                 String sapCode = row.getCell(0).getStringCellValue().trim();
                 int quantity = (int) row.getCell(1).getNumericCellValue();
 
                 MOQ moq = moqService.getMOQbySAPPN(sapCode);
                 if (moq == null || moq.getMoq() == null || moq.getMoq() == 0) {
-                    showAlert("Error", "Missing MOQ for: " + sapCode, Alert.AlertType.WARNING);
+                    showAlert("Warning", "Missing MOQ for: " + sapCode, Alert.AlertType.WARNING);
                     continue;
                 }
 
@@ -574,14 +633,15 @@ public class InvoiceController {
 
                 detailList.add(detail);
                 importedData.add(new InvoiceDataDto(sapCode, quantity));
-
             }
 
+            if (detailList.isEmpty()) {
+                showAlert("Error", "No valid data found to import.", Alert.AlertType.ERROR);
+                return;
+            }
 
-            // Lưu invoice và chi tiết vào DB
             invoiceService.saveInvoiceWithDetails(invoice, detailList);
 
-            // Hiển thị invoice vừa import
             cbInvoiceNo.getItems().add(invoice);
             cbInvoiceNo.getSelectionModel().select(invoice);
             dpDate.setValue(invoice.getInvoiceDate());
@@ -589,6 +649,7 @@ public class InvoiceController {
             for (InvoiceDetail detail : detailList) {
                 InvoiceDetailViewDto dto = new InvoiceDetailViewDto();
                 dto.setInvoiceNo(invoice.getInvoiceNo());
+                dto.setInvoicePN(invoicePN); // gán vào DTO
                 dto.setInvoiceDate(invoice.getInvoiceDate());
                 dto.setSapCode(detail.getSapPN());
                 dto.setQuantity(detail.getQuantity());
@@ -598,7 +659,6 @@ public class InvoiceController {
                 invoiceDetailDtoList.add(dto);
             }
 
-            // Hiển thị lên tblData
             tblData.getItems().clear();
             tblData.setItems(importedData);
             colSapCode.setCellValueFactory(new PropertyValueFactory<>("sapCode"));
@@ -612,6 +672,8 @@ public class InvoiceController {
             showAlert("Error", "Unexpected error: " + e.getMessage(), Alert.AlertType.ERROR);
         }
     }
+
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     private void deleteInvocie() {
@@ -719,21 +781,81 @@ public class InvoiceController {
     }
 
 
-
+    ////////////////////////////////////////////////////////////////////////////////////////////////
     private void startAutoGC() {
         scheduler.scheduleAtFixedRate(() -> {
             System.gc();
             System.out.println("Triggered GC at: " + java.time.LocalTime.now());
-        }, 30, 30, TimeUnit.SECONDS); // chạy mỗi 5 phút
+        }, 20, 20, TimeUnit.SECONDS);
         long heapSize = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
         System.out.println("Heap used: " + heapSize / 1024 / 1024 + " MB");
 
     }
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    private void updateTotals() {
+        int totalQuantity = 0;
+        int totalReelQty = 0;
+
+        // Duyệt qua các chi tiết trong bảng và tính tổng
+        for (InvoiceDetailViewDto dto : invoiceDetailDtoList) {
+            totalQuantity += dto.getQuantity();
+            totalReelQty += dto.getReelQty();
+        }
+
+        // Cập nhật vào Text trong giao diện
+        txtTotalQuantity.setText("Total Quantity: " + totalQuantity);
+        txtTotalReelQty.setText("Total Reel Qty: " + totalReelQty);
+    }
+
 
 
     public void shutdown() {
         scheduler.shutdown();
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    private void openSearchDialog() {
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Advanced Search");
+        dialog.setHeaderText("Search Invoices by Criteria");
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+
+        TextField txtInvoicePN = new TextField();
+        TextField txtSAPCode = new TextField();
+        TextField txtMakerPN = new TextField();
+        DatePicker dpSearchDate = new DatePicker();
+
+        grid.add(new Label("InvoicePN:"), 0, 0);
+        grid.add(txtInvoicePN, 1, 0);
+        grid.add(new Label("SAP Code:"), 0, 1);
+        grid.add(txtSAPCode, 1, 1);
+        grid.add(new Label("MakerPN:"), 0, 2);
+        grid.add(txtMakerPN, 1, 2);
+        grid.add(new Label("Invoice Date:"), 0, 3);
+        grid.add(dpSearchDate, 1, 3);
+
+        dialog.getDialogPane().setContent(grid);
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+        dialog.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                String invoicePN = txtInvoicePN.getText().trim();
+                String sapCode = txtSAPCode.getText().trim();
+                String makerPN = txtMakerPN.getText().trim();
+                LocalDate date = dpSearchDate.getValue();
+
+                List<InvoiceDetailViewDto> result = invoiceService.searchByFields(invoicePN, sapCode, makerPN, date);
+
+                cbInvoiceNo.getSelectionModel().clearSelection();
+                dpDate.setValue(null);
+                invoiceDetailDtoList.clear();
+                invoiceDetailDtoList.addAll(result);
+            }
+        });
+        updateTotals();
+    }
 
 }

@@ -6,6 +6,7 @@ public class InvoiceDetailViewDto {
     private int invoiceId;
     private LocalDate invoiceDate;
     private String invoiceNo;
+    private String invoicePN;
     private String sapCode;
     private int quantity;
     private int moq;
@@ -14,10 +15,11 @@ public class InvoiceDetailViewDto {
     public InvoiceDetailViewDto() {
     }
 
-    public InvoiceDetailViewDto( int invoiceId ,LocalDate invoiceDate, String invoiceNo, String sapCode, int quantity, int moq, int reelQty) {
+    public InvoiceDetailViewDto( int invoiceId ,LocalDate invoiceDate, String invoiceNo, String invoicePN, String sapCode, int quantity, int moq, int reelQty) {
         this.invoiceId = invoiceId;
         this.invoiceDate = invoiceDate;
         this.invoiceNo = invoiceNo;
+        this.invoicePN = invoicePN;
         this.sapCode = sapCode;
         this.quantity = quantity;
         this.moq = moq;
@@ -45,6 +47,13 @@ public class InvoiceDetailViewDto {
 
     public void setInvoiceNo(String invoiceNo) {
         this.invoiceNo = invoiceNo;
+    }
+
+    public String getInvoicePN() {
+        return invoicePN;
+    }
+    public void setInvoicePN(String invoicePN) {
+        this.invoicePN = invoicePN;
     }
 
     public String getSapCode() {

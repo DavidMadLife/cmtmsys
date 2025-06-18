@@ -16,6 +16,8 @@ public class History {
     private String status;
     private String scanCode;
     private String MSL;
+    private String invoicePN;
+    private String spec;
 
     //When get into View
     private String invoiceNo;
@@ -25,7 +27,7 @@ public class History {
 
     public History(int id, Integer invoiceId, LocalDate date, LocalTime time,
                    String maker, String makerPN, String sapPN, int quantity,
-                   String employeeId, String status, String scanCode, String MSL) {
+                   String employeeId, String status, String scanCode, String MSL, String invoicePN, String spec) {
         this.id = id;
         this.invoiceId = invoiceId;
         this.date = date;
@@ -38,10 +40,25 @@ public class History {
         this.status = status;
         this.scanCode = scanCode;
         this.MSL = MSL;
+        this.invoicePN = invoicePN;
+        this.spec = spec;
+
     }
 
 
+    public String getSpec(){
+        return spec;
+    }
+    public void setSpec(String spec){
+        this.spec = spec;
+    }
 
+    public String getInvoicePN(){
+        return invoicePN;
+    }
+    public void setInvoicePN(String invoicePN){
+        this.invoicePN = invoicePN;
+    }
 
 
     //Using for View

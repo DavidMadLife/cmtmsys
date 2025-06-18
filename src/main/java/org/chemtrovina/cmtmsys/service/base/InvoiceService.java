@@ -1,6 +1,7 @@
 package org.chemtrovina.cmtmsys.service.base;
 
 import org.chemtrovina.cmtmsys.dto.HistoryDetailViewDto;
+import org.chemtrovina.cmtmsys.dto.InvoiceDetailViewDto;
 import org.chemtrovina.cmtmsys.model.Invoice;
 import org.chemtrovina.cmtmsys.model.InvoiceDetail;
 
@@ -29,13 +30,20 @@ public interface InvoiceService {
 
     List<Invoice> getInvoicesByDate(LocalDate date);
     List<Invoice> getInvoicesByInvoiceNo(String invoiceNo);
+    Invoice getInvoicesByInvoicePN(String invoicePN);
+    Invoice getInvoiceByInvoiceNo(String invoiceNo);
     List<Invoice> getInvoicesByDateAndInvoiceNo(LocalDate date, String invoiceNo);
     List<String> getAllInvoiceNos();
+    List<String> getAllInvoicePNs();
 
     List<InvoiceDetail> getInvoiceDetailsByInvoiceId(int invoiceId);
 
     void deleteInvoice(int invoiceId);
     int countHistoryByInvoiceId(int invoiceId);
+
+    List<InvoiceDetailViewDto> searchByFields(String invoicePN, String sapPN, String makerPN, LocalDate date);
+
+
 
 
 
