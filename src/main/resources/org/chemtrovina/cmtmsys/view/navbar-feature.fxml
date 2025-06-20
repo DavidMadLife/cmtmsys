@@ -11,5 +11,6 @@
         <Button fx:id="btnScan" mnemonicParsing="false" prefHeight="31.0" prefWidth="126.0" style="-fx-font-weight: Bold;" text="Scan" />
         <Button fx:id="btnHistory" mnemonicParsing="false" prefHeight="31.0" prefWidth="126.0" style="-fx-font-weight: Bold;" text="History" />
         <Button fx:id="btnMOQ" mnemonicParsing="false" prefHeight="31.0" prefWidth="126.0" style="-fx-font-weight: Bold;" text="MOQ" />
+      <Button fx:id="btnEmployee" layoutX="400.0" layoutY="10.0" mnemonicParsing="false" prefHeight="31.0" prefWidth="126.0" style="-fx-font-weight: Bold;" text="Employee" />
     </items>
 </ToolBar>

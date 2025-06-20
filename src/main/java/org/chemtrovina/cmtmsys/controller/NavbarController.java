@@ -13,6 +13,7 @@ public class NavbarController {
     @FXML private Button btnInvoice;
     @FXML private Button btnScan;
     @FXML private Button btnMOQ;
+    @FXML private Button btnEmployee;
 
     @FXML
     public void initialize() {
@@ -20,6 +21,7 @@ public class NavbarController {
         btnHistory.setOnAction(this::handleHistoryListButton);
         btnInvoice.setOnAction(this::handleInvoiceButton);
         btnMOQ.setOnAction(this::handleMOQButton);
+        btnEmployee.setOnAction(this::handleEmployeeButton);
     }
 
     private void handleScanButton(ActionEvent event) {
@@ -36,6 +38,10 @@ public class NavbarController {
     private void handleMOQButton(ActionEvent event) {
         navigateTo("/org/chemtrovina/cmtmsys/view/moq-feature.fxml");
     }
+    private void handleEmployeeButton(ActionEvent event) {
+        navigateTo("/org/chemtrovina/cmtmsys/view/employee-feature.fxml");
+    }
+
 
     private void navigateTo(String fxmlPath) {
         try {
