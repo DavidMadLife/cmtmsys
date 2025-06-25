@@ -29,16 +29,15 @@ public class EmployeeRepositoryImpl extends GenericRepositoryImpl<Employee> impl
                 employee.getGender(),
                 employee.getDateOfBirth(),
                 employee.getEntryDate(),
-                employee.getExitDate(), // ✅ new
+                employee.getExitDate(),
                 employee.getAddress(),
                 employee.getPhoneNumber(),
                 employee.getDepartmentId(),
                 employee.getPositionId(),
-                employee.getShiftId(),
                 employee.getManagerId(),
                 employee.getJobTitle(),
                 employee.getNote(),
-                employee.getStatus() // assuming enum is stored as string
+                employee.getStatus()
         );
     }
 
@@ -54,12 +53,11 @@ public class EmployeeRepositoryImpl extends GenericRepositoryImpl<Employee> impl
                 employee.getGender(),
                 employee.getDateOfBirth(),
                 employee.getEntryDate(),
-                employee.getExitDate(), // ✅ new
+                employee.getExitDate(),
                 employee.getAddress(),
                 employee.getPhoneNumber(),
                 employee.getDepartmentId(),
                 employee.getPositionId(),
-                employee.getShiftId(),
                 employee.getManagerId(),
                 employee.getJobTitle(),
                 employee.getNote(),
@@ -90,71 +88,66 @@ public class EmployeeRepositoryImpl extends GenericRepositoryImpl<Employee> impl
     @Override
     public List<EmployeeDto> findAllEmployeeDtos() {
         String sql = """
-        SELECT 
-            e.EmployeeID,
-            e.MSCNID1,
-            e.MSCNID2,
-            e.FullName,
-            e.Company,
-            e.Gender,
-            e.BirthDate,
-            e.EntryDate,
-            e.ExitDate,
-            e.Address,
-            e.PhoneNumber,
-            e.JobTitle,
-            e.Note,
-            e.Status,
-            d.DepartmentName,
-            p.PositionName,
-            s.ShiftName,
-            m.FullName AS ManagerName
-        FROM Employee e
-        LEFT JOIN Department d ON e.DepartmentID = d.DepartmentID
-        LEFT JOIN Position p ON e.PositionID = p.PositionID
-        LEFT JOIN ShiftChem s ON e.ShiftID = s.ShiftID
-        LEFT JOIN Employee m ON e.ManagerID = m.EmployeeID
-        ORDER BY e.EmployeeID
-    """;
+            SELECT 
+                e.EmployeeID,
+                e.MSCNID1,
+                e.MSCNID2,
+                e.FullName,
+                e.Company,
+                e.Gender,
+                e.BirthDate,
+                e.EntryDate,
+                e.ExitDate,
+                e.Address,
+                e.PhoneNumber,
+                e.JobTitle,
+                e.Note,
+                e.Status,
+                d.DepartmentName,
+                p.PositionName,
+                m.FullName AS ManagerName
+            FROM Employee e
+            LEFT JOIN Department d ON e.DepartmentID = d.DepartmentID
+            LEFT JOIN Position p ON e.PositionID = p.PositionID
+            LEFT JOIN Employee m ON e.ManagerID = m.EmployeeID
+            ORDER BY e.EmployeeID
+        """;
 
         return jdbcTemplate.query(sql, employeeDtoMapper);
     }
 
     public List<EmployeeDto> findFilteredEmployeeDtos(EmployeeStatus status, LocalDate entryDateFrom, LocalDate entryDateTo) {
         StringBuilder sql = new StringBuilder("""
-        SELECT 
-            e.EmployeeID,
-            e.MSCNID1,
-            e.MSCNID2,
-            e.FullName,
-            e.Company,
-            e.Gender,
-            e.BirthDate,
-            e.EntryDate,
-            e.ExitDate,
-            e.Address,
-            e.PhoneNumber,
-            e.JobTitle,
-            e.Note,
-            e.Status,
-            d.DepartmentName,
-            p.PositionName,
-            s.ShiftName,
-            m.FullName AS ManagerName
-        FROM Employee e
-        LEFT JOIN Department d ON e.DepartmentID = d.DepartmentID
-        LEFT JOIN Position p ON e.PositionID = p.PositionID
-        LEFT JOIN ShiftChem s ON e.ShiftID = s.ShiftID
-        LEFT JOIN Employee m ON e.ManagerID = m.EmployeeID
-        WHERE 1=1
-    """);
+            SELECT 
+                e.EmployeeID,
+                e.MSCNID1,
+                e.MSCNID2,
+                e.FullName,
+                e.Company,
+                e.Gender,
+                e.BirthDate,
+                e.EntryDate,
+                e.ExitDate,
+                e.Address,
+                e.PhoneNumber,
+                e.JobTitle,
+                e.Note,
+                e.Status,
+                d.DepartmentName,
+                p.PositionName,
+                m.FullName AS ManagerName
+            FROM Employee e
+            LEFT JOIN Department d ON e.DepartmentID = d.DepartmentID
+            LEFT JOIN Position p ON e.PositionID = p.PositionID
+            LEFT JOIN Employee m ON e.ManagerID = m.EmployeeID
+            WHERE 1=1
+        """);
 
-        // Params list
         List<Object> params = new java.util.ArrayList<>();
 
         if (status != null) {
             sql.append(" AND e.Status = ?");
-            params.add(status.getCode()); // dùng getCode từ enum
+            params.add(status.getCode());
         }
         if (entryDateFrom != null) {
             sql.append(" AND e.EntryDate >= ?");
@@ -169,10 +162,6 @@ public class EmployeeRepositoryImpl extends GenericRepositoryImpl<Employee> impl
 
         return jdbcTemplate.query(sql.toString(), params.toArray(), employeeDtoMapper);
     }
-
-
-
-
 
     ////////////////////////////////////Mapper////////////////////////////////////////////
     private final RowMapper<EmployeeDto> employeeDtoMapper = (rs, rowNum) -> {
@@ -193,10 +182,8 @@ public class EmployeeRepositoryImpl extends GenericRepositoryImpl<Employee> impl
         dto.setStatus(EmployeeStatus.fromCode(rs.getInt("Status")).getLabel());
         dto.setDepartmentName(rs.getString("DepartmentName"));
         dto.setPositionName(rs.getString("PositionName"));
-        dto.setShiftName(rs.getString("ShiftName"));
+        // dto.setShiftName(null); // Optional: giữ dòng này nếu muốn khởi tạo shiftName là null
         dto.setManagerName(rs.getString("ManagerName"));
         return dto;
     };
-
-
 }

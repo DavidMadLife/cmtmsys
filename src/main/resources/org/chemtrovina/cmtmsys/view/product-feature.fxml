@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane prefHeight="500" prefWidth="800" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.chemtrovina.cmtmsys.controller.ProductController">
+
+    <VBox spacing="10" AnchorPane.bottomAnchor="10" AnchorPane.leftAnchor="10" AnchorPane.rightAnchor="10" AnchorPane.topAnchor="10">
+
+        <Label style="-fx-font-size: 18px; -fx-font-weight: bold;" text="Chi tiết thành phẩm" />
+
+        <HBox spacing="10">
+            <Label text="Mã thành phẩm (Product Code):">
+            <font>
+               <Font size="14.0" />
+            </font></Label>
+            <TextField fx:id="txtProductCode" prefWidth="200" />
+            <Button fx:id="btnLoad" text="Tải dữ liệu" />
+        </HBox>
+
+        <Label style="-fx-font-size: 14px;" text="Danh sách mã liệu sử dụng (BOM):" />
+
+        <TableView fx:id="tblProductBOM" VBox.vgrow="ALWAYS">
+            <columns>
+                <TableColumn fx:id="colProductCode" prefWidth="150" text="Mã thành phẩm" />
+                <TableColumn fx:id="colSappn" prefWidth="150" text="Mã vật liệu (SAP)" />
+                <TableColumn fx:id="colQuantity" prefWidth="100" text="Số lượng" />
+                <TableColumn fx:id="colCreatedDate" prefWidth="150" text="Ngày tạo" />
+                <TableColumn fx:id="colUpdatedDate" prefWidth="150" text="Ngày cập nhật" />
+            </columns>
+        </TableView>
+    </VBox>
+</AnchorPane>

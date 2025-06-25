@@ -17,7 +17,6 @@ public class Employee {
     private String phoneNumber;
     private int departmentId;
     private int positionId;
-    private int shiftId;
     private int managerId;
     private String jobTitle;
     private String note;
@@ -32,7 +31,7 @@ public class Employee {
     // Constructor với tất cả các tham số
     public Employee(int employeeId, String MSCNID1, String MSCNID2, String fullName, String company,
                     String gender, LocalDate dateOfBirth, String address, String phoneNumber,LocalDate exitDate,
-                    int departmentId, int positionId, int shiftId, int managerId, LocalDate entryDate, String jobTitle
+                    int departmentId, int positionId, int managerId, LocalDate entryDate, String jobTitle
     , String note, EmployeeStatus status) {
         this.employeeId = employeeId;
         this.MSCNID1 = MSCNID1;
@@ -45,7 +44,6 @@ public class Employee {
         this.phoneNumber = phoneNumber;
         this.departmentId = departmentId;
         this.positionId = positionId;
-        this.shiftId = shiftId;
         this.managerId = managerId;
         this.entryDate = entryDate;
         this.jobTitle = jobTitle;
@@ -178,13 +176,6 @@ public class Employee {
         this.positionId = positionId;
     }
 
-    public int getShiftId() {
-        return shiftId;
-    }
-
-    public void setShiftId(int shiftId) {
-        this.shiftId = shiftId;
-    }
 
     public int getManagerId() {
         return managerId;
@@ -208,7 +199,6 @@ public class Employee {
                 ", phoneNumber='" + phoneNumber + '\'' +
                 ", departmentId=" + departmentId +
                 ", positionId=" + positionId +
-                ", shiftId=" + shiftId +
                 ", managerId=" + managerId +
                 '}';
     }

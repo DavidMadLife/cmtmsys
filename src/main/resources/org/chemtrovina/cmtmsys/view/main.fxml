@@ -1,18 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.layout.VBox?>
-
+<?import javafx.scene.control.TabPane?>
 <?import javafx.scene.layout.BorderPane?>
-<?import javafx.scene.layout.AnchorPane?>
+
 <BorderPane fx:id="mainLayout" xmlns:fx="http://javafx.com/fxml" fx:controller="org.chemtrovina.cmtmsys.controller.MainController">
     <top>
         <fx:include source="navbar-feature.fxml" />
     </top>
     <center>
-        <AnchorPane fx:id="mainContentPane" />
+        <TabPane fx:id="mainTabPane" />
     </center>
 </BorderPane>
-

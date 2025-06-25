@@ -24,7 +24,6 @@ public class EmployeeRowMapper implements RowMapper<Employee> {
                 rs.getObject("ExitDate", LocalDate.class),
                 rs.getInt("DepartmentId"),
                 rs.getInt("PositionId"),
-                rs.getInt("ShiftId"),
                 rs.getInt("ManagerId"),
                 rs.getObject("EntryDate", LocalDate.class),
                 rs.getString("JobTitle"),

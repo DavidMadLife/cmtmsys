@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane fx:controller="org.chemtrovina.cmtmsys.controller.ShiftSchedulingController"
+            xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml">
+    <HBox spacing="2" AnchorPane.topAnchor="0" AnchorPane.bottomAnchor="0"
+          AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0">
+
+        <!-- Cột cố định: STT, Mã nhân viên, Họ tên -->
+        <TableView fx:id="tblEmployeeInfo" prefWidth="250">
+            <columns>
+                <TableColumn fx:id="colNo" text="STT" />
+                <TableColumn fx:id="colEmpId" text="Mã NV" />
+                <TableColumn fx:id="colFullName" text="Họ tên" />
+            </columns>
+        </TableView>
+
+        <!-- Cột trượt: phân ca theo ngày -->
+        <ScrollPane fitToHeight="true" fitToWidth="false">
+            <TableView fx:id="tblShiftByDate" prefWidth="1000">
+                <!-- Các cột ngày sẽ được tạo động trong Controller -->
+            </TableView>
+        </ScrollPane>
+
+    </HBox>
+</AnchorPane>
+

@@ -34,7 +34,7 @@
                 <TableColumn fx:id="colSummaryDepartment" text="Bộ phận" />
                 <TableColumn fx:id="colSummaryTotal" text="Tổng" />
                 <TableColumn fx:id="colSummaryCHEM" text="CHEM" />
-                <TableColumn fx:id="colSummaryTV" text="TV" />
+                <TableColumn fx:id="colSummaryTV" />
             </columns>
         </TableView>
 

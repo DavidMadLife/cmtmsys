@@ -1,11 +1,15 @@
 package org.chemtrovina.cmtmsys.dto;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class DepartmentSummaryDto {
     private String department;
     private int total;
     private int chem;
     private int tv;
 
+    private final Map<String, Integer> companyCounts = new HashMap<>();
     public DepartmentSummaryDto(String department) {
         this.department = department;
     }
@@ -37,5 +41,13 @@ public class DepartmentSummaryDto {
             tv++;
         }
         total++;
+    }
+
+    public Map<String, Integer> getCompanyCounts() {
+        return companyCounts;
+    }
+
+    public void addCompany(String company) {
+        companyCounts.merge(company, 1, Integer::sum);
     }
 }

@@ -7,6 +7,7 @@ import javafx.collections.ListChangeListener;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.VBox;
 import org.chemtrovina.cmtmsys.config.DataSourceConfig;
 import org.chemtrovina.cmtmsys.dto.DepartmentSummaryDto;
 import org.chemtrovina.cmtmsys.dto.EmployeeDto;
@@ -23,10 +24,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 
 import javax.sql.DataSource;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class EmployeeManageController {
 
@@ -63,11 +61,11 @@ public class EmployeeManageController {
     //private final ContextMenu departmentFilterMenu = new ContextMenu();
     private final Map<String, CheckBox> departmentCheckItems = new HashMap<>();
     private final List<String> selectedDepartments = new ArrayList<>();
-    /*private final ContextMenu summaryFilterMenu = new ContextMenu();
-    private final Map<String, CheckBox> summaryCheckItems = new HashMap<>();*/
 
     private List<String> selectedCompanies = new ArrayList<>();
 
+    private boolean showCompanyColumns = false;
+    private final List<TableColumn<DepartmentSummaryDto, ?>> dynamicCompanyColumns = new ArrayList<>();
 
 
     private EmployeeService employeeService;
@@ -120,6 +118,22 @@ public class EmployeeManageController {
         colSummaryTotal.setCellValueFactory(cell -> new SimpleIntegerProperty(cell.getValue().getTotal()).asObject());
         colSummaryCHEM.setCellValueFactory(cell -> new SimpleIntegerProperty(cell.getValue().getChem()).asObject());
         colSummaryTV.setCellValueFactory(cell -> new SimpleIntegerProperty(cell.getValue().getTv()).asObject());
+
+        Hyperlink toggleDetailLink = new Hyperlink("Hiện chi tiết");
+        toggleDetailLink.setOnAction(e -> {
+            showCompanyColumns = !showCompanyColumns;
+            toggleDetailLink.setText(showCompanyColumns ? "Ẩn chi tiết" : "Hiện chi tiết");
+
+            // Reload lại bảng để thêm/bỏ cột động
+            loadSummaryTable(tblEmployee.getItems());
+        });
+
+        Label label = new Label("TV");
+        VBox headerBox = new VBox(label, toggleDetailLink);
+        headerBox.setSpacing(2);
+        colSummaryTV.setGraphic(headerBox);
+
+
     }
 
 
@@ -128,10 +142,6 @@ public class EmployeeManageController {
         btnClearFilter.setOnAction(event -> clearFilter());
         tblEmployee.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         tblSummary.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        /*tblSummary.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        tblSummary.getSelectionModel().getSelectedItems().addListener((ListChangeListener<DepartmentSummaryDto>) change -> {
-            filterBySelectedDepartments();
-        });*/
 
 
     }
@@ -313,24 +323,11 @@ public class EmployeeManageController {
     }
 
 
-    /*private void filterEmployeeBySummarySelection() {
-        List<String> selected = summaryCheckItems.entrySet().stream()
-                .filter(e -> e.getValue().isSelected())
-                .map(Map.Entry::getKey)
-                .toList();
-
-        List<EmployeeDto> all = employeeService.getAllEmployeeDtos();
-        List<EmployeeDto> filtered = all.stream()
-                .filter(e -> selected.contains(e.getDepartmentName()))
-                .toList();
-
-        tblEmployee.setItems(FXCollections.observableArrayList(filtered));
-        loadSummaryTable(filtered);
-    }*/
-
     ////////////////////////////////////////////////////////////////////////////////////////////////
+
     private void loadSummaryTable(List<EmployeeDto> employeeList) {
         Map<String, DepartmentSummaryDto> summaryMap = new HashMap<>();
+        Set<String> dynamicCompanies = new HashSet<>();
 
         for (EmployeeDto emp : employeeList) {
             String department = emp.getDepartmentName();
@@ -340,11 +337,40 @@ public class EmployeeManageController {
             boolean isChem = "CHEM".equalsIgnoreCase(company);
             DepartmentSummaryDto summary = summaryMap.computeIfAbsent(department, DepartmentSummaryDto::new);
             summary.add(isChem);
+
+            if (!isChem) {
+                summary.addCompany(company);
+                dynamicCompanies.add(company);
+            }
         }
 
         var summaries = new ArrayList<>(summaryMap.values());
         tblSummary.setItems(FXCollections.observableArrayList(summaries));
-        //setupSummaryFilterMenu(summaries);
+
+        // Xoá cột công ty động cũ (nếu có)
+        tblSummary.getColumns().removeAll(dynamicCompanyColumns);
+        dynamicCompanyColumns.clear();
+
+        // Chỉ thêm nếu đang bật chế độ hiển thị
+        if (showCompanyColumns) {
+            for (String company : dynamicCompanies.stream().sorted().toList()) {
+                TableColumn<DepartmentSummaryDto, Integer> col = new TableColumn<>(company);
+                col.setCellValueFactory(cell -> {
+                    Integer count = cell.getValue().getCompanyCounts().getOrDefault(company, 0);
+                    return new SimpleIntegerProperty(count).asObject();
+                });
+                col.setUserData("dynamic"); // Đánh dấu để dễ xoá
+                dynamicCompanyColumns.add(col);
+            }
+
+            // Thêm vào bên phải colSummaryTV
+            int tvIndex = tblSummary.getColumns().indexOf(colSummaryTV);
+            if (tvIndex >= 0) {
+                tblSummary.getColumns().addAll(tvIndex + 1, dynamicCompanyColumns);
+            } else {
+                tblSummary.getColumns().addAll(dynamicCompanyColumns); // fallback
+            }
+        }
     }
 
 
@@ -372,8 +398,6 @@ public class EmployeeManageController {
         FxFilterUtils.setupFilterMenu(colJobTitle, employees, EmployeeDto::getJobTitle, this::filterGeneral);
         FxFilterUtils.setupFilterMenu(colNote, employees, EmployeeDto::getNote, this::filterGeneral);
         FxFilterUtils.setupFilterMenu(colStatus, employees, EmployeeDto::getStatus, this::filterGeneral);
-
-
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
