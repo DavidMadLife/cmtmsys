@@ -38,6 +38,10 @@ public class ProductServiceImpl implements ProductService {
     public List<Product> getAllProducts() {
         return repository.findAll();
     }
+    @Override
+    public Product getProductByCode(String code) {
+        return repository.getProductByCode(code); // Giả sử bạn đã có hàm này trong repository
+    }
 
 
 }

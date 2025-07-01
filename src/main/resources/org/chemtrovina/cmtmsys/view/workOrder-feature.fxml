@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<AnchorPane prefHeight="700.0" prefWidth="1000.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/23.0.1" fx:controller="org.chemtrovina.cmtmsys.controller.WorkOrderController">
+
+    <VBox spacing="10" AnchorPane.bottomAnchor="10" AnchorPane.leftAnchor="10" AnchorPane.rightAnchor="10" AnchorPane.topAnchor="10">
+        <padding>
+            <Insets bottom="10" left="10" right="10" top="10" />
+        </padding>
+
+        <Label style="-fx-font-size: 18px; -fx-font-weight: bold" text="Bảng tổng hợp nguyên vật liệu theo thành phẩm" />
+
+
+        <HBox spacing="10">
+            <TextField fx:id="txtWorkOrderCode" promptText="Nhập mã Work Order hoặc để trống" />
+            <DatePicker fx:id="dpFrom" promptText="Từ ngày" />
+            <DatePicker fx:id="dpTo" promptText="Đến ngày" />
+            <Button fx:id="btnLoadWorkOrders" text="Lọc Work Orders" />
+            <Button fx:id="btnClearFilter" text="Xóa bộ lọc" />
+            <Button fx:id="btnAddWorkOrder" text="Tạo Work Order" />
+        </HBox>
+
+        <TableView fx:id="tblWorkOrders" prefHeight="150">
+            <columns>
+                <TableColumn fx:id="colWOCode" text="Mã Work Order" />
+                <TableColumn fx:id="colWODesc" text="Mô tả" />
+                <TableColumn fx:id="colWODate" text="Ngày tạo" />
+                <TableColumn fx:id="colWOUpdatedDate" text="Ngày Cập nhật " />
+            </columns>
+        </TableView>
+        <HBox spacing="10">
+            <Button fx:id="btnChooseImportFile" text="Chọn File Excel" />
+            <TextField fx:id="txtImportFileName" editable="false" promptText="Chưa chọn file" />
+            <Button fx:id="btnImportWorkOrder" text="Import Work Order" />
+        </HBox>
+
+
+        <Label style="-fx-font-size: 16px; -fx-font-weight: bold" text="Chi tiết vật tư cần thiết" />
+
+        <ScrollPane fitToHeight="true" fitToWidth="true" VBox.vgrow="ALWAYS">
+            <TableView fx:id="tblMaterialByProduct" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="colNo" minWidth="60" text="NO" />
+                    <TableColumn fx:id="colSappn" minWidth="120" text="Mã Liệu (SAP)" />
+                    <!-- Cột động sẽ được thêm bằng controller -->
+                    <TableColumn fx:id="colLineTotal" minWidth="100" text="Total" />
+                    <TableColumn fx:id="colScanned" minWidth="100" text="Đã Scan" />
+                    <TableColumn fx:id="colRemain" minWidth="100" text="Còn Lại" />
+               <TableColumn fx:id="colActual" minWidth="100" text="Thực tế" />
+               <TableColumn fx:id="colFall" minWidth="100" text="Rơi rớt" />
+               <TableColumn fx:id="colMissing" minWidth="100" text="Thiếu" />
+
+                </columns>
+            </TableView>
+        </ScrollPane>
+
+    </VBox>
+</AnchorPane>

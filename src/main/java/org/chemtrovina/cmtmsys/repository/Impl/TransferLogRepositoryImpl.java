@@ -44,9 +44,10 @@ public class TransferLogRepositoryImpl implements TransferLogRepository {
     public List<TransferLog> search(String sapCode, String barcode, Integer fromWarehouseId, Integer toWarehouseId, LocalDateTime fromDate, LocalDateTime toDate) {
         StringBuilder sql = new StringBuilder(
                 "SELECT tl.* FROM TransferLogs tl " +
-                        "JOIN Materials m ON tl.RollCode = m.RollCode " +
+                        "LEFT JOIN Materials m ON tl.RollCode = m.RollCode " +
                         "WHERE 1=1"
         );
+
         List<Object> params = new ArrayList<>();
 
         if (sapCode != null && !sapCode.isBlank()) {

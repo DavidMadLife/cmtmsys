@@ -16,6 +16,7 @@ public class FxFilterUtils {
             List<T> data,
             Function<T, String> valueExtractor,
             Consumer<List<String>> onApplyFilter
+
     ) {
         ContextMenu filterMenu = new ContextMenu();
         Map<String, CheckBox> checkMap = new HashMap<>();
@@ -74,13 +75,16 @@ public class FxFilterUtils {
         MenuItem applyItem = new MenuItem("✓ Áp dụng lọc");
         applyItem.setStyle("-fx-font-weight: bold;");
         applyItem.setOnAction(e -> {
-            List<String> selected = checkMap.entrySet().stream()
-                    .filter(entry -> entry.getValue().isSelected())
-                    .map(Map.Entry::getKey)
+            List<String> selected = checkboxContainer.getChildren().stream()
+                    .filter(node -> node instanceof CheckBox)
+                    .map(node -> (CheckBox) node)
+                    .filter(CheckBox::isSelected)
+                    .map(CheckBox::getText)
                     .toList();
             onApplyFilter.accept(selected);
             filterMenu.hide();
         });
+
 
         // Thêm vào menu
         filterMenu.getItems().addAll(
@@ -94,6 +98,14 @@ public class FxFilterUtils {
         );
 
         column.setContextMenu(filterMenu);
+
+        // Reset tìm kiếm và hiện lại toàn bộ checkbox khi mở lại filter
+        filterMenu.setOnShowing(e -> {
+            searchField.clear();
+            checkboxContainer.getChildren().clear();
+            values.forEach(v -> checkboxContainer.getChildren().add(checkMap.get(v)));
+        });
+
     }
 
 }

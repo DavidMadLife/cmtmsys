@@ -35,6 +35,9 @@ public class MainController {
 
             Tab tab = new Tab(title, view);
             tab.setClosable(true);
+
+            tab.setOnClosed(e -> FXMLCacheManager.removePage(fxmlPath));
+            tab.setOnClosed(e -> FXMLCacheManager.clearCache());
             mainTabPane.getTabs().add(tab);
             mainTabPane.getSelectionModel().select(tab);
         } catch (Exception ex) {

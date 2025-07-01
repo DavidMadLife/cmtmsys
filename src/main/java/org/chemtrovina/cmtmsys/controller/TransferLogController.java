@@ -1,5 +1,6 @@
 package org.chemtrovina.cmtmsys.controller;
 
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -25,11 +26,13 @@ import org.chemtrovina.cmtmsys.service.base.TransferLogService;
 import org.chemtrovina.cmtmsys.service.base.WarehouseService;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class TransferLogController {
 
     @FXML private TableView<TransferLogDto> tblTransferLogs;
+    @FXML private TableColumn<TransferLogDto, Integer> colNo;
     @FXML private TableColumn<TransferLogDto, String> colBarcode;
     @FXML private TableColumn<TransferLogDto, String> colFromWarehouse;
     @FXML private TableColumn<TransferLogDto, String> colToWarehouse;
@@ -51,12 +54,13 @@ public class TransferLogController {
     private WarehouseService warehouseService;
     private MaterialService materialService;
 
+    private List<TransferLogDto> allLogs = new ArrayList<>();
+
     @FXML
     public void initialize() {
         setupServices();
         setupTable();
         setupSearch();
-        loadData();
         tblTransferLogs.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         setupActions();
 
@@ -87,6 +91,9 @@ public class TransferLogController {
     }
 
     private void setupTable() {
+        colNo.setCellValueFactory(cell ->
+                new SimpleIntegerProperty(tblTransferLogs.getItems().indexOf(cell.getValue()) + 1).asObject()
+        );
         colBarcode.setCellValueFactory(new PropertyValueFactory<>("barcode"));
         colFromWarehouse.setCellValueFactory(new PropertyValueFactory<>("fromWarehouse"));
         colToWarehouse.setCellValueFactory(new PropertyValueFactory<>("toWarehouse"));
@@ -138,42 +145,32 @@ public class TransferLogController {
                 }
             }
         });
-        onSearch();
+        //onSearch();
 
         // Gắn nút tìm kiếm
-        btnSearch.setOnAction(e -> onSearch());
+        //btnSearch.setOnAction(e -> onSearch());
     }
-
-
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     private void loadData() {
-        List<TransferLogDto> logs = transferLogService.getAllTransferLogDtos();
-        tblTransferLogs.setItems(FXCollections.observableArrayList(logs));
-    }
-
-    private void onSearch() {
-        String sapCode = txtSapCode.getText();
-        String barcode = txtBarcode.getText();
-        Integer fromWarehouseId = cbFromWarehouse.getValue() != null ? cbFromWarehouse.getValue().getWarehouseId() : null;
-        Integer toWarehouseId = cbToWarehouse.getValue() != null ? cbToWarehouse.getValue().getWarehouseId() : null;
-        var fromDate = dpFromDate.getValue() != null ? dpFromDate.getValue().atStartOfDay() : null;
-        var toDate = dpToDate.getValue() != null ? dpToDate.getValue().atTime(23, 59, 59) : null;
-
-        var logs = transferLogService.searchTransfers(sapCode, barcode, fromWarehouseId, toWarehouseId, fromDate, toDate);
-
+        var rawLogs = transferLogService.getAllTransfers(); // Bạn cần thêm hàm này để lấy TransferLog (entity), không DTO
+        var allMaterials = materialService.getAllMaterials();   // 1 lần duy nhất
         var warehouseMap = warehouseService.getAllWarehouses().stream()
                 .collect(java.util.stream.Collectors.toMap(
                         Warehouse::getWarehouseId, Warehouse::getName
                 ));
 
+        var materialMap = allMaterials.stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        m -> m.getRollCode(), m -> m
+                ));
+
         var formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
-        var dtos = logs.stream().map(log -> {
-            var material = materialService.getMaterialByRollCode(log.getRollCode());
+        allLogs = rawLogs.stream().map(log -> {
+            var material = materialMap.getOrDefault(log.getRollCode(), null);
             String spec = material != null ? material.getSpec() : "N/A";
             String sap = material != null ? material.getSapCode() : "N/A";
-
             return new TransferLogDto(
                     log.getRollCode(),
                     warehouseMap.getOrDefault(log.getFromWarehouseId(), "Unknown"),
@@ -185,8 +182,42 @@ public class TransferLogController {
             );
         }).toList();
 
-        tblTransferLogs.setItems(FXCollections.observableArrayList(dtos));
+        tblTransferLogs.setItems(FXCollections.observableArrayList(allLogs));
     }
+
+    private void onSearch() {
+        String sapCode = txtSapCode.getText().toLowerCase().trim();
+        String barcode = txtBarcode.getText().toLowerCase().trim();
+        String from = cbFromWarehouse.getValue() != null ? cbFromWarehouse.getValue().getName() : null;
+        String to = cbToWarehouse.getValue() != null ? cbToWarehouse.getValue().getName() : null;
+        var fromDate = dpFromDate.getValue();
+        var toDate = dpToDate.getValue();
+
+        if (sapCode.isEmpty() && barcode.isEmpty() && from == null && to == null && fromDate == null && toDate == null) {
+            loadData();
+            return;
+        }
+
+        var filtered = allLogs.stream()
+                .filter(log -> sapCode.isEmpty() || log.getSapCode().toLowerCase().contains(sapCode))
+                .filter(log -> barcode.isEmpty() || log.getBarcode().toLowerCase().contains(barcode))
+                .filter(log -> from == null || log.getFromWarehouse().equals(from))
+                .filter(log -> to == null || log.getToWarehouse().equals(to))
+                .filter(log -> {
+                    // nếu không lọc theo ngày
+                    if (fromDate == null && toDate == null) return true;
+
+                    var logDate = java.time.LocalDateTime.parse(log.getFormattedTime(), java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")).toLocalDate();
+                    boolean ok = true;
+                    if (fromDate != null) ok &= !logDate.isBefore(fromDate);
+                    if (toDate != null) ok &= !logDate.isAfter(toDate);
+                    return ok;
+                })
+                .toList();
+
+        tblTransferLogs.setItems(FXCollections.observableArrayList(filtered));
+    }
+
 
     private void clearFilters() {
         txtSapCode.clear();
@@ -195,7 +226,9 @@ public class TransferLogController {
         cbToWarehouse.getSelectionModel().clearSelection();
         dpFromDate.setValue(null);
         dpToDate.setValue(null);
-        onSearch();
+        //onSearch();
+        tblTransferLogs.setItems(FXCollections.emptyObservableList());
+
     }
 
     private void copySelectionToClipboard() {

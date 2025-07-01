@@ -10,6 +10,8 @@ public interface ProductRepository {
     void deleteById(int productId);
     Product findById(int productId);
     List<Product> findAll();
+    Product getProductByCode(String code);
+
 
 
 }

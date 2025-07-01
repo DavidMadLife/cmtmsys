@@ -27,6 +27,7 @@
 
         <TableView fx:id="tblTransferLogs" prefHeight="450">
             <columns>
+                <TableColumn fx:id="colNo" text="NO" minWidth="60"/>
                 <TableColumn fx:id="colSapCode" text="Sap Code"/>
                 <TableColumn fx:id="colSpec" text="SPEC"/>
                 <TableColumn fx:id="colBarcode" text="Mã Barcode"/>
@@ -35,6 +36,7 @@
                 <TableColumn fx:id="colTransferTime" text="Thời gian chuyển"/>
                 <TableColumn fx:id="colEmployeeId" text="Người chuyển"/>
             </columns>
+
         </TableView>
 
     </VBox>

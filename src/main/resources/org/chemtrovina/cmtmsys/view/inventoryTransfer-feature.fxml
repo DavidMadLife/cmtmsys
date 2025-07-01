@@ -10,49 +10,66 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<AnchorPane prefHeight="600.0" prefWidth="900.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.chemtrovina.cmtmsys.controller.InventoryTransferController">
+<AnchorPane prefHeight="650.0" prefWidth="1000.0"
+            xmlns="http://javafx.com/javafx/23.0.1"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="org.chemtrovina.cmtmsys.controller.InventoryTransferController">
 
-    <HBox spacing="10" AnchorPane.bottomAnchor="10.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="10.0">
+    <VBox spacing="12" AnchorPane.topAnchor="10" AnchorPane.bottomAnchor="10" AnchorPane.leftAnchor="10" AnchorPane.rightAnchor="10">
+        <!-- Top Filters -->
+        <HBox spacing="15">
+            <Label text="Nhân viên:" />
+            <TextField fx:id="txtEmployeeID" prefWidth="100" />
 
-        <!-- LEFT SIDE: Input Fields -->
-        <VBox prefWidth="300" spacing="8">
-            <Label text="ID" />
-            <TextField fx:id="txtEmployeeID" />
+            <Label text="Work Order:" />
+            <ComboBox fx:id="cbWorkOrder" prefWidth="160" />
 
-            <Label text="Kho hiện tại" />
-            <ComboBox fx:id="cbSourceWarehouse" prefWidth="200" />
+            <Label text="Từ kho:" />
+            <ComboBox fx:id="cbSourceWarehouse" prefWidth="120" />
 
-            <Label text="Kho chuyển đến" />
-            <ComboBox fx:id="cbTargetWarehouse" prefWidth="200" />
+            <Label text="Tới kho:" />
+            <ComboBox fx:id="cbTargetWarehouse" prefWidth="120" />
+        </HBox>
 
-            <Label text="Số mã vạch" />
-            <TextField fx:id="txtBarcode" />
-
-            <Label text="Mã SAP" />
-            <TextField fx:id="txtSapCode" editable="false" style="-fx-background-color: #D3D3D3;" />
-
-            <Label text="Spec" />
-            <TextField fx:id="txtSpec" editable="false" style="-fx-background-color: #D3D3D3;" />
-
-            <Label text="Số lượng" />
-            <TextField fx:id="txtQuantity" editable="false" style="-fx-background-color: #D3D3D3;" />
-
+        <!-- Scan Area -->
+        <HBox spacing="15">
+            <Label text="Quét Barcode:" />
+            <TextField fx:id="txtBarcode" prefWidth="200" />
             <Button fx:id="btnTransfer" text="Chuyển kho" />
+        </HBox>
+
+        <!-- Table: SAP Status Overview -->
+        <VBox spacing="6" VBox.vgrow="ALWAYS">
+            <Label text="Chi tiết vật liệu theo W/O" style="-fx-font-weight: bold" />
+            <TableView fx:id="tblRequiredSummary" prefHeight="200">
+                <columns>
+                    <TableColumn fx:id="colNoRequired" text="NO" />
+                    <TableColumn fx:id="colSapCodeRequired" text="SAP Code" />
+                    <TableColumn fx:id="colRequired" text="Yêu cầu" />
+                    <TableColumn fx:id="colScanned" text="Đã quét" />
+                    <TableColumn fx:id="colStatus" text="Trạng thái" />
+                </columns>
+            </TableView>
         </VBox>
 
-        <!-- RIGHT SIDE: Transferred Materials Table -->
-        <VBox spacing="6" HBox.hgrow="ALWAYS">
-            <Label alignment="CENTER" text="Danh sách đã chuyển" />
-            <TableView fx:id="tblTransferred" prefWidth="600">
+        <Button fx:id="btnImportFromExcel" text="Import từ Excel"/>
+
+
+
+        <!-- Table: Transfer Log -->
+        <VBox spacing="6" VBox.vgrow="ALWAYS">
+            <Label text="Danh sách đã chuyển" style="-fx-font-weight: bold" />
+            <TableView fx:id="tblTransferred">
                 <columns>
+                    <TableColumn fx:id="colNoTransferred" text="NO" />
                     <TableColumn fx:id="colBarcode" text="Barcode" />
                     <TableColumn fx:id="colSapCode" text="SAP Code" />
                     <TableColumn fx:id="colSpec" text="Spec" />
-                    <TableColumn fx:id="colQuantity" text="Qty" />
+                    <TableColumn fx:id="colQuantity" text="Số lượng" />
                     <TableColumn fx:id="colFromWarehouse" text="Từ kho" />
                     <TableColumn fx:id="colToWarehouse" text="Tới kho" />
                 </columns>
             </TableView>
         </VBox>
-    </HBox>
+    </VBox>
 </AnchorPane>

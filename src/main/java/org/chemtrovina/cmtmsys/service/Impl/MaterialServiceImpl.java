@@ -101,6 +101,7 @@ public class MaterialServiceImpl implements MaterialService {
                     .findFirst()
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy kho SMT W/H"));
 
+            int processedCount = 0;
             for (Row row : sheet) {
                 if (row.getRowNum() == 0) continue; // Bỏ qua dòng header
 
@@ -133,7 +134,11 @@ public class MaterialServiceImpl implements MaterialService {
                     );
                     materialRepository.add(material);
                 }
+
+                processedCount++;
             }
+
+            System.out.println("Đã import " + processedCount + " dòng dữ liệu.");
         } catch (IOException e) {
             throw new RuntimeException("Không thể đọc file Excel", e);
         }
@@ -146,6 +151,7 @@ public class MaterialServiceImpl implements MaterialService {
         Map<Integer, String> warehouseMap = warehouseService.getAllWarehouses().stream()
                 .collect(Collectors.toMap(Warehouse::getWarehouseId, Warehouse::getName));
 
+
         return materials.stream().map(m -> new MaterialDto(
                 m.getSapCode(),
                 m.getRollCode(),
@@ -155,6 +161,8 @@ public class MaterialServiceImpl implements MaterialService {
                 m.getCreatedAt(),
                 m.getEmployeeId()
         )).toList();
+
+
     }
 
 

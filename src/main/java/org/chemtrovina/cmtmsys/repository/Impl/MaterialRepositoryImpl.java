@@ -26,16 +26,18 @@ public class MaterialRepositoryImpl implements MaterialRepository {
 
     @Override
     public void update(Material material) {
-        String sql = "UPDATE Materials SET SapCode = ?, Quantity = ?, Spec = ?, EmployeeID = ? WHERE MaterialID = ?";
+        String sql = "UPDATE Materials SET SapCode = ?, Quantity = ?, Spec = ?, EmployeeID = ?, WarehouseID = ? WHERE MaterialID = ?";
         jdbcTemplate.update(
                 sql,
                 material.getSapCode(),
                 material.getQuantity(),
                 material.getSpec(),
                 material.getEmployeeId(),
+                material.getWarehouseId(),
                 material.getMaterialId()
         );
     }
+
 
 
     @Override
@@ -55,6 +57,7 @@ public class MaterialRepositoryImpl implements MaterialRepository {
     public Material findByRollCode(String rollCode) {
         String sql = "SELECT * FROM Materials WHERE RollCode = ?";
         List<Material> results = jdbcTemplate.query(sql, new MaterialRowMapper(), rollCode);
+        System.out.println(">>> DEBUG: Executing query with RollCode = " + rollCode);
         return results.isEmpty() ? null : results.get(0);
     }
 

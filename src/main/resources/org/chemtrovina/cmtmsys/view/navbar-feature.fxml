@@ -36,6 +36,7 @@
                 <MenuItem fx:id="menuInventoryTransfer" text="Transfer Inventory" />
                 <MenuItem fx:id="menuTransferLog" text="Transfer Log" />
                 <MenuItem fx:id="menuProduct" text="Product" />
+                <MenuItem fx:id="menuWorkOrder" text="W/O" />
             </items>
         </MenuButton>
 

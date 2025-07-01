@@ -24,6 +24,12 @@
             <TextField fx:id="txtProductCode" prefWidth="200" />
             <Button fx:id="btnLoad" text="Tải dữ liệu" />
         </HBox>
+        <HBox spacing="10">
+            <Button fx:id="btnChooseFile" text="Choose File" />
+            <TextField fx:id="txtFileName" promptText="No file chosen" editable="false" />
+            <Button fx:id="btnImport" text="Import" />
+        </HBox>
+
 
         <Label style="-fx-font-size: 14px;" text="Danh sách mã liệu sử dụng (BOM):" />
 

@@ -45,6 +45,7 @@
         <!-- Bảng dữ liệu tồn kho -->
         <TableView fx:id="tblMaterials" prefHeight="500">
             <columns>
+                <TableColumn fx:id="colNo" text="NO" />
                 <TableColumn fx:id="colSapCode" text="Mã SAP" />
                 <TableColumn fx:id="colSpec" text="SPEC" />
                 <TableColumn fx:id="colRollCode" text="Barcode" />

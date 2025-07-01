@@ -11,6 +11,10 @@ public class TransferLog {
     private String note;
     private String employeeId;
 
+    public TransferLog() {
+
+    }
+
     public TransferLog(int transferId, String rollCode, int fromWarehouseId, int toWarehouseId,
                        LocalDateTime transferDate, String note, String employeeId) {
         this.transferId = transferId;

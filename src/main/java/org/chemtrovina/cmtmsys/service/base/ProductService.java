@@ -10,5 +10,7 @@ public interface ProductService {
     void deleteProductById(int id);
     Product getProductById(int id);
     List<Product> getAllProducts();
+    Product getProductByCode(String code);
+
 
 }

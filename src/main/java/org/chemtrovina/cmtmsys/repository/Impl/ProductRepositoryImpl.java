@@ -18,7 +18,7 @@ public class ProductRepositoryImpl implements ProductRepository {
     }
 
     public void add(Product product) {
-        String sql = "INSERT INTO Product (ProductCode, Description, CreatedDate, UpdatedDate) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO Products (ProductCode, Description, CreatedDate, UpdatedDate) VALUES (?, ?, ?, ?)";
         LocalDateTime now = LocalDateTime.now();
         jdbcTemplate.update(sql,
                 product.getProductCode(),
@@ -29,7 +29,7 @@ public class ProductRepositoryImpl implements ProductRepository {
     }
 
     public void update(Product product) {
-        String sql = "UPDATE Product SET ProductCode = ?, Description = ?, UpdatedDate = ? WHERE ProductID = ?";
+        String sql = "UPDATE Products SET ProductCode = ?, Description = ?, UpdatedDate = ? WHERE ProductID = ?";
         jdbcTemplate.update(sql,
                 product.getProductCode(),
                 product.getDescription(),
@@ -39,18 +39,29 @@ public class ProductRepositoryImpl implements ProductRepository {
     }
 
     public void deleteById(int productId) {
-        String sql = "DELETE FROM Product WHERE ProductID = ?";
+        String sql = "DELETE FROM Products WHERE ProductID = ?";
         jdbcTemplate.update(sql, productId);
     }
 
     public Product findById(int productId) {
-        String sql = "SELECT * FROM Product WHERE ProductID = ?";
+        String sql = "SELECT * FROM Products WHERE ProductID = ?";
         List<Product> results = jdbcTemplate.query(sql, new ProductRowMapper(), productId);
         return results.isEmpty() ? null : results.get(0);
     }
 
     public List<Product> findAll() {
-        String sql = "SELECT * FROM Product ORDER BY ProductID";
+        String sql = "SELECT * FROM Products ORDER BY ProductID";
         return jdbcTemplate.query(sql, new ProductRowMapper());
     }
+
+    @Override
+    public Product getProductByCode(String code) {
+        List<Product> result = jdbcTemplate.query(
+                "SELECT * FROM Products WHERE productCode = ?",
+                new Object[]{code},
+                new ProductRowMapper()
+        );
+        return result.isEmpty() ? null : result.get(0);
+    }
+
 }

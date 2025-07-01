@@ -17,6 +17,7 @@ public class NavbarController {
     @FXML private MenuItem menuInventoryTransfer;
     @FXML private MenuItem menuTransferLog;
     @FXML private MenuItem menuProduct;
+    @FXML private MenuItem menuWorkOrder;
 
     @FXML
     public void initialize() {
@@ -32,6 +33,7 @@ public class NavbarController {
         menuInventoryTransfer.setOnAction(e -> openTab("Inventory Transfer", "/org/chemtrovina/cmtmsys/view/inventoryTransfer-feature.fxml"));
         menuTransferLog.setOnAction(e -> openTab("Transfer Log", "/org/chemtrovina/cmtmsys/view/transferLog-feature.fxml"));
         menuProduct.setOnAction(e -> openTab("Product", "/org/chemtrovina/cmtmsys/view/product-feature.fxml"));
+        menuWorkOrder.setOnAction(e -> openTab("W/O", "/org/chemtrovina/cmtmsys/view/workOrder-feature.fxml"));
     }
 
     private void openTab(String title, String fxmlPath) {

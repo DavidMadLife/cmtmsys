@@ -1,5 +1,6 @@
 package org.chemtrovina.cmtmsys.controller;
 
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -25,6 +26,7 @@ import org.chemtrovina.cmtmsys.service.Impl.WarehouseServiceImpl;
 import org.chemtrovina.cmtmsys.service.base.MaterialService;
 import org.chemtrovina.cmtmsys.service.base.TransferLogService;
 import org.chemtrovina.cmtmsys.service.base.WarehouseService;
+import org.chemtrovina.cmtmsys.utils.FxFilterUtils;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.io.File;
@@ -38,6 +40,7 @@ import java.util.stream.Collectors;
 public class InventoryCheckController {
 
     @FXML private TableView<MaterialDto> tblMaterials;
+    @FXML private TableColumn<MaterialDto, Integer> colNo;
     @FXML private TableColumn<MaterialDto, String> colSapCode;
     @FXML private TableColumn<MaterialDto, String> colSpec;
     @FXML private TableColumn<MaterialDto, String> colRollCode;
@@ -56,9 +59,6 @@ public class InventoryCheckController {
     @FXML private Button btnSearch;
     @FXML private Button btnClear;
 
-
-
-
     private File selectedFile;
 
 
@@ -70,7 +70,7 @@ public class InventoryCheckController {
     public void initialize() {
         setupServices();
         setupTable();
-        loadData();
+        //loadData();
         setupFileImport();
         setupSearch();
         tblMaterials.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
@@ -94,6 +94,10 @@ public class InventoryCheckController {
 
 
     private void setupTable() {
+        colNo.setCellValueFactory(cellData ->
+                new SimpleIntegerProperty(tblMaterials.getItems().indexOf(cellData.getValue()) + 1).asObject()
+        );
+
         colSapCode.setCellValueFactory(new PropertyValueFactory<>("sapCode"));
         colRollCode.setCellValueFactory(new PropertyValueFactory<>("rollCode"));
         colQuantity.setCellValueFactory(new PropertyValueFactory<>("quantity"));
@@ -139,11 +143,14 @@ public class InventoryCheckController {
             });
         });
     }
+
+
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     private void loadData() {
         List<MaterialDto> dtos = materialService.getAllMaterialDtos();
         tblMaterials.setItems(FXCollections.observableArrayList(dtos));
+        //setupFilterMenus(dtos);
     }
 
     private void importFromExcelFile(File file, String employeeId) {
@@ -180,9 +187,6 @@ public class InventoryCheckController {
         });
 
         btnSearch.setOnAction(e -> onSearch());
-
-        // Gọi lần đầu nếu muốn load theo filter mặc định
-        onSearch();
         setupCopyAction();
 
     }
@@ -204,6 +208,7 @@ public class InventoryCheckController {
                 warehouseId
         );
         tblMaterials.setItems(FXCollections.observableArrayList(filtered));
+        //setupFilterMenus(filtered);
     }
 
     private void setupCopyAction() {
@@ -255,7 +260,8 @@ public class InventoryCheckController {
         cbWarehouses.getSelectionModel().clearSelection();
         dpFromDate.setValue(null);
         dpToDate.setValue(null);
-        onSearch();
+        //onSearch();
+        tblMaterials.setItems(FXCollections.emptyObservableList());
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -266,4 +272,41 @@ public class InventoryCheckController {
         alert.setContentText(content);
         alert.showAndWait();
     }
+
+    private void applyGeneralFilter(List<String> selectedValues) {
+        List<MaterialDto> all = materialService.getAllMaterialDtos();
+        List<MaterialDto> filtered = all.stream()
+                .filter(m ->
+                        selectedValues.contains(m.getSapCode()) ||
+                                selectedValues.contains(m.getSpec()) ||
+                                selectedValues.contains(m.getRollCode()) ||
+                                selectedValues.contains(String.valueOf(m.getQuantity())) ||
+                                selectedValues.contains(m.getWarehouseName()) ||
+                                selectedValues.contains(String.valueOf(m.getCreatedAt())) ||
+                                selectedValues.contains(m.getEmployeeId())
+                )
+                .collect(Collectors.toList());
+
+        tblMaterials.setItems(FXCollections.observableArrayList(filtered));
+    }
+
+    private void setupFilterMenus(List<MaterialDto> data) {
+        // Dọn context menu cũ (nếu có)
+        colSapCode.setContextMenu(null);
+        colSpec.setContextMenu(null);
+        colRollCode.setContextMenu(null);
+        colWarehouse.setContextMenu(null);
+        colEmployeeId.setContextMenu(null);
+
+        // Setup lại filter menu
+        FxFilterUtils.setupFilterMenu(colSapCode, data, MaterialDto::getSapCode, this::applyGeneralFilter);
+        FxFilterUtils.setupFilterMenu(colSpec, data, MaterialDto::getSpec, this::applyGeneralFilter);
+        FxFilterUtils.setupFilterMenu(colRollCode, data, MaterialDto::getRollCode, this::applyGeneralFilter);
+        FxFilterUtils.setupFilterMenu(colWarehouse, data, MaterialDto::getWarehouseName, this::applyGeneralFilter);
+        FxFilterUtils.setupFilterMenu(colEmployeeId, data, MaterialDto::getEmployeeId, this::applyGeneralFilter);
+    }
+
+
+
+
 }

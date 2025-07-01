@@ -23,6 +23,11 @@ public class App extends  javafx.application.Application {
                 App.class.getResourceAsStream("asserts/logo.png")
         ));
         stage.setScene(scene);
+
+        stage.setOnCloseRequest(event -> {
+            System.exit(0);
+        });
+
         stage.show();
 
     }
