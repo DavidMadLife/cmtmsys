@@ -4,9 +4,11 @@ import org.chemtrovina.cmtmsys.model.ShiftChem;
 import org.chemtrovina.cmtmsys.repository.RowMapper.ShiftChemRowMapper;
 import org.chemtrovina.cmtmsys.repository.base.ShiftChemRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+@Repository
 public class ShiftChemRepositoryImpl implements ShiftChemRepository {
 
     private final JdbcTemplate jdbcTemplate;

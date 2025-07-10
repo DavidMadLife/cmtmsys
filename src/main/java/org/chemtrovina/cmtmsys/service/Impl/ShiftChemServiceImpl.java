@@ -3,9 +3,11 @@ package org.chemtrovina.cmtmsys.service.Impl;
 import org.chemtrovina.cmtmsys.model.ShiftChem;
 import org.chemtrovina.cmtmsys.repository.base.ShiftChemRepository;
 import org.chemtrovina.cmtmsys.service.base.ShiftChemService;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Service
 public class ShiftChemServiceImpl implements ShiftChemService {
 
     private final ShiftChemRepository shiftChemRepository;

@@ -3,9 +3,11 @@ package org.chemtrovina.cmtmsys.service.Impl;
 import org.chemtrovina.cmtmsys.model.WorkOrderItem;
 import org.chemtrovina.cmtmsys.repository.base.WorkOrderItemRepository;
 import org.chemtrovina.cmtmsys.service.base.WorkOrderItemService;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Service
 public class WorkOrderItemServiceImpl implements WorkOrderItemService {
 
     private final WorkOrderItemRepository repository;

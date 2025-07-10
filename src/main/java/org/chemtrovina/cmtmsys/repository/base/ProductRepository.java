@@ -1,8 +1,10 @@
 package org.chemtrovina.cmtmsys.repository.base;
 
 import org.chemtrovina.cmtmsys.model.Product;
+import org.chemtrovina.cmtmsys.model.enums.ModelType;
 
 import java.util.List;
+
 
 public interface ProductRepository {
     void add(Product product);
@@ -11,6 +13,12 @@ public interface ProductRepository {
     Product findById(int productId);
     List<Product> findAll();
     Product getProductByCode(String code);
+    boolean checkProductExists(String productCode);
+
+    Product findByCodeAndModelType(String productCode, ModelType modelType);
+
+    void updateProduct(Product product);
+    void deleteProductWithBOM(int productId);
 
 
 

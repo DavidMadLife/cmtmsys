@@ -5,6 +5,7 @@ public class SAPSummaryDto {
     private int required;
     private int scanned;
     private String status;
+    private int actualReturned;
 
     public SAPSummaryDto(String sapCode, int required) {
         this.sapCode = sapCode;
@@ -21,6 +22,14 @@ public class SAPSummaryDto {
     public void setRequired(int required) { this.required = required; }
     public void setScanned(int scanned) { this.scanned = scanned; }
     public void setStatus(String status) { this.status = status; }
+
+    public int getActualReturned() {
+        return actualReturned;
+    }
+
+    public void setActualReturned(int actualReturned) {
+        this.actualReturned = actualReturned;
+    }
 
     public void incrementScanned(int qty) {
         this.scanned += qty;

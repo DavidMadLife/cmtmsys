@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<VBox spacing="15" alignment="CENTER" xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml" fx:controller="org.chemtrovina.cmtmsys.controller.LoginController">
+    <padding>
+        <Insets top="40" right="40" bottom="40" left="40"/>
+    </padding>
+
+    <Label text="Đăng nhập hệ thống" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
+
+    <TextField fx:id="txtUsername" promptText="Tên đăng nhập" maxWidth="200"/>
+    <PasswordField fx:id="txtPassword" promptText="Mật khẩu" maxWidth="200"/>
+
+    <Button fx:id="btnLogin" text="Đăng nhập" maxWidth="200"/>
+
+    <Label fx:id="lblError" textFill="red" visible="false"/>
+
+</VBox>

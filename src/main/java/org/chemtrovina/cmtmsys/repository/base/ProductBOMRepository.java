@@ -10,5 +10,5 @@ public interface ProductBOMRepository {
     void update(ProductBOM bom);
     void deleteByProductId(int productId);
     List<ProductBOM> findByProductId(int productId);
-    List<ProductBOM> findByProductCode(String productCode);
+    List<ProductBomDto> findBomDtoByProductCode(String productCode);
 }

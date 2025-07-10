@@ -10,12 +10,14 @@ import org.chemtrovina.cmtmsys.repository.base.InvoiceRepository;
 import org.chemtrovina.cmtmsys.repository.base.MOQRepository;
 import org.chemtrovina.cmtmsys.service.base.HistoryService;
 import org.chemtrovina.cmtmsys.service.base.InvoiceDetailService;
+import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Service
 public class HistoryServiceImpl implements HistoryService {
     private final HistoryRepository historyRepository;
     private final MOQRepository moqRepository;

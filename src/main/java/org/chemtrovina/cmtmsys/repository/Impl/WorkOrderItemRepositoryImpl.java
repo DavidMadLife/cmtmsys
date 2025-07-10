@@ -4,11 +4,13 @@ import org.chemtrovina.cmtmsys.model.WorkOrderItem;
 import org.chemtrovina.cmtmsys.repository.RowMapper.WorkOrderItemRowMapper;
 import org.chemtrovina.cmtmsys.repository.base.WorkOrderItemRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Repository
 public class WorkOrderItemRepositoryImpl implements WorkOrderItemRepository {
 
     private final JdbcTemplate jdbcTemplate;

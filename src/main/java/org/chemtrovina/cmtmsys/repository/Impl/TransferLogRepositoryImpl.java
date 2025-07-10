@@ -4,11 +4,13 @@ import org.chemtrovina.cmtmsys.model.TransferLog;
 import org.chemtrovina.cmtmsys.repository.RowMapper.TransferLogRowMapper;
 import org.chemtrovina.cmtmsys.repository.base.TransferLogRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+@Repository
 public class TransferLogRepositoryImpl implements TransferLogRepository {
 
     private final JdbcTemplate jdbcTemplate;

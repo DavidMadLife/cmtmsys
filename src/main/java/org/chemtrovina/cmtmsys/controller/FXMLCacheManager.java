@@ -3,6 +3,7 @@ package org.chemtrovina.cmtmsys.controller;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import org.chemtrovina.cmtmsys.model.FxmlPage;
+import org.chemtrovina.cmtmsys.utils.SpringFXMLLoader;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -15,7 +16,7 @@ public class FXMLCacheManager {
         if (cache.containsKey(fxmlPath)) {
             return cache.get(fxmlPath);
         } else {
-            FXMLLoader loader = new FXMLLoader(FXMLCacheManager.class.getResource(fxmlPath));
+            FXMLLoader loader = SpringFXMLLoader.load(FXMLCacheManager.class.getResource(fxmlPath));
             Parent view = loader.load();
             Object controller = loader.getController();
             FxmlPage page = new FxmlPage(view, controller);

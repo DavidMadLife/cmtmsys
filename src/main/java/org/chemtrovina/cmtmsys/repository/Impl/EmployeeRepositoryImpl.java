@@ -7,10 +7,12 @@ import org.chemtrovina.cmtmsys.repository.RowMapper.EmployeeRowMapper;
 import org.chemtrovina.cmtmsys.repository.base.EmployeeRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
 
+@Repository
 public class EmployeeRepositoryImpl extends GenericRepositoryImpl<Employee> implements EmployeeRepository {
 
     public EmployeeRepositoryImpl(JdbcTemplate jdbcTemplate) {

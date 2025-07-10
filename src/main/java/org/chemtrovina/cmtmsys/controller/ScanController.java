@@ -38,6 +38,7 @@ import org.chemtrovina.cmtmsys.service.base.InvoiceDetailService;
 import org.chemtrovina.cmtmsys.service.base.InvoiceService;
 import org.chemtrovina.cmtmsys.service.base.MOQService;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
 import java.time.LocalDate;
@@ -49,7 +50,7 @@ import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-
+@Component
 public class ScanController {
 
     // ======================== FXML COMPONENTS ========================
@@ -79,10 +80,18 @@ public class ScanController {
 
 
     // ======================== SERVICES ========================
-    private InvoiceService invoiceService;
-    private MOQService moqService;
-    private HistoryService historyService;
-    private InvoiceDetailService invoiceDetailService;
+    private final InvoiceService invoiceService;
+    private final MOQService moqService;
+    private final HistoryService historyService;
+    private final InvoiceDetailService invoiceDetailService;
+
+    public ScanController(InvoiceService invoiceService, MOQService moqService, HistoryService historyService, InvoiceDetailService invoiceDetailService) {
+        this.invoiceService = invoiceService;
+        this.moqService = moqService;
+        this.historyService = historyService;
+        this.invoiceDetailService = invoiceDetailService;
+    }
+
 
     // ======================== VARIABLES ========================
     private boolean isScanEnabled = false;
@@ -97,7 +106,6 @@ public class ScanController {
     // ======================== INIT ========================
     @FXML
     public void initialize() {
-        setupServices();
         setupTableColumns();
         setupInvoiceComboBox();
         setupScanInputHandlers();
@@ -120,25 +128,6 @@ public class ScanController {
                 openSearchDialog();
             }
         });
-    }
-
-    private void setupServices() {
-        DataSource dataSource = DataSourceConfig.getDataSource();
-        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-
-        InvoiceRepository invoiceRepository = new InvoiceRepositoryImpl(jdbcTemplate);
-        invoiceService = new InvoiceServiceImpl(invoiceRepository);
-
-        MOQRepository moqRepository = new MOQRepositoryImpl(jdbcTemplate);
-        moqService = new MOQServiceImpl(moqRepository);
-
-        InvoiceDetailRepository invoiceDetailRepository = new InvoiceDetailRepositoryImpl(jdbcTemplate);
-        invoiceDetailService = new InvoiceDetailServiceImpl(invoiceDetailRepository);
-
-        HistoryRepository historyRepository = new HistoryRepositoryImpl(jdbcTemplate);
-        historyService = new HistoryServiceImpl(historyRepository, moqRepository, invoiceRepository);
-
-
     }
 
     private void setupTableColumns(){

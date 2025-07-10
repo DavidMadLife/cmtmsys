@@ -5,10 +5,13 @@ import org.chemtrovina.cmtmsys.model.WarehouseTransferDetail;
 import org.chemtrovina.cmtmsys.repository.base.WarehouseTransferDetailRepository;
 import org.chemtrovina.cmtmsys.repository.base.WarehouseTransferRepository;
 import org.chemtrovina.cmtmsys.service.base.WarehouseTransferService;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
 
+
+@Service
 public class WarehouseTransferServiceImpl implements WarehouseTransferService {
 
     private final WarehouseTransferRepository transferRepository;
@@ -61,6 +64,16 @@ public class WarehouseTransferServiceImpl implements WarehouseTransferService {
     @Override
     public Map<String, Integer> getScannedQuantitiesByWO(int workOrderId) {
         return transferRepository.getScannedQuantitiesByWO(workOrderId);
+    }
+
+    @Override
+    public Map<String, Integer> getActualReturnedByWorkOrderId(int workOrderId) {
+        return transferRepository.getActualReturnedByWorkOrderId(workOrderId);
+    }
+
+    @Override
+    public int getFromWarehouseIdByTransferId(int transferId) {
+        return transferRepository.getFromWarehouseIdByTransferId(transferId);
     }
 
 

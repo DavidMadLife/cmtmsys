@@ -10,6 +10,9 @@ module org.chemtrovina.cmtmsys {
     requires spring.jdbc;
     requires org.apache.poi.ooxml;
     requires spring.tx;
+    requires java.desktop;
+    requires spring.context;
+    requires spring.beans;
 
     opens org.chemtrovina.cmtmsys to javafx.fxml;
     exports org.chemtrovina.cmtmsys;
@@ -24,5 +27,9 @@ module org.chemtrovina.cmtmsys {
     exports org.chemtrovina.cmtmsys.service.base;
     exports org.chemtrovina.cmtmsys.service.Impl;
     opens org.chemtrovina.cmtmsys.dto to javafx.base;
+    exports org.chemtrovina.cmtmsys.utils;
+
+
+
 
 }

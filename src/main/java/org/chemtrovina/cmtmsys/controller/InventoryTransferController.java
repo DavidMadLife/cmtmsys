@@ -23,10 +23,13 @@ import org.chemtrovina.cmtmsys.repository.Impl.*;
 import org.chemtrovina.cmtmsys.repository.base.*;
 import org.chemtrovina.cmtmsys.service.Impl.*;
 import org.chemtrovina.cmtmsys.service.base.*;
+import org.chemtrovina.cmtmsys.utils.FxClipboardUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
+import org.springframework.stereotype.Component;
 
 
 import java.io.File;
@@ -36,7 +39,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-
+@Component
 public class InventoryTransferController {
 
     // ComboBox hiển thị tên kho
@@ -46,11 +49,6 @@ public class InventoryTransferController {
     // Các field khác (đã có sẵn trong FXML)
     @FXML private TextField txtEmployeeID;
     @FXML private TextField txtBarcode;
-    /*@FXML private TextField txtSapCode;
-    @FXML private TextField txtSpec;
-    @FXML private TextField txtQuantity;
-    @FXML private Button btnTransfer;*/
-
     @FXML private TableView<TransferredDto> tblTransferred;
     @FXML private TableColumn<TransferredDto, String> colBarcode;
     @FXML private TableColumn<TransferredDto, String> colSapCode;
@@ -74,14 +72,8 @@ public class InventoryTransferController {
 
     @FXML private ComboBox<String> cbWorkOrder;
 
-    private WarehouseTransferService warehouseTransferService;
-    private WarehouseTransfer currentTransfer;
 
 
-    private WorkOrderService workOrderService;
-    private WarehouseService warehouseService;
-    private TransferLogService transferLogService;
-    private MaterialService materialService;
     private final List<TransferredDto> transferredList = new ArrayList<>();
     private Set<String> alreadyScannedRollCodes = new HashSet<>();
     @FXML private Button btnImportFromExcel;
@@ -89,10 +81,24 @@ public class InventoryTransferController {
     private boolean isBatchImport = false;
 
 
+    private final WarehouseTransferService warehouseTransferService;
+    private WarehouseTransfer currentTransfer;
+    private final WorkOrderService workOrderService;
+    private final WarehouseService warehouseService;
+    private final TransferLogService transferLogService;
+    private final MaterialService materialService;
+
+    @Autowired
+    public InventoryTransferController(WarehouseTransferService warehouseTransferService, WarehouseService warehouseService, MaterialService materialService, TransferLogService transferLogService, WorkOrderService workOrderService) {
+        this.warehouseTransferService = warehouseTransferService;
+        this.warehouseService = warehouseService;
+        this.materialService = materialService;
+        this.transferLogService = transferLogService;
+        this.workOrderService = workOrderService;
+    }
 
     @FXML
     public void initialize() {
-        setupWarehouseService();
         loadWarehouses();
         loadWorkOrders();
 
@@ -118,7 +124,7 @@ public class InventoryTransferController {
 
         tblRequiredSummary.setOnKeyPressed(event -> {
             if (event.isControlDown() && event.getCode().toString().equals("C")) {
-                copyTableSelectionToClipboard(tblRequiredSummary);
+                FxClipboardUtils.copySelectionToClipboard(tblRequiredSummary);
             }
         });
 
@@ -158,32 +164,7 @@ public class InventoryTransferController {
 
 
 
-
-    private void setupWarehouseService() {
-        JdbcTemplate jdbcTemplate = new JdbcTemplate(DataSourceConfig.getDataSource());
-        WarehouseRepository warehouseRepository = new WarehouseRepositoryImpl(jdbcTemplate);
-        this.warehouseService = new WarehouseServiceImpl(warehouseRepository);
-
-        MaterialRepository materialRepository = new MaterialRepositoryImpl(jdbcTemplate);
-        //this.materialService = new MaterialServiceImpl(materialRepository, warehouseService);
-
-        TransferLogRepository transferLogRepository = new TransferLogRepositoryImpl(jdbcTemplate);
-        this.transferLogService = new TransferLogServiceImpl(transferLogRepository, warehouseService, materialService);
-
-        this.materialService = new MaterialServiceImpl(materialRepository, warehouseService, transferLogService);
-
-        WorkOrderRepository workOrderRepository = new WorkOrderRepositoryImpl(jdbcTemplate);
-        WarehouseTransferRepository warehouseTransferRepository = new WarehouseTransferRepositoryImpl(jdbcTemplate);
-        WarehouseTransferDetailRepository warehouseTransferDetailRepository = new WarehouseTransferDetailRepositoryImpl(jdbcTemplate);
-
-        this.workOrderService = new WorkOrderServiceImpl(
-                workOrderRepository, jdbcTemplate, null, warehouseTransferRepository, warehouseTransferDetailRepository // nếu không dùng WorkOrderItem thì để null
-        );
-
-        this.warehouseTransferService = new WarehouseTransferServiceImpl(warehouseTransferRepository, warehouseTransferDetailRepository);
-
-    }
-    private void setupTransferredTable() {
+        private void setupTransferredTable() {
         colNoTransferred.setCellValueFactory(cell ->
                 new SimpleIntegerProperty(tblTransferred.getItems().indexOf(cell.getValue()) + 1).asObject()
         );
@@ -539,33 +520,4 @@ public class InventoryTransferController {
             default -> "";
         };
     }
-    private void copyTableSelectionToClipboard(TableView<?> table) {
-        StringBuilder clipboardString = new StringBuilder();
-        ObservableList<TablePosition> positionList = table.getSelectionModel().getSelectedCells();
-
-        int prevRow = -1;
-        for (TablePosition position : positionList) {
-            int row = position.getRow();
-            int col = position.getColumn();
-
-            Object cell = table.getColumns().get(col).getCellData(row);
-            if (cell == null) cell = "";
-
-            if (prevRow == row) {
-                clipboardString.append('\t');
-            } else if (prevRow != -1) {
-                clipboardString.append('\n');
-            }
-
-            clipboardString.append(cell);
-            prevRow = row;
-        }
-
-        final ClipboardContent clipboardContent = new ClipboardContent();
-        clipboardContent.putString(clipboardString.toString());
-        Clipboard.getSystemClipboard().setContent(clipboardContent);
-    }
-
-
-
 }

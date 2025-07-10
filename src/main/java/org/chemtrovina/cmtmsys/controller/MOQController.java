@@ -17,7 +17,9 @@ import org.chemtrovina.cmtmsys.repository.base.MOQRepository;
 import org.chemtrovina.cmtmsys.service.Impl.MOQServiceImpl;
 import org.chemtrovina.cmtmsys.service.base.MOQService;
 import org.chemtrovina.cmtmsys.utils.AutoCompleteUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
 import java.io.File;
@@ -27,7 +29,7 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-
+@Component
 public class MOQController {
     @FXML
     private TableView<MOQ> moqTableView;
@@ -62,14 +64,20 @@ public class MOQController {
 
     private final List<MOQ> allData = new ArrayList<>(); // để lưu toàn bộ dữ liệu từ Excel
 
-    private MOQService moqService;
+
     private final ObservableList<MOQ> moqObservableList = FXCollections.observableArrayList();
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+
+    private final MOQService moqService;
+
+    @Autowired
+    public MOQController(MOQService moqService) {
+        this.moqService = moqService;
+    }
 
     @FXML
     public void initialize() {
         setupTableColumns();
-        setupServices();
         setupTableContextMenu();
         setupEventHandlers();
         setupAutoCompleteFields();
@@ -112,13 +120,6 @@ public class MOQController {
         mslColumn.setCellValueFactory(new PropertyValueFactory<>("msql"));
         specColumn.setCellValueFactory(new PropertyValueFactory<>("spec"));
 
-    }
-
-    private void setupServices() {
-        DataSource dataSource = DataSourceConfig.getDataSource();
-        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-        MOQRepository moqRepository = new MOQRepositoryImpl(jdbcTemplate);
-        moqService = new MOQServiceImpl(moqRepository);
     }
 
     private void setupTableContextMenu() {

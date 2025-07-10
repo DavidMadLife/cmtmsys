@@ -1,46 +1,56 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.TableColumn?>
-<?import javafx.scene.control.TableView?>
-<?import javafx.scene.control.TextField?>
-<?import javafx.scene.layout.AnchorPane?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.VBox?>
-<?import javafx.scene.text.Font?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Text?>
 
-<AnchorPane prefHeight="500" prefWidth="800" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.chemtrovina.cmtmsys.controller.ProductController">
+<AnchorPane prefHeight="600" prefWidth="800"
+            xmlns="http://javafx.com/javafx/23.0.1"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="org.chemtrovina.cmtmsys.controller.ProductController">
 
-    <VBox spacing="10" AnchorPane.bottomAnchor="10" AnchorPane.leftAnchor="10" AnchorPane.rightAnchor="10" AnchorPane.topAnchor="10">
+    <VBox spacing="10" AnchorPane.topAnchor="10" AnchorPane.leftAnchor="10"
+          AnchorPane.rightAnchor="10" AnchorPane.bottomAnchor="10">
 
-        <Label style="-fx-font-size: 18px; -fx-font-weight: bold;" text="Chi tiết thành phẩm" />
+        <!-- Title -->
+        <Label text="Quản lý BOM thành phẩm" style="-fx-font-size: 18px; -fx-font-weight: bold;" />
 
+        <!-- Search area -->
         <HBox spacing="10">
-            <Label text="Mã thành phẩm (Product Code):">
-            <font>
-               <Font size="14.0" />
-            </font></Label>
-            <TextField fx:id="txtProductCode" prefWidth="200" />
-            <Button fx:id="btnLoad" text="Tải dữ liệu" />
+            <Label text="Chọn model:" />
+            <TextField fx:id="txtProductCode" promptText="Nhập mã sản phẩm" prefWidth="200"/>
+            <Button fx:id="btnLoad" text="Tải BOM" />
+            <Button fx:id="btnUpdateProduct" text="Cập nhật sản phẩm" />
+            <Button fx:id="btnDeleteProduct" text="Xóa sản phẩm" />
         </HBox>
+        <!-- Create Product -->
         <HBox spacing="10">
-            <Button fx:id="btnChooseFile" text="Choose File" />
-            <TextField fx:id="txtFileName" promptText="No file chosen" editable="false" />
-            <Button fx:id="btnImport" text="Import" />
+            <Label text="Tạo sản phẩm mới:" />
+            <TextField fx:id="txtNewProductCode" promptText="Nhập mã thành phẩm" prefWidth="200"/>
+            <Label text="Loại model:" />
+            <ComboBox fx:id="cbNewModelType" promptText="Chọn loại" prefWidth="150"/>
+            <Button fx:id="btnCreateProduct" text="Tạo" />
         </HBox>
 
+        <!-- Import -->
+        <HBox spacing="10">
+            <Button fx:id="btnChooseFile" text="Chọn file Excel" />
+            <TextField fx:id="txtFileName" promptText="Chưa chọn file" editable="false" prefWidth="300"/>
+            <Button fx:id="btnImport" text="Import BOM" />
+        </HBox>
 
-        <Label style="-fx-font-size: 14px;" text="Danh sách mã liệu sử dụng (BOM):" />
-
+        <!-- Table -->
+        <Label text="Danh sách BOM:" style="-fx-font-size: 14px;" />
         <TableView fx:id="tblProductBOM" VBox.vgrow="ALWAYS">
             <columns>
-                <TableColumn fx:id="colProductCode" prefWidth="150" text="Mã thành phẩm" />
-                <TableColumn fx:id="colSappn" prefWidth="150" text="Mã vật liệu (SAP)" />
-                <TableColumn fx:id="colQuantity" prefWidth="100" text="Số lượng" />
-                <TableColumn fx:id="colCreatedDate" prefWidth="150" text="Ngày tạo" />
-                <TableColumn fx:id="colUpdatedDate" prefWidth="150" text="Ngày cập nhật" />
+                <TableColumn fx:id="colProductCode" text="Mã thành phẩm" prefWidth="150" />
+                <TableColumn fx:id="colModelType" text="Loại model" prefWidth="100"/>
+                <TableColumn fx:id="colSappn" text="Mã vật liệu (SAP)" prefWidth="200" />
+                <TableColumn fx:id="colQuantity" text="Số lượng" prefWidth="100" />
+                <TableColumn fx:id="colCreatedDate" text="Ngày tạo" prefWidth="150" />
+                <TableColumn fx:id="colUpdatedDate" text="Ngày cập nhật" prefWidth="150" />
             </columns>
         </TableView>
     </VBox>
+
 </AnchorPane>

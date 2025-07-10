@@ -4,9 +4,11 @@ import org.chemtrovina.cmtmsys.model.Warehouse;
 import org.chemtrovina.cmtmsys.repository.RowMapper.WarehouseRowMapper;
 import org.chemtrovina.cmtmsys.repository.base.WarehouseRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+@Repository
 public class WarehouseRepositoryImpl implements WarehouseRepository {
 
     private final JdbcTemplate jdbcTemplate;
@@ -45,4 +47,25 @@ public class WarehouseRepositoryImpl implements WarehouseRepository {
         String sql = "SELECT * FROM Warehouses ORDER BY WarehouseID";
         return jdbcTemplate.query(sql, new WarehouseRowMapper());
     }
+
+    public Warehouse findByName(String name) {
+        String sql = "SELECT * FROM Warehouses WHERE Name = ?";
+        List<Warehouse> results = jdbcTemplate.query(sql, new WarehouseRowMapper(), name);
+        return results.isEmpty() ? null : results.get(0);
+    }
+
+    @Override
+    public String getWarehouseNameByTransferId(int transferId, boolean isFrom) {
+        String sql = isFrom
+                ? "SELECT w.Name FROM WarehouseTransfers t JOIN Warehouses w ON t.FromWarehouseID = w.WarehouseID WHERE t.TransferID = ?"
+                : "SELECT w.Name FROM WarehouseTransfers t JOIN Warehouses w ON t.ToWarehouseID = w.WarehouseID WHERE t.TransferID = ?";
+
+        try {
+            return jdbcTemplate.queryForObject(sql, new Object[]{transferId}, String.class);
+        } catch (Exception e) {
+            return "Không xác định";
+        }
+    }
+
+
 }

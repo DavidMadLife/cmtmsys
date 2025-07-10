@@ -3,10 +3,12 @@ package org.chemtrovina.cmtmsys.service.Impl;
 import org.chemtrovina.cmtmsys.model.ShiftSchedule;
 import org.chemtrovina.cmtmsys.repository.base.ShiftScheduleRepository;
 import org.chemtrovina.cmtmsys.service.base.ShiftScheduleService;
+import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
 
+@Service
 public class ShiftScheduleServiceImpl implements ShiftScheduleService {
 
     private final ShiftScheduleRepository repo;

@@ -4,9 +4,11 @@ import org.chemtrovina.cmtmsys.model.Position;
 import org.chemtrovina.cmtmsys.repository.RowMapper.PositionRowMapper;
 import org.chemtrovina.cmtmsys.repository.base.PositionRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+@Repository
 public class PositionRepositoryImpl implements PositionRepository {
 
     private final JdbcTemplate jdbcTemplate;

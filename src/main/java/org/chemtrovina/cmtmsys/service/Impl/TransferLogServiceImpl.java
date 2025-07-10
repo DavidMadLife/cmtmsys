@@ -9,6 +9,8 @@ import org.chemtrovina.cmtmsys.repository.base.WarehouseRepository;
 import org.chemtrovina.cmtmsys.service.base.MaterialService;
 import org.chemtrovina.cmtmsys.service.base.TransferLogService;
 import org.chemtrovina.cmtmsys.service.base.WarehouseService;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -17,13 +19,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+
+@Service
 public class TransferLogServiceImpl implements TransferLogService {
 
     private final TransferLogRepository repo;
     private final WarehouseService warehouseService;
     private final MaterialService materialService;
 
-    public TransferLogServiceImpl(TransferLogRepository repo, WarehouseService warehouseService, MaterialService materialService) {
+    public TransferLogServiceImpl(TransferLogRepository repo, WarehouseService warehouseService, @Lazy MaterialService materialService) {
         this.repo = repo;
         this.warehouseService = warehouseService;
         this.materialService = materialService;

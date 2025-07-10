@@ -5,10 +5,13 @@ import org.chemtrovina.cmtmsys.model.Employee;
 import org.chemtrovina.cmtmsys.model.enums.EmployeeStatus;
 import org.chemtrovina.cmtmsys.repository.base.EmployeeRepository;
 import org.chemtrovina.cmtmsys.service.base.EmployeeService;
+import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
 
+
+@Service
 public class EmployeeServiceImpl implements EmployeeService {
 
     private final EmployeeRepository employeeRepository;

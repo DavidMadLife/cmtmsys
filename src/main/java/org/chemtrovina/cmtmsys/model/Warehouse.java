@@ -9,6 +9,10 @@ public class Warehouse {
         this.name = name;
     }
 
+    public Warehouse() {
+
+    }
+
     public int getWarehouseId() {
         return warehouseId;
     }

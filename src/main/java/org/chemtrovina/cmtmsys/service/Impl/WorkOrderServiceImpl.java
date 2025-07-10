@@ -12,6 +12,7 @@ import org.chemtrovina.cmtmsys.service.base.WarehouseService;
 import org.chemtrovina.cmtmsys.service.base.WarehouseTransferService;
 import org.chemtrovina.cmtmsys.service.base.WorkOrderService;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -20,6 +21,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+
+@Service
 public class WorkOrderServiceImpl implements WorkOrderService {
 
     private final WorkOrderRepository repository;

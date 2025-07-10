@@ -10,6 +10,7 @@ import org.chemtrovina.cmtmsys.repository.base.MOQRepository;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Repository;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -19,6 +20,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+
+@Repository
 public class MOQRepositoryImpl extends GenericRepositoryImpl<MOQ> implements MOQRepository {
 
     public MOQRepositoryImpl(JdbcTemplate jdbcTemplate) {

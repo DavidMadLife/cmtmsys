@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane prefHeight="493.0" prefWidth="885.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.chemtrovina.cmtmsys.controller.MaterialReturnController">
+
+    <top>
+        <VBox spacing="20.0">
+            <HBox spacing="10" style="-fx-padding: 10;">
+                <Label text="Mã nhân viên:" />
+                <TextField fx:id="txtEmployeeId" prefWidth="150" promptText="Nhập mã NV" />
+
+                <Label text="Mã RollCode:" />
+                <TextField fx:id="txtBarcode" prefWidth="200" promptText="Scan mã vạch" />
+
+                <Label text="Số lượng trả:" />
+                <TextField fx:id="txtReturnQty" prefWidth="100" promptText="VD: 500" />
+
+                <Button fx:id="btnReturn" text="↩ Trả về SMT" />
+                <Button fx:id="btnReopen" text="♻ Mở lại cuộn" />
+            </HBox>
+
+            <Label style="-fx-font-weight: bold;" text="Danh sách đã trả" />
+        </VBox>
+    </top>
+
+    <center>
+        <TableView fx:id="tblReturnedMaterials" prefHeight="400">
+            <columns>
+                <TableColumn fx:id="colNo" prefWidth="50" text="STT" />
+                <TableColumn fx:id="colRollCode" prefWidth="150" text="Roll Code" />
+                <TableColumn fx:id="colSapCode" prefWidth="120" text="SAP Code" />
+                <TableColumn fx:id="colQuantity" prefWidth="100" text="Số lượng trả" />
+                <TableColumn fx:id="colFromWarehouse" prefWidth="150" text="Từ kho" />
+                <TableColumn fx:id="colToWarehouse" prefWidth="150" text="Về kho" />
+                <TableColumn fx:id="colNote" prefWidth="200" text="Ghi chú" />
+            </columns>
+        </TableView>
+    </center>
+</BorderPane>

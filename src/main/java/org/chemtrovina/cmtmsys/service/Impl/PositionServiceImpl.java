@@ -3,9 +3,11 @@ package org.chemtrovina.cmtmsys.service.Impl;
 import org.chemtrovina.cmtmsys.model.Position;
 import org.chemtrovina.cmtmsys.repository.base.PositionRepository;
 import org.chemtrovina.cmtmsys.service.base.PositionService;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Service
 public class PositionServiceImpl implements PositionService {
 
     private final PositionRepository positionRepository;

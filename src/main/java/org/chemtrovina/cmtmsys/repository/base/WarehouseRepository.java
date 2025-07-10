@@ -10,4 +10,7 @@ public interface WarehouseRepository {
     void deleteById(int warehouseId);
     Warehouse findById(int warehouseId);
     List<Warehouse> findAll();
+
+    Warehouse findByName(String name);
+    String getWarehouseNameByTransferId(int transferId, boolean isFrom);
 }

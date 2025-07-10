@@ -9,12 +9,15 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.util.converter.IntegerStringConverter;
 import org.chemtrovina.cmtmsys.model.Product;
+import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+
+@Component
 public class CreateWOController {
     @FXML
     private Label lblNewCode;

@@ -27,7 +27,9 @@ import org.chemtrovina.cmtmsys.service.base.MaterialService;
 import org.chemtrovina.cmtmsys.service.base.TransferLogService;
 import org.chemtrovina.cmtmsys.service.base.WarehouseService;
 import org.chemtrovina.cmtmsys.utils.FxFilterUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.time.LocalDate;
@@ -36,7 +38,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
+@Component
 public class InventoryCheckController {
 
     @FXML private TableView<MaterialDto> tblMaterials;
@@ -62,13 +64,22 @@ public class InventoryCheckController {
     private File selectedFile;
 
 
-    private MaterialService materialService;
-    private WarehouseService warehouseService;
-    private TransferLogService transferLogService;
+    private final MaterialService materialService;
+    private final WarehouseService warehouseService;
+    private final TransferLogService transferLogService;
+
+    @Autowired
+    public InventoryCheckController(MaterialService materialService, WarehouseService warehouseService, TransferLogService transferLogService) {
+
+        this.materialService = materialService;
+        this.warehouseService = warehouseService;
+        this.transferLogService = transferLogService;
+
+    }
 
     @FXML
     public void initialize() {
-        setupServices();
+
         setupTable();
         //loadData();
         setupFileImport();
@@ -77,21 +88,6 @@ public class InventoryCheckController {
         btnClear.setOnAction(e -> clearFilters());
 
     }
-
-    private void setupServices() {
-        JdbcTemplate jdbcTemplate = new JdbcTemplate(DataSourceConfig.getDataSource());
-        WarehouseRepository warehouseRepository = new WarehouseRepositoryImpl(jdbcTemplate);
-        this.warehouseService = new WarehouseServiceImpl(warehouseRepository);
-
-        TransferLogRepository transferLogRepository = new TransferLogRepositoryImpl(jdbcTemplate);
-
-
-
-        MaterialRepository materialRepository = new MaterialRepositoryImpl(jdbcTemplate);
-        this.transferLogService = new TransferLogServiceImpl(transferLogRepository, warehouseService, materialService);
-        this.materialService = new MaterialServiceImpl(materialRepository, warehouseService, transferLogService);
-    }
-
 
     private void setupTable() {
         colNo.setCellValueFactory(cellData ->
@@ -128,8 +124,6 @@ public class InventoryCheckController {
 
             TextInputDialog dialog = new TextInputDialog();
             dialog.setTitle("Nhập mã nhân viên");
-            dialog.setHeaderText("Xác nhận người thực hiện import");
-            dialog.setContentText("Mã nhân viên:");
 
             dialog.showAndWait().ifPresent(employeeId -> {
                 employeeId = employeeId.trim();

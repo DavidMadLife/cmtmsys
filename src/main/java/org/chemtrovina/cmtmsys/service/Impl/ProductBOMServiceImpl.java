@@ -4,9 +4,11 @@ import org.chemtrovina.cmtmsys.dto.ProductBomDto;
 import org.chemtrovina.cmtmsys.model.ProductBOM;
 import org.chemtrovina.cmtmsys.repository.base.ProductBOMRepository;
 import org.chemtrovina.cmtmsys.service.base.ProductBOMService;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Service
 public class ProductBOMServiceImpl implements ProductBOMService {
 
     private final ProductBOMRepository repository;
@@ -36,21 +38,15 @@ public class ProductBOMServiceImpl implements ProductBOMService {
     }
 
     @Override
-    public List<ProductBOM> getByProductCode(String productCode) {
-        return repository.findByProductCode(productCode);
+    public List<ProductBomDto> getByProductCode(String productCode) {
+        return repository.findBomDtoByProductCode(productCode);
     }
 
     @Override
     public List<ProductBomDto> getBomDtoByProductCode(String productCode) {
-        List<ProductBOM> rawList = repository.findByProductCode(productCode);
-        return rawList.stream().map(b -> new ProductBomDto(
-                productCode,
-                b.getSappn(),
-                b.getQuantity(),
-                b.getCreatedDate(),
-                b.getUpdatedDate()
-        )).toList();
+        return repository.findBomDtoByProductCode(productCode);
     }
+
 
 
 }

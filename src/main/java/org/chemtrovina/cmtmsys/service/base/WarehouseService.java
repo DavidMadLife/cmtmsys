@@ -10,4 +10,7 @@ public interface WarehouseService {
     void deleteWarehouseById(int id);
     Warehouse getWarehouseById(int id);
     List<Warehouse> getAllWarehouses();
+    String getWarehouseNameByTransferId(int transferId, boolean isFrom);
+
+
 }

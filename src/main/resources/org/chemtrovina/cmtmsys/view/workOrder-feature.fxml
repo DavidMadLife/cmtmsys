@@ -57,13 +57,16 @@
                     <TableColumn fx:id="colLineTotal" minWidth="100" text="Total" />
                     <TableColumn fx:id="colScanned" minWidth="100" text="Đã Scan" />
                     <TableColumn fx:id="colRemain" minWidth="100" text="Còn Lại" />
-               <TableColumn fx:id="colActual" minWidth="100" text="Thực tế" />
-               <TableColumn fx:id="colFall" minWidth="100" text="Rơi rớt" />
-               <TableColumn fx:id="colMissing" minWidth="100" text="Thiếu" />
-
+                    <TableColumn fx:id="colActual" minWidth="100" text="Thực tế" />
+                    <TableColumn fx:id="colMissing" minWidth="100" text="Thiếu" />
+                    <TableColumn fx:id="collNote" minWidth="100" text="Note" />
                 </columns>
             </TableView>
         </ScrollPane>
+
+        <HBox spacing="10" alignment="CENTER_RIGHT">
+            <Button fx:id="btnTransferNG" text="Chuyển hàng NG" />
+        </HBox>
 
     </VBox>
 </AnchorPane>

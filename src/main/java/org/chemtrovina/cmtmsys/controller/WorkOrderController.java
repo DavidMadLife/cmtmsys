@@ -20,8 +20,10 @@ import javafx.stage.Stage;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.chemtrovina.cmtmsys.App;
 import org.chemtrovina.cmtmsys.config.DataSourceConfig;
 import org.chemtrovina.cmtmsys.dto.MaterialRequirementDto;
+import org.chemtrovina.cmtmsys.model.RejectedMaterial;
 import org.chemtrovina.cmtmsys.model.WorkOrder;
 import org.chemtrovina.cmtmsys.repository.Impl.WarehouseTransferDetailRepositoryImpl;
 import org.chemtrovina.cmtmsys.repository.Impl.WarehouseTransferRepositoryImpl;
@@ -33,24 +35,31 @@ import org.chemtrovina.cmtmsys.repository.base.WorkOrderItemRepository;
 import org.chemtrovina.cmtmsys.service.Impl.WarehouseServiceImpl;
 import org.chemtrovina.cmtmsys.service.Impl.WarehouseTransferServiceImpl;
 import org.chemtrovina.cmtmsys.service.Impl.WorkOrderServiceImpl;
+import org.chemtrovina.cmtmsys.service.base.RejectedMaterialService;
 import org.chemtrovina.cmtmsys.service.base.WarehouseTransferService;
 import org.chemtrovina.cmtmsys.service.base.WorkOrderService;
 import org.chemtrovina.cmtmsys.utils.FxFilterUtils;
+import org.chemtrovina.cmtmsys.utils.SpringFXMLLoader;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-
+@Component
 public class WorkOrderController {
 
     @FXML private TextField txtWorkOrderCode;
     @FXML private DatePicker dpFrom, dpTo;
     @FXML private Button btnLoadWorkOrders, btnClearFilter;
     @FXML private Button btnAddWorkOrder;
+    @FXML private Button btnTransferNG;
+
 
 
     @FXML private TableView<WorkOrder> tblWorkOrders;
@@ -64,7 +73,7 @@ public class WorkOrderController {
     @FXML private TableColumn<Map<String, Object>, String> colSappn;
     @FXML private TableColumn<Map<String, Object>, Integer> colLineTotal;
     @FXML private TableColumn<Map<String,Object>, Integer> colScanned;
-    @FXML private TableColumn<Map<String,Object>, Integer> colRemain,colActual, colFall, colMissing;
+    @FXML private TableColumn<Map<String,Object>, Integer> colRemain,colActual, collNote, colMissing;
     @FXML private Button btnChooseImportFile, btnImportWorkOrder;
     @FXML private TextField txtImportFileName;
     private File importFile;
@@ -72,15 +81,26 @@ public class WorkOrderController {
 
     @FXML private TableView<Map<String, Object>> tblMaterialByProduct;
 
-    private WorkOrderService workOrderService;
-    private WarehouseTransferService warehouseTransferService;
+
+    private final WorkOrderService workOrderService;
+    private final WarehouseTransferService warehouseTransferService;
+    private final RejectedMaterialService rejectedMaterialService;
+
+    @Autowired
+    public WorkOrderController(WorkOrderService workOrderService,
+                               WarehouseTransferService warehouseTransferService,
+                               RejectedMaterialService rejectedMaterialService) {
+        this.workOrderService = workOrderService;
+        this.warehouseTransferService = warehouseTransferService;
+        this.rejectedMaterialService = rejectedMaterialService;
+    }
+
 
 
     private ObservableList<Map<String, Object>> masterMaterialData = FXCollections.observableArrayList();
 
     @FXML
     public void initialize() {
-        setupServices();
         setupWorkOrderTable();
         setupEventHandlers();
         tblMaterialByProduct.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
@@ -95,18 +115,6 @@ public class WorkOrderController {
         btnImportWorkOrder.setOnAction(e -> importWorkOrderFromExcel());
 
 
-    }
-
-    private void setupServices() {
-        JdbcTemplate jdbcTemplate = new JdbcTemplate(DataSourceConfig.getDataSource());
-
-        WorkOrderItemRepository workOrderItemRepository = new WorkOrderItemRepositoryImpl(jdbcTemplate);
-
-
-        WarehouseTransferRepository warehouseTransferRepository = new WarehouseTransferRepositoryImpl(jdbcTemplate);
-        WarehouseTransferDetailRepository warehouseTransferDetailRepository = new WarehouseTransferDetailRepositoryImpl(jdbcTemplate);
-        this.warehouseTransferService = new WarehouseTransferServiceImpl(warehouseTransferRepository, warehouseTransferDetailRepository);
-        this.workOrderService = new WorkOrderServiceImpl(new WorkOrderRepositoryImpl(jdbcTemplate), jdbcTemplate, workOrderItemRepository, warehouseTransferRepository, warehouseTransferDetailRepository);
     }
 
     private void setupWorkOrderTable() {
@@ -190,6 +198,7 @@ public class WorkOrderController {
         });
 
         btnAddWorkOrder.setOnAction(e -> openCreateWorkOrderDialog());
+        btnTransferNG.setOnAction(e -> handleTransferNG());
 
     }
 
@@ -273,8 +282,9 @@ public class WorkOrderController {
 
     private void openCreateWorkOrderDialog() {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/org/chemtrovina/cmtmsys/view/work_order_create.fxml"));
+            FXMLLoader loader = SpringFXMLLoader.load(App.class.getResource("view/work_order_create.fxml"));
             Parent root = loader.load();
+
 
             Stage stage = new Stage();
             stage.setTitle("Tạo Work Order mới");
@@ -327,6 +337,53 @@ public class WorkOrderController {
 
     }
 
+    private void handleTransferNG() {
+        WorkOrder selectedWO = tblWorkOrders.getSelectionModel().getSelectedItem();
+        if (selectedWO == null) {
+            showAlert("Vui lòng chọn Work Order.");
+            return;
+        }
+
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("Lý do chuyển hàng NG");
+        dialog.setHeaderText("Nhập lý do chuyển hàng NG:");
+        dialog.setContentText("Lý do:");
+
+        Optional<String> result = dialog.showAndWait();
+        if (result.isEmpty() || result.get().trim().isEmpty()) {
+            showAlert("⚠️ Bạn phải nhập lý do để chuyển hàng NG.");
+            return;
+        }
+
+        String reason = result.get().trim();
+        int workOrderId = selectedWO.getWorkOrderId();
+        int warehouseIdNG = 17; // ⚠️ ID kho NG thực tế
+
+        int inserted = 0;
+        for (Map<String, Object> row : tblMaterialByProduct.getItems()) {
+            String sapCode = String.valueOf(row.get("sappn"));
+            int missingQty = (int) row.getOrDefault("MISSING", 0);
+            if (missingQty <= 0) continue;
+
+            RejectedMaterial rm = new RejectedMaterial();
+            rm.setWorkOrderId(workOrderId);
+            rm.setWarehouseId(warehouseIdNG);
+            rm.setSapCode(sapCode);
+            rm.setQuantity(missingQty);
+            rm.setCreatedDate(java.time.LocalDateTime.now());
+            rm.setNote(reason);
+
+            rejectedMaterialService.addOrUpdateRejectedMaterial(rm);
+            inserted++;
+        }
+
+        showAlert("✅ Đã chuyển " + inserted + " dòng hàng NG vào kho.");
+    }
+
+
+
+
+
     private void handleClearFilters() {
         txtWorkOrderCode.clear();
         dpFrom.setValue(null);
@@ -341,6 +398,7 @@ public class WorkOrderController {
         int woId = workOrderService.getWorkOrderIdByCode(workOrderCode);
         List<MaterialRequirementDto> data = workOrderService.getMaterialRequirements(workOrderCode);
         Map<String, Integer> scannedMap = warehouseTransferService.getScannedQuantitiesByWO(woId);
+        Map<String, Integer> actualMap = warehouseTransferService.getActualReturnedByWorkOrderId(woId);
 
         Map<String, Map<String, Integer>> pivotData = new LinkedHashMap<>();
         Map<String, Integer> productQuantities = new LinkedHashMap<>();
@@ -404,10 +462,15 @@ public class WorkOrderController {
             row.put("SCANNED", scannedQty);
             row.put("REMAIN", remainQty);
 
-            // optional: nếu có ACTUAL, FALL, MISSING bạn xử lý thêm
-            row.putIfAbsent("ACTUAL", 0);
-            row.putIfAbsent("FALL", 0);
-            row.putIfAbsent("MISSING", 0);
+            if (actualMap.containsKey(sappn)) {
+                int actualQty = actualMap.get(sappn);
+                row.put("ACTUAL", actualQty);
+
+                int missingQty = remainQty - actualQty;
+                row.put("MISSING", Math.max(0, missingQty));
+            }
+
+
 
             tableRows.add(row);
         }
@@ -418,9 +481,12 @@ public class WorkOrderController {
         );
         colScanned.setCellValueFactory(dataMap -> new SimpleIntegerProperty((Integer) dataMap.getValue().get("SCANNED")).asObject());
         colRemain.setCellValueFactory(dataMap -> new SimpleIntegerProperty((Integer) dataMap.getValue().get("REMAIN")).asObject());
-        colActual.setCellValueFactory(dataMap -> new SimpleIntegerProperty((Integer) dataMap.getValue().get("ACTUAL")).asObject());
-        colFall.setCellValueFactory(dataMap -> new SimpleIntegerProperty((Integer) dataMap.getValue().get("FALL")).asObject());
-        colMissing.setCellValueFactory(dataMap -> new SimpleIntegerProperty((Integer) dataMap.getValue().get("MISSING")).asObject());
+        colActual.setCellValueFactory(dataMap ->
+                new SimpleIntegerProperty((Integer) dataMap.getValue().getOrDefault("ACTUAL", 0)).asObject());
+
+        colMissing.setCellValueFactory(dataMap ->
+                new SimpleIntegerProperty((Integer) dataMap.getValue().getOrDefault("MISSING", 0)).asObject());
+
 
         tblMaterialByProduct.setItems(FXCollections.observableArrayList(tableRows));
 

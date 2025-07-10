@@ -32,8 +32,10 @@ import org.chemtrovina.cmtmsys.service.base.InvoiceService;
 import org.chemtrovina.cmtmsys.service.base.MOQService;
 import org.chemtrovina.cmtmsys.utils.AutoCompleteUtils;
 import org.controlsfx.control.textfield.TextFields;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
 import java.io.File;
@@ -48,7 +50,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
+@Component
 public class InvoiceController {
 
 
@@ -81,8 +83,7 @@ public class InvoiceController {
     @FXML private TableColumn<InvoiceDataDto, String> colQuantity;
 
 
-    private InvoiceService invoiceService;
-    private MOQService moqService;
+
 
     private boolean isDirty = false;
     private boolean isProcessingCancel = false;
@@ -94,25 +95,23 @@ public class InvoiceController {
 
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
+    private final InvoiceService invoiceService;
+    private final MOQService moqService;
+
+    @Autowired
+    public InvoiceController(InvoiceService invoiceService, MOQService moqService) {
+        this.invoiceService = invoiceService;
+        this.moqService = moqService;
+    }
+
+
     @FXML
     public void initialize() {
-        initServices();
         initTableView();
         initEventHandlers();
         initComboBox();
         loadInvoiceList();
         startAutoGC();
-    }
-
-    private void initServices() {
-        DataSource dataSource = DataSourceConfig.getDataSource();
-        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-
-        InvoiceRepository invoiceRepository = new InvoiceRepositoryImpl(jdbcTemplate);
-        invoiceService = new InvoiceServiceImpl(invoiceRepository);
-
-        MOQRepository moqRepository = new MOQRepositoryImpl(jdbcTemplate);
-        moqService = new MOQServiceImpl(moqRepository);
     }
 
     private void initTableView() {

@@ -24,11 +24,13 @@ import org.chemtrovina.cmtmsys.service.Impl.WarehouseServiceImpl;
 import org.chemtrovina.cmtmsys.service.base.MaterialService;
 import org.chemtrovina.cmtmsys.service.base.TransferLogService;
 import org.chemtrovina.cmtmsys.service.base.WarehouseService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
-
+@Component
 public class TransferLogController {
 
     @FXML private TableView<TransferLogDto> tblTransferLogs;
@@ -50,33 +52,25 @@ public class TransferLogController {
 
 
 
-    private TransferLogService transferLogService;
-    private WarehouseService warehouseService;
-    private MaterialService materialService;
+    private final TransferLogService transferLogService;
+    private final WarehouseService warehouseService;
+    private final MaterialService materialService;
+    @Autowired
+    public TransferLogController(TransferLogService transferLogService, WarehouseService warehouseService, MaterialService materialService) {
+        this.transferLogService = transferLogService;
+        this.warehouseService = warehouseService;
+        this.materialService = materialService;
+    }
 
     private List<TransferLogDto> allLogs = new ArrayList<>();
 
     @FXML
     public void initialize() {
-        setupServices();
         setupTable();
         setupSearch();
         tblTransferLogs.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         setupActions();
-
-    }
-
-    private void setupServices() {
-        JdbcTemplate jdbcTemplate = new JdbcTemplate(DataSourceConfig.getDataSource());
-
-        WarehouseRepository warehouseRepository = new WarehouseRepositoryImpl(jdbcTemplate);
-        this.warehouseService = new WarehouseServiceImpl(warehouseRepository);
-
-        MaterialRepository materialRepository = new MaterialRepositoryImpl(jdbcTemplate);
-        this.materialService = new MaterialServiceImpl(materialRepository, this.warehouseService, null); // nếu cần null tạm thời
-
-        TransferLogRepository transferLogRepository = new TransferLogRepositoryImpl(jdbcTemplate);
-        this.transferLogService = new TransferLogServiceImpl(transferLogRepository, this.warehouseService, this.materialService);
+        loadData();
     }
 
     private void setupActions() {

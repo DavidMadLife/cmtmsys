@@ -4,12 +4,14 @@ import org.chemtrovina.cmtmsys.model.InvoiceDetail;
 import org.chemtrovina.cmtmsys.repository.base.InvoiceDetailRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Repository;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+@Repository
 public class InvoiceDetailRepositoryImpl extends GenericRepositoryImpl<InvoiceDetail> implements InvoiceDetailRepository {
 
     public InvoiceDetailRepositoryImpl(JdbcTemplate jdbcTemplate) {

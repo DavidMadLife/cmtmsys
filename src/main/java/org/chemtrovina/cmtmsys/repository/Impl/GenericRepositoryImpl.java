@@ -3,8 +3,10 @@ package org.chemtrovina.cmtmsys.repository.Impl;
 import org.chemtrovina.cmtmsys.repository.base.GenericRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
+
 
 public class GenericRepositoryImpl<T> implements GenericRepository<T> {
 

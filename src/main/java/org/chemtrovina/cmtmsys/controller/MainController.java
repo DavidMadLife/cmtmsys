@@ -1,5 +1,6 @@
 package org.chemtrovina.cmtmsys.controller;
 
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.Parent;
 import javafx.scene.control.Tab;
@@ -18,6 +19,9 @@ public class MainController {
     }
 
     public static MainController getInstance() {
+        if (instance == null) {
+            throw new IllegalStateException("MainController chưa được khởi tạo!");
+        }
         return instance;
     }
 
@@ -29,20 +33,28 @@ public class MainController {
             }
         }
 
-        try {
-            FxmlPage page = FXMLCacheManager.getPage(fxmlPath);
-            Parent view = page.getView();
+        Task<FxmlPage> loadTask = new Task<>() {
+            @Override
+            protected FxmlPage call() throws Exception {
+                return FXMLCacheManager.getPage(fxmlPath);
+            }
+        };
 
+        loadTask.setOnSucceeded(e -> {
+            Parent view = loadTask.getValue().getView();
             Tab tab = new Tab(title, view);
             tab.setClosable(true);
-
-            tab.setOnClosed(e -> FXMLCacheManager.removePage(fxmlPath));
-            tab.setOnClosed(e -> FXMLCacheManager.clearCache());
+            tab.setOnClosed(ev -> FXMLCacheManager.removePage(fxmlPath));
             mainTabPane.getTabs().add(tab);
             mainTabPane.getSelectionModel().select(tab);
-        } catch (Exception ex) {
-            ex.printStackTrace();
+        });
+
+        loadTask.setOnFailed(e -> {
             System.err.println("Lỗi khi load tab: " + title);
-        }
+            loadTask.getException().printStackTrace();
+        });
+
+        new Thread(loadTask).start();
     }
 }
+

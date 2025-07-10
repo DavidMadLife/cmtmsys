@@ -12,7 +12,7 @@
     <items>
 
         <!-- Menu: Warehouse -->
-        <MenuButton text="Warehouse" style="-fx-font-weight: bold;" prefWidth="126.0">
+        <MenuButton fx:id="menuWarehouse" text="Warehouse" style="-fx-font-weight: bold;" prefWidth="126.0">
             <items>
                 <MenuItem fx:id="btnInvoice" text="Invoice" />
                 <MenuItem fx:id="btnScan" text="Scan" />
@@ -22,7 +22,7 @@
         </MenuButton>
 
         <!-- Menu: Manage Employee -->
-        <MenuButton text="Manage Employee" style="-fx-font-weight: bold;" prefWidth="160.0">
+        <MenuButton fx:id="menuEmployee" text="Manage Employee" style="-fx-font-weight: bold;" prefWidth="160.0">
             <items>
                 <MenuItem fx:id="btnEmployee" text="Employee" />
                 <MenuItem fx:id="btnShiftScheduling" text="Shift Scheduling" />
@@ -35,8 +35,26 @@
                 <MenuItem fx:id="menuInventoryCheck" text="Check Inventory" />
                 <MenuItem fx:id="menuInventoryTransfer" text="Transfer Inventory" />
                 <MenuItem fx:id="menuTransferLog" text="Transfer Log" />
-                <MenuItem fx:id="menuProduct" text="Product" />
+                <MenuItem fx:id="menuTransferMaterialReturn" text="Transfer Material Return" />
+                <MenuItem fx:id="menuProduct" text="BOM" />
                 <MenuItem fx:id="menuWorkOrder" text="W/O" />
+                <MenuItem fx:id="menuCheckNG" text="Check NG" />
+            </items>
+        </MenuButton>
+
+        <MenuButton fx:id="menuPlan" text="Manage Plan" style="-fx-font-weight: bold;" prefWidth="160.0">
+            <items>
+                <MenuItem fx:id="menuPlanWeekly" text="Planning Weekly" />
+                <MenuItem fx:id="menuTest" text="Test view" />
+                <MenuItem fx:id="menuFeeder" text="Feeder List" />
+            </items>
+        </MenuButton>
+
+        <MenuButton fx:id="menuUser" text="Tài khoản" style="-fx-font-weight: bold;" prefWidth="120.0">
+            <items>
+                <MenuItem fx:id="menuManageAccount" text="Quản lý Account"/>
+                <MenuItem fx:id="menuChangePassword" text="Đổi mật khẩu" />
+                <MenuItem fx:id="menuLogout" text="Đăng xuất" />
             </items>
         </MenuButton>
 

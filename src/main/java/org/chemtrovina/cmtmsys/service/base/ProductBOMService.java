@@ -10,7 +10,7 @@ public interface ProductBOMService {
     void updateProductBOM(ProductBOM bom);
     void deleteProductBOMByProductId(int productId);
     List<ProductBOM> getByProductId(int productId);
-    List<ProductBOM> getByProductCode(String productCode);
+    List<ProductBomDto> getByProductCode(String productCode);
     List<ProductBomDto> getBomDtoByProductCode(String productCode);
 
 

@@ -4,11 +4,14 @@ import org.chemtrovina.cmtmsys.model.Material;
 import org.chemtrovina.cmtmsys.repository.RowMapper.MaterialRowMapper;
 import org.chemtrovina.cmtmsys.repository.base.MaterialRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+
+@Repository
 public class MaterialRepositoryImpl implements MaterialRepository {
 
     private final JdbcTemplate jdbcTemplate;
@@ -100,5 +103,22 @@ public class MaterialRepositoryImpl implements MaterialRepository {
 
         return jdbcTemplate.query(sql.toString(), params.toArray(), new MaterialRowMapper());
     }
+
+    @Override
+    public void restore(int planItemId, int quantity) {
+        // Ví dụ cộng lại vào kho tồn theo PlanItemID hoặc ProductID
+        String sql = """
+        UPDATE Materials
+        SET Quantity = Quantity + ?
+        WHERE SapCode = (
+            SELECT p.ProductCode
+            FROM ProductionPlanItems ppi
+            JOIN Products p ON ppi.ProductID = p.ProductID
+            WHERE ppi.PlanItemID = ?
+        )
+    """;
+        jdbcTemplate.update(sql, quantity, planItemId);
+    }
+
 
 }

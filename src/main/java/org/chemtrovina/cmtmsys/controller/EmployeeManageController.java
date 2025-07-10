@@ -20,12 +20,15 @@ import org.chemtrovina.cmtmsys.service.Impl.EmployeeServiceImpl;
 import org.chemtrovina.cmtmsys.service.Impl.MOQServiceImpl;
 import org.chemtrovina.cmtmsys.service.base.EmployeeService;
 import org.chemtrovina.cmtmsys.utils.FxFilterUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
 import java.time.LocalDate;
 import java.util.*;
 
+@Component
 public class EmployeeManageController {
 
     @FXML private TableView<EmployeeDto> tblEmployee;
@@ -68,12 +71,15 @@ public class EmployeeManageController {
     private final List<TableColumn<DepartmentSummaryDto, ?>> dynamicCompanyColumns = new ArrayList<>();
 
 
-    private EmployeeService employeeService;
+    private final EmployeeService employeeService;
+    @Autowired
+    public EmployeeManageController(EmployeeService employeeService) {
+        this.employeeService = employeeService;
+    }
 
     @FXML
     public void initialize() {
         setupTableColumns();
-        setupServices();
         setupStatusFilter();
         loadEmployeeTable();
         setupActions();
@@ -83,13 +89,6 @@ public class EmployeeManageController {
 
     ///////////////////////////////////////SET_UP/////////////////////////////////////
 
-
-    private void setupServices() {
-        DataSource dataSource = DataSourceConfig.getDataSource();
-        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-        EmployeeRepository employeeRepository = new EmployeeRepositoryImpl(jdbcTemplate);
-        employeeService = new EmployeeServiceImpl(employeeRepository);
-    }
 
     private void setupTableColumns() {
         colNo.setCellValueFactory(new PropertyValueFactory<>("no"));

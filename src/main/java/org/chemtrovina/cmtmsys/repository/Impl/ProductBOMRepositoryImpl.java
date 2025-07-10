@@ -1,14 +1,17 @@
 package org.chemtrovina.cmtmsys.repository.Impl;
 
+import org.chemtrovina.cmtmsys.dto.ProductBomDto;
 import org.chemtrovina.cmtmsys.model.ProductBOM;
 import org.chemtrovina.cmtmsys.repository.RowMapper.ProductBOMRowMapper;
 import org.chemtrovina.cmtmsys.repository.base.ProductBOMRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Repository
 public class ProductBOMRepositoryImpl implements ProductBOMRepository {
 
     private final JdbcTemplate jdbcTemplate;
@@ -50,14 +53,26 @@ public class ProductBOMRepositoryImpl implements ProductBOMRepository {
         return jdbcTemplate.query(sql, new ProductBOMRowMapper(), productId);
     }
 
-    public List<ProductBOM> findByProductCode(String productCode) {
+    public List<ProductBomDto> findBomDtoByProductCode(String productCode) {
         String sql = """
-            SELECT b.BOMID, b.ProductID, b.SAPPN, b.Quantity, b.CreatedDate, b.UpdatedDate
-            FROM ProductBOM b
-            JOIN Products p ON p.ProductID = b.ProductID
-            WHERE p.ProductCode = ?
-            """;
-        return jdbcTemplate.query(sql, new ProductBOMRowMapper(), productCode);
+        SELECT p.ProductCode, b.SAPPN, b.Quantity, 
+               p.ModelType,
+               FORMAT(b.CreatedDate, 'yyyy-MM-dd HH:mm:ss') AS CreatedDate,
+               FORMAT(b.UpdatedDate, 'yyyy-MM-dd HH:mm:ss') AS UpdatedDate
+        FROM ProductBOM b
+        JOIN Products p ON p.ProductID = b.ProductID
+        WHERE p.ProductCode = ?
+    """;
+
+        return jdbcTemplate.query(sql, (rs, rowNum) -> new ProductBomDto(
+                rs.getString("ProductCode"),
+                rs.getString("SAPPN"),
+                rs.getDouble("Quantity"),
+                rs.getString("ModelType"),
+                rs.getTimestamp("CreatedDate").toLocalDateTime(),
+                rs.getTimestamp("UpdatedDate").toLocalDateTime()
+        ), productCode);
     }
+
 
 }

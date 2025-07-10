@@ -16,6 +16,8 @@ public interface WarehouseTransferService {
 
     WarehouseTransfer findExistingTransfer(int fromWarehouseId, int toWarehouseId, int workOrderId, String employeeId);
     Map<String,Integer> getScannedQuantitiesByWO(int workOrderId);
+    Map<String, Integer> getActualReturnedByWorkOrderId(int workOrderId);
+    int getFromWarehouseIdByTransferId(int transferId);
 
 
 }

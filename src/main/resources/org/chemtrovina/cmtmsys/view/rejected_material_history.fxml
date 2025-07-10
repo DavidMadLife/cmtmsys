@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="org.chemtrovina.cmtmsys.controller.RejectedMaterialHistoryController"
+      spacing="10" >
+
+    <Label text="Lịch sử chuyển hàng NG" style="-fx-font-size: 18px; -fx-font-weight: bold"/>
+    <HBox spacing="10">
+        <TextField fx:id="txtSearchWO" promptText="Tìm theo mã Work Order..." />
+        <TextField fx:id="txtSearchSAP" promptText="Tìm theo mã SAP..." />
+        <Button fx:id="btnSearch" text="Tìm kiếm" />
+        <Button fx:id="btnClearSearch" text="Xóa lọc" />
+    </HBox>
+
+    <TableView fx:id="tblRejected" prefHeight="600">
+        <columns>
+            <TableColumn fx:id="colId" text="ID" minWidth="50"/>
+            <TableColumn fx:id="colWO" text="Work Order" minWidth="100"/>
+            <TableColumn fx:id="colSap" text="Mã SAP" minWidth="100"/>
+            <TableColumn fx:id="colQty" text="Số lượng" minWidth="100"/>
+            <TableColumn fx:id="colWarehouse" text="Kho NG" minWidth="100"/>
+            <TableColumn fx:id="colDate" text="Ngày tạo" minWidth="150"/>
+            <TableColumn fx:id="colNote" text="Ghi chú" minWidth="200"/>
+        </columns>
+    </TableView>
+</VBox>

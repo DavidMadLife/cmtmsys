@@ -3,9 +3,12 @@ package org.chemtrovina.cmtmsys.service.Impl;
 import org.chemtrovina.cmtmsys.model.InvoiceDetail;
 import org.chemtrovina.cmtmsys.repository.base.InvoiceDetailRepository;
 import org.chemtrovina.cmtmsys.service.base.InvoiceDetailService;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+
+@Service
 public class InvoiceDetailServiceImpl implements InvoiceDetailService {
 
     private final InvoiceDetailRepository invoiceDetailRepository;

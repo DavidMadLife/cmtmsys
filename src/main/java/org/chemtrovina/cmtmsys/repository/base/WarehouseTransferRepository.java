@@ -11,5 +11,7 @@ public interface WarehouseTransferRepository {
     WarehouseTransfer findById(int id);
     Map<String,Integer> getScannedQuantitiesByWO(int workOrderId);
     void deleteByWorkOrderId(int workOrderId);
+    Map<String, Integer> getActualReturnedByWorkOrderId(int workOrderId);
+    int getFromWarehouseIdByTransferId(int transferId);
 
 }

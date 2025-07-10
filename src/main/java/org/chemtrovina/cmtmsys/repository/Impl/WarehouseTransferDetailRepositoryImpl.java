@@ -6,10 +6,13 @@ import org.chemtrovina.cmtmsys.repository.RowMapper.WarehouseTransferDetailRowMa
 import org.chemtrovina.cmtmsys.repository.RowMapper.WarehouseTransferRowMapper;
 import org.chemtrovina.cmtmsys.repository.base.WarehouseTransferDetailRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
+
+@Repository
 public class WarehouseTransferDetailRepositoryImpl implements WarehouseTransferDetailRepository {
 
     private final JdbcTemplate jdbcTemplate;
@@ -70,6 +73,28 @@ public class WarehouseTransferDetailRepositoryImpl implements WarehouseTransferD
     """;
         jdbcTemplate.update(sql, workOrderId);
     }
+
+    @Override
+    public Optional<WarehouseTransferDetail> findByRollCode(String rollCode) {
+        String sql = "SELECT * FROM WarehouseTransferDetails WHERE RollCode = ?";
+        List<WarehouseTransferDetail> results = jdbcTemplate.query(sql, new WarehouseTransferDetailRowMapper(), rollCode);
+        return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
+    }
+
+    @Override
+    public void updateReturnInfo(String rollCode, int actualReturned, boolean active) {
+        String sql = "UPDATE WarehouseTransferDetails " +
+                "SET ActualReturned = ?, Active = ? " +
+                "WHERE RollCode = ? AND Active = 1";
+        jdbcTemplate.update(sql, actualReturned, active ? 1 : 0, rollCode);
+    }
+
+    @Override
+    public void reopenReturn(String rollCode) {
+        String sql = "UPDATE WarehouseTransferDetails SET Active = 1 WHERE RollCode = ?";
+        jdbcTemplate.update(sql, rollCode);
+    }
+
 
 
 

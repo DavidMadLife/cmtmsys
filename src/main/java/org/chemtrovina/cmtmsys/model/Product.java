@@ -1,11 +1,14 @@
 package org.chemtrovina.cmtmsys.model;
 
+import org.chemtrovina.cmtmsys.model.enums.ModelType;
+
 import java.time.LocalDateTime;
 
 public class Product {
     private int productId;
     private String productCode;
     private String description;
+    private ModelType modelType;  // Thêm dòng này
     private LocalDateTime createdDate;
     private LocalDateTime updatedDate;
 
@@ -30,6 +33,13 @@ public class Product {
         this.description = description;
     }
 
+    public ModelType getModelType() {
+        return modelType;
+    }
+    public void setModelType(ModelType modelType) {
+        this.modelType = modelType;
+    }
+
     public LocalDateTime getCreatedDate() {
         return createdDate;
     }
@@ -44,4 +54,3 @@ public class Product {
         this.updatedDate = updatedDate;
     }
 }
-

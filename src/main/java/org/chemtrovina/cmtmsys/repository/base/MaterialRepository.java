@@ -14,5 +14,6 @@ public interface MaterialRepository {
     List<Material> findAll();
     List<Material> findByWarehouseId(int warehouseId);
     List<Material> search(String sapCode, String barCode, LocalDateTime fromDate, LocalDateTime toDate, Integer warehouseId);
+    void restore(int planItemId, int quantity);
 
 }

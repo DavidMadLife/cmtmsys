@@ -9,42 +9,62 @@ import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.Pair;
-import org.chemtrovina.cmtmsys.config.DataSourceConfig;
 import org.chemtrovina.cmtmsys.model.Product;
 import org.chemtrovina.cmtmsys.model.WorkOrder;
-import org.chemtrovina.cmtmsys.model.WorkOrderItem;
-import org.chemtrovina.cmtmsys.repository.Impl.*;
-import org.chemtrovina.cmtmsys.service.Impl.ProductServiceImpl;
-import org.chemtrovina.cmtmsys.service.Impl.WorkOrderServiceImpl;
 import org.chemtrovina.cmtmsys.service.base.ProductService;
 import org.chemtrovina.cmtmsys.service.base.WorkOrderService;
-import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
 
+@Component
 public class WorkOrderCreateController {
 
     @FXML private TextField txtDescription;
     @FXML private TableView<Pair<Product, Integer>> tblItems;
     @FXML private TableColumn<Pair<Product, Integer>, String> colProduct;
+    @FXML private TableColumn<Pair<Product, Integer>, String> colDescription;
     @FXML private TableColumn<Pair<Product, Integer>, Integer> colQuantity;
     @FXML private Button btnAddItem, btnRemoveItem, btnCreate;
-    @FXML private TableColumn<Pair<Product, Integer>, String> colDescription;
+
     private final ObservableList<Pair<Product, Integer>> itemList = FXCollections.observableArrayList();
-    private WorkOrderService workOrderService;
-    private ProductService productService;
     private Integer editingWorkOrderId = null;
 
+    private final WorkOrderService workOrderService;
+    private final ProductService productService;
+
+    @Autowired
+    public WorkOrderCreateController(WorkOrderService workOrderService, ProductService productService) {
+        this.workOrderService = workOrderService;
+        this.productService = productService;
+    }
 
     @FXML
     public void initialize() {
-        initServices();
         setupTable();
         setupActions();
         tblItems.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
     }
 
+    private void setupTable() {
+        tblItems.setItems(itemList);
+        colProduct.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getKey().getProductCode()));
+        colDescription.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getKey().getDescription()));
+        colQuantity.setCellValueFactory(cell -> new SimpleIntegerProperty(cell.getValue().getValue()).asObject());
+    }
+
+    private void setupActions() {
+        btnAddItem.setOnAction(e -> addProductDialog());
+        btnRemoveItem.setOnAction(e -> {
+            var selected = tblItems.getSelectionModel().getSelectedItem();
+            if (selected != null) {
+                itemList.remove(selected);
+            }
+        });
+        btnCreate.setOnAction(e -> handleCreateWorkOrder());
+    }
 
     private void addProductDialog() {
         Dialog<Pair<Product, Integer>> dialog = new Dialog<>();
@@ -67,14 +87,12 @@ public class WorkOrderCreateController {
                     String code = txtCode.getText().trim();
                     int qty = Integer.parseInt(txtQty.getText().trim());
 
-                    Product product = productService.getProductByCode(code); // <-- dùng service lấy product
-
+                    Product product = productService.getProductByCode(code);
                     if (product != null) {
                         return new Pair<>(product, qty);
                     } else {
                         showAlert("❌ Không tìm thấy sản phẩm với mã: " + code);
                     }
-
                 } catch (NumberFormatException ex) {
                     showAlert("❌ Số lượng không hợp lệ!");
                 }
@@ -83,36 +101,6 @@ public class WorkOrderCreateController {
         });
 
         dialog.showAndWait().ifPresent(result -> itemList.add(result));
-    }
-
-
-    private void initServices() {
-        JdbcTemplate jdbcTemplate = new JdbcTemplate(DataSourceConfig.getDataSource());
-        this.productService = new ProductServiceImpl(new ProductRepositoryImpl(jdbcTemplate));
-        this.workOrderService = new WorkOrderServiceImpl(
-                new WorkOrderRepositoryImpl(jdbcTemplate),
-                jdbcTemplate,
-                new WorkOrderItemRepositoryImpl(jdbcTemplate),
-                new WarehouseTransferRepositoryImpl(jdbcTemplate),
-                new WarehouseTransferDetailRepositoryImpl(jdbcTemplate)
-        );
-    }
-    private void setupTable() {
-        tblItems.setItems(itemList);
-        colProduct.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getKey().getProductCode()));
-        colDescription.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getKey().getDescription()));
-        colQuantity.setCellValueFactory(cell -> new SimpleIntegerProperty(cell.getValue().getValue()).asObject());
-    }
-    private void setupActions() {
-        btnAddItem.setOnAction(e -> addProductDialog());
-        btnRemoveItem.setOnAction(e -> {
-            var selected = tblItems.getSelectionModel().getSelectedItem();
-            if (selected != null) {
-                itemList.remove(selected);
-            }
-        });
-
-        btnCreate.setOnAction(e -> handleCreateWorkOrder());
     }
 
     private void handleCreateWorkOrder() {
@@ -149,11 +137,10 @@ public class WorkOrderCreateController {
 
         Map<Product, Integer> productMap = workOrderService.getWorkOrderItems(workOrder.getWorkOrderId());
         itemList.clear();
-        productMap.forEach((product, quantity) -> itemList.add(new javafx.util.Pair<>(product, quantity)));
+        productMap.forEach((product, quantity) -> itemList.add(new Pair<>(product, quantity)));
 
         btnCreate.setText("Cập nhật Work Order");
     }
-
 
     private void showAlert(String msg) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION, msg, ButtonType.OK);

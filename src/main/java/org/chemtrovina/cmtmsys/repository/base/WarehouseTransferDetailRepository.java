@@ -13,6 +13,8 @@ public interface WarehouseTransferDetailRepository {
     boolean existsByTransferIdAndRollCode(int transferId, String rollCode);
     Optional<WarehouseTransfer> findByFields(int fromWarehouseId, int toWarehouseId, int workOrderId, String employeeId);
     void deleteByWorkOrderId(int workOrderId);
-
+    Optional<WarehouseTransferDetail> findByRollCode(String rollCode);
+    void updateReturnInfo(String rollCode, int actualReturned, boolean active);
+    void reopenReturn(String rollCode);
 
 }

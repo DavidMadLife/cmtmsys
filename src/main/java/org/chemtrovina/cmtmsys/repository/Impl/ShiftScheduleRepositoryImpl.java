@@ -4,11 +4,13 @@ import org.chemtrovina.cmtmsys.model.ShiftSchedule;
 import org.chemtrovina.cmtmsys.repository.RowMapper.ShiftScheduleRowMapper;
 import org.chemtrovina.cmtmsys.repository.base.ShiftScheduleRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
 
 import java.sql.Timestamp;
 import java.util.List;
 import java.time.LocalDate;
 
+@Repository
 public class ShiftScheduleRepositoryImpl implements ShiftScheduleRepository {
 
     private final JdbcTemplate jdbcTemplate;

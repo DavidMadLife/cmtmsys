@@ -1,6 +1,7 @@
 package org.chemtrovina.cmtmsys.service.base;
 
 import org.chemtrovina.cmtmsys.model.Product;
+import org.chemtrovina.cmtmsys.model.enums.ModelType;
 
 import java.util.List;
 
@@ -11,6 +12,10 @@ public interface ProductService {
     Product getProductById(int id);
     List<Product> getAllProducts();
     Product getProductByCode(String code);
+    boolean checkProductExists(String productCode);
+    void deleteProductWithBOM(int productId);
+    Product getProductByCodeAndType(String productCode, ModelType modelType);
+
 
 
 }

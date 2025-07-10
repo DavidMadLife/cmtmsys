@@ -3,9 +3,11 @@ package org.chemtrovina.cmtmsys.service.Impl;
 import org.chemtrovina.cmtmsys.model.Warehouse;
 import org.chemtrovina.cmtmsys.repository.base.WarehouseRepository;
 import org.chemtrovina.cmtmsys.service.base.WarehouseService;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Service
 public class WarehouseServiceImpl implements WarehouseService {
 
     private final WarehouseRepository repository;
@@ -38,4 +40,13 @@ public class WarehouseServiceImpl implements WarehouseService {
     public List<Warehouse> getAllWarehouses() {
         return repository.findAll();
     }
+
+    @Override
+    public String getWarehouseNameByTransferId(int transferId, boolean isFrom) {
+        return repository.getWarehouseNameByTransferId(transferId, isFrom);
+    }
+
+
+
+
 }
