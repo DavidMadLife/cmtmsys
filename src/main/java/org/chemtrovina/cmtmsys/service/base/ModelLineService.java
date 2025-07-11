@@ -9,4 +9,6 @@ public interface ModelLineService {
     void deleteModelLineById(int id);
     ModelLine getModelLineById(int id);
     List<ModelLine> getAllModelLines();
+    ModelLine findOrCreateModelLine(int productId, int warehouseId);
+
 }

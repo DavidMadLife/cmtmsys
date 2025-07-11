@@ -90,6 +90,13 @@
             <version>5.4.0</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-media</artifactId>
+            <version>24.0.1</version>
+            <classifier>win</classifier>
+        </dependency>
+
     </dependencies>
 
     <build>
@@ -109,20 +116,22 @@
                 <version>0.0.8</version>
                 <executions>
                     <execution>
-                        <!-- Default configuration for running with: mvn clean javafx:run -->
                         <id>default-cli</id>
                         <configuration>
                             <mainClass>org.chemtrovina.cmtmsys/org.chemtrovina.cmtmsys.App</mainClass>
-                            <launcher>app</launcher>
-                            <jlinkZipName>app</jlinkZipName>
-                            <jlinkImageName>app</jlinkImageName>
-                            <noManPages>true</noManPages>
-                            <stripDebug>true</stripDebug>
-                            <noHeaderFiles>true</noHeaderFiles>
+                            <modules>
+                                <module>javafx.controls</module>
+                                <module>javafx.fxml</module>
+                                <module>javafx.media</module>
+                            </modules>
+                            <jvmArgs>
+                                <jvmArg>--enable-native-access=javafx.media</jvmArg>
+                            </jvmArgs>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
+
         </plugins>
     </build>
 </project>

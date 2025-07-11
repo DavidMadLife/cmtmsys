@@ -13,6 +13,7 @@ module org.chemtrovina.cmtmsys {
     requires java.desktop;
     requires spring.context;
     requires spring.beans;
+    requires javafx.media;
 
     opens org.chemtrovina.cmtmsys to javafx.fxml;
     exports org.chemtrovina.cmtmsys;
@@ -28,8 +29,5 @@ module org.chemtrovina.cmtmsys {
     exports org.chemtrovina.cmtmsys.service.Impl;
     opens org.chemtrovina.cmtmsys.dto to javafx.base;
     exports org.chemtrovina.cmtmsys.utils;
-
-
-
 
 }

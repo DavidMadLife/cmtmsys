@@ -9,6 +9,8 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 
 @Repository
@@ -40,6 +42,19 @@ public class MaterialRepositoryImpl implements MaterialRepository {
                 material.getMaterialId()
         );
     }
+
+    @Override
+    public List<Material> findByIds(Set<Integer> ids) {
+        if (ids == null || ids.isEmpty()) return List.of();
+
+        String inSql = ids.stream()
+                .map(id -> "?")
+                .collect(Collectors.joining(", "));
+
+        String sql = "SELECT * FROM Materials WHERE MaterialID IN (" + inSql + ")";
+        return jdbcTemplate.query(sql, new MaterialRowMapper(), ids.toArray());
+    }
+
 
 
 

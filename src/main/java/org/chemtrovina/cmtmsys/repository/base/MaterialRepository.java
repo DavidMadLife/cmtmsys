@@ -4,6 +4,7 @@ import org.chemtrovina.cmtmsys.model.Material;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 public interface MaterialRepository {
     void add(Material material);
@@ -15,5 +16,8 @@ public interface MaterialRepository {
     List<Material> findByWarehouseId(int warehouseId);
     List<Material> search(String sapCode, String barCode, LocalDateTime fromDate, LocalDateTime toDate, Integer warehouseId);
     void restore(int planItemId, int quantity);
+
+    List<Material> findByIds(Set<Integer> ids);
+
 
 }

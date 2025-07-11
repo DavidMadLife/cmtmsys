@@ -14,43 +14,19 @@ public class ModelLineRun {
         this.status = "Running";
     }
 
-    public int getRunId() {
-        return runId;
-    }
+    // Getters & Setters
+    public int getRunId() { return runId; }
+    public void setRunId(int runId) { this.runId = runId; }
 
-    public void setRunId(int runId) {
-        this.runId = runId;
-    }
+    public int getModelLineId() { return modelLineId; }
+    public void setModelLineId(int modelLineId) { this.modelLineId = modelLineId; }
 
-    public int getModelLineId() {
-        return modelLineId;
-    }
+    public LocalDateTime getStartedAt() { return startedAt; }
+    public void setStartedAt(LocalDateTime startedAt) { this.startedAt = startedAt; }
 
-    public void setModelLineId(int modelLineId) {
-        this.modelLineId = modelLineId;
-    }
+    public LocalDateTime getEndedAt() { return endedAt; }
+    public void setEndedAt(LocalDateTime endedAt) { this.endedAt = endedAt; }
 
-    public LocalDateTime getStartedAt() {
-        return startedAt;
-    }
-
-    public void setStartedAt(LocalDateTime startedAt) {
-        this.startedAt = startedAt;
-    }
-
-    public LocalDateTime getEndedAt() {
-        return endedAt;
-    }
-
-    public void setEndedAt(LocalDateTime endedAt) {
-        this.endedAt = endedAt;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 }

@@ -6,6 +6,7 @@ import org.chemtrovina.cmtmsys.model.Material;
 import java.io.File;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 public interface MaterialService {
     void addMaterial(Material material);
@@ -20,6 +21,9 @@ public interface MaterialService {
     public void importMaterialsFromExcel(File file, String employeeId);
 
     List<MaterialDto> searchMaterials(String sapCode, String barCode,LocalDateTime fromDate, LocalDateTime toDate, Integer warehouseId);
+
+    List<Material> getMaterialsByIds(Set<Integer> ids);
+
 
 
 

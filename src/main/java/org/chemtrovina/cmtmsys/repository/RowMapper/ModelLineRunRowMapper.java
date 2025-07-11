@@ -15,14 +15,10 @@ public class ModelLineRunRowMapper implements RowMapper<ModelLineRun> {
         run.setModelLineId(rs.getInt("ModelLineID"));
 
         Timestamp startedAt = rs.getTimestamp("StartedAt");
-        if (startedAt != null) {
-            run.setStartedAt(startedAt.toLocalDateTime());
-        }
+        if (startedAt != null) run.setStartedAt(startedAt.toLocalDateTime());
 
         Timestamp endedAt = rs.getTimestamp("EndedAt");
-        if (endedAt != null) {
-            run.setEndedAt(endedAt.toLocalDateTime());
-        }
+        if (endedAt != null) run.setEndedAt(endedAt.toLocalDateTime());
 
         run.setStatus(rs.getString("Status"));
         return run;

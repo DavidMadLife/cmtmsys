@@ -6,45 +6,64 @@ import org.chemtrovina.cmtmsys.repository.base.ModelLineRunRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Repository
 public class ModelLineRunRepositoryImpl implements ModelLineRunRepository {
+    private final JdbcTemplate jdbc;
 
-    private final JdbcTemplate jdbcTemplate;
-
-    public ModelLineRunRepositoryImpl(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
+    public ModelLineRunRepositoryImpl(JdbcTemplate jdbc) {
+        this.jdbc = jdbc;
     }
 
     @Override
     public void add(ModelLineRun run) {
         String sql = "INSERT INTO ModelLineRuns (ModelLineID, StartedAt, Status) VALUES (?, ?, ?)";
-        jdbcTemplate.update(sql, run.getModelLineId(), run.getStartedAt(), run.getStatus());
+        jdbc.update(sql, run.getModelLineId(), run.getStartedAt(), run.getStatus());
     }
 
     @Override
     public void update(ModelLineRun run) {
         String sql = "UPDATE ModelLineRuns SET Status = ?, EndedAt = ? WHERE RunID = ?";
-        jdbcTemplate.update(sql, run.getStatus(), run.getEndedAt(), run.getRunId());
-    }
-
-    @Override
-    public void endRun(int runId) {
-        String sql = "UPDATE ModelLineRuns SET Status = 'Completed', EndedAt = GETDATE() WHERE RunID = ?";
-        jdbcTemplate.update(sql, runId);
+        jdbc.update(sql, run.getStatus(), run.getEndedAt(), run.getRunId());
     }
 
     @Override
     public ModelLineRun findById(int runId) {
         String sql = "SELECT * FROM ModelLineRuns WHERE RunID = ?";
-        List<ModelLineRun> results = jdbcTemplate.query(sql, new ModelLineRunRowMapper(), runId);
-        return results.isEmpty() ? null : results.get(0);
+        List<ModelLineRun> list = jdbc.query(sql, new ModelLineRunRowMapper(), runId);
+        return list.isEmpty() ? null : list.get(0);
     }
 
     @Override
     public List<ModelLineRun> findByModelLineId(int modelLineId) {
         String sql = "SELECT * FROM ModelLineRuns WHERE ModelLineID = ? ORDER BY StartedAt DESC";
-        return jdbcTemplate.query(sql, new ModelLineRunRowMapper(), modelLineId);
+        return jdbc.query(sql, new ModelLineRunRowMapper(), modelLineId);
     }
+
+    @Override
+    public void markRunsAsDuplicate(int modelLineId, LocalDate date) {
+        String sql = """
+        UPDATE ModelLineRuns 
+        SET Status = 'Duplicate'
+        WHERE ModelLineID = ? 
+          AND CAST(StartedAt AS DATE) = ?
+          AND Status = 'Running'
+    """;
+        jdbc.update(sql, modelLineId, date);
+    }
+
+    @Override
+    public ModelLineRun findLatestRunByModelLineId(int modelLineId) {
+        String sql = """
+        SELECT TOP 1 * 
+        FROM ModelLineRuns 
+        WHERE ModelLineID = ? 
+        ORDER BY StartedAt DESC
+    """;
+        return jdbc.queryForObject(sql, new ModelLineRunRowMapper(), modelLineId);
+    }
+
+
 }

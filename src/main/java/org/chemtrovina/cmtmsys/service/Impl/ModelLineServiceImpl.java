@@ -41,4 +41,10 @@ public class ModelLineServiceImpl implements ModelLineService {
     public List<ModelLine> getAllModelLines() {
         return repository.findAll();
     }
+
+    @Override
+    public ModelLine findOrCreateModelLine(int productId, int warehouseId) {
+        return repository.findOrCreateModelLine(productId, warehouseId);
+    }
+
 }

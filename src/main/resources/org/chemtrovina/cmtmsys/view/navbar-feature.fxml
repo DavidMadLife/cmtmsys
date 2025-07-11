@@ -47,6 +47,7 @@
                 <MenuItem fx:id="menuPlanWeekly" text="Planning Weekly" />
                 <MenuItem fx:id="menuTest" text="Test view" />
                 <MenuItem fx:id="menuFeeder" text="Feeder List" />
+                <MenuItem fx:id="menuFeederRoll" text="Attach Reel"/>
             </items>
         </MenuButton>
 

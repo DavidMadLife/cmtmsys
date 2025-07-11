@@ -11,4 +11,6 @@ public interface ModelLineRepository {
     List<ModelLine> findAll();
 
     ModelLine findOrCreateModelLine(int productId, int warehouseId);
+
+
 }

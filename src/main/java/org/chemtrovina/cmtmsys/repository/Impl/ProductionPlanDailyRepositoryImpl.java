@@ -186,8 +186,9 @@ public class ProductionPlanDailyRepositoryImpl implements ProductionPlanDailyRep
         );
     }
 
+    @Override
     public void consumeMaterialByActual(int planItemId, LocalDate runDate, int actualQty) {
-        // 1. Lấy thông tin ProductID và PlanID từ ProductionPlanItems
+        // 1. Lấy ProductID và PlanID từ PlanItem
         String getProductSql = "SELECT ProductID, PlanID FROM ProductionPlanItems WHERE PlanItemID = ?";
         var productAndPlan = jdbcTemplate.queryForMap(getProductSql, planItemId);
 
@@ -198,30 +199,66 @@ public class ProductionPlanDailyRepositoryImpl implements ProductionPlanDailyRep
         String getWarehouseSql = "SELECT LineWarehouseID FROM ProductionPlans WHERE PlanID = ?";
         int warehouseId = jdbcTemplate.queryForObject(getWarehouseSql, Integer.class, planId);
 
-        // 3. Lấy danh sách nguyên vật liệu từ ProductBOM
-        String getBOMSql = "SELECT SAPPN, Quantity FROM ProductBOM WHERE ProductID = ?";
-        List<Map<String, Object>> bomList = jdbcTemplate.queryForList(getBOMSql, productId);
+        // 3. Tìm RunID đang chạy (status = 'Running') của ModelLine
+        String getRunIdSql = """
+        SELECT r.RunID
+        FROM ModelLineRuns r
+        JOIN ModelLines ml ON r.ModelLineID = ml.ModelLineID
+        WHERE ml.ProductID = ? AND ml.WarehouseID = ? AND r.Status = 'Running'
+    """;
 
-        for (Map<String, Object> bom : bomList) {
-            String sapCode = (String) bom.get("SAPPN");
-            Number quantity = (Number) bom.get("Quantity");
-            int bomQty = quantity.intValue();
-            int totalToConsume = bomQty * actualQty;
+        Integer runId = jdbcTemplate.queryForObject(getRunIdSql, Integer.class, productId, warehouseId);
+        if (runId == null) throw new RuntimeException("Không tìm thấy phiên đang chạy để trừ liệu.");
 
-            // 4. Trừ liệu từ bảng Materials
-            String consumeSql = """
-            UPDATE Materials 
-            SET Quantity = Quantity - ? 
-            WHERE SAPCode = ? AND WarehouseID = ? AND Quantity >= ?
+        // 4. Lấy danh sách Feeder của model-line này
+        String getFeedersSql = "SELECT FeederID, SapCode FROM Feeders WHERE ProductID = ? AND WarehouseID = ?";
+        List<Map<String, Object>> feeders = jdbcTemplate.queryForList(getFeedersSql, productId, warehouseId);
+
+        for (Map<String, Object> feeder : feeders) {
+            int feederId = (int) feeder.get("FeederID");
+            String sapCode = (String) feeder.get("SapCode");
+
+            // 5. Lấy tất cả cuộn được gắn cho Feeder đó trong phiên đang chạy (FIFO)
+            String getMaterialsSql = """
+            SELECT m.MaterialID, m.Quantity
+            FROM FeederAssignmentMaterials fam
+            JOIN Materials m ON fam.MaterialID = m.MaterialID
+            JOIN FeederAssignments fa ON fam.AssignmentID = fa.AssignmentID
+            WHERE fa.FeederID = ? AND fa.RunID = ? AND fam.IsActive = 1
+            ORDER BY fam.AttachedAt ASC
         """;
 
-            int updated = jdbcTemplate.update(consumeSql, totalToConsume, sapCode, warehouseId, totalToConsume);
+            List<Map<String, Object>> assignedRolls = jdbcTemplate.queryForList(getMaterialsSql, feederId, runId);
+            int qtyToConsume = actualQty;
 
-            if (updated == 0) {
-                throw new RuntimeException("Không đủ liệu cho SAP " + sapCode + " trong kho " + warehouseId);
+            for (Map<String, Object> roll : assignedRolls) {
+                if (qtyToConsume <= 0) break;
+
+                int materialId = (int) roll.get("MaterialID");
+                int availableQty = (int) roll.get("Quantity");
+
+                int consumeNow = Math.min(availableQty, qtyToConsume);
+
+                String updateMatSql = """
+                UPDATE Materials 
+                SET Quantity = Quantity - ? 
+                WHERE MaterialID = ? AND Quantity >= ?
+            """;
+
+                int updated = jdbcTemplate.update(updateMatSql, consumeNow, materialId, consumeNow);
+                if (updated == 0) {
+                    throw new RuntimeException("Không đủ vật liệu ở cuộn " + materialId + " để trừ.");
+                }
+
+                qtyToConsume -= consumeNow;
+            }
+
+            if (qtyToConsume > 0) {
+                throw new RuntimeException("Không đủ liệu để trừ cho SAP " + sapCode + " theo FIFO trong phiên đang chạy.");
             }
         }
     }
+
 
 
     @Override
