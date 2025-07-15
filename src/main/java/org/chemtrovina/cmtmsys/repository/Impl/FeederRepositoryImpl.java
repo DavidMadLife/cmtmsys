@@ -81,4 +81,11 @@ public class FeederRepositoryImpl implements FeederRepository {
                 "%" + feederCode + "%", "%" + sapCode + "%"
         );
     }
+
+    @Override
+    public List<Feeder> findByModelLineId(int modelLineId) {
+        String sql = "SELECT * FROM Feeders WHERE ModelLineID = ?";
+        return jdbcTemplate.query(sql, new FeederRowMapper(), modelLineId);
+    }
+
 }

@@ -18,4 +18,10 @@ public interface ProductionPlanRepository {
                                     LocalDate fromDate, LocalDate toDate, int weekNo, int year)
             ;
 
+    List<String> getLinesWithPlan(int weekNo, int year);
+    void deleteWeeklyPlan(int planId);
+
+    int findPlanId(WeeklyPlanDto dto);
+
+
 }

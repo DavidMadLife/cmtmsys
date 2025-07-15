@@ -4,6 +4,7 @@ import org.chemtrovina.cmtmsys.dto.MaterialRequirementDto;
 import org.chemtrovina.cmtmsys.model.Product;
 import org.chemtrovina.cmtmsys.model.WorkOrder;
 import org.chemtrovina.cmtmsys.model.WorkOrderItem;
+import org.chemtrovina.cmtmsys.model.enums.ModelType;
 import org.chemtrovina.cmtmsys.repository.base.WarehouseTransferDetailRepository;
 import org.chemtrovina.cmtmsys.repository.base.WarehouseTransferRepository;
 import org.chemtrovina.cmtmsys.repository.base.WorkOrderItemRepository;
@@ -157,6 +158,7 @@ public class WorkOrderServiceImpl implements WorkOrderService {
     @Override
     public Map<Product, Integer> getWorkOrderItems(int workOrderId) {
         List<WorkOrderItem> items = workOrderItemRepository.findByWorkOrderId(workOrderId);
+
         return items.stream().collect(Collectors.toMap(
                 item -> jdbcTemplate.queryForObject(
                         "SELECT * FROM Products WHERE ProductID = ?",
@@ -165,7 +167,13 @@ public class WorkOrderServiceImpl implements WorkOrderService {
                             p.setProductId(rs.getInt("ProductID"));
                             p.setProductCode(rs.getString("ProductCode"));
                             p.setDescription(rs.getString("Description"));
-                            // bổ sung thêm thuộc tính nếu có
+
+                            // ✅ Parse thêm modelType nếu có
+                            String modelTypeStr = rs.getString("ModelType");
+                            if (modelTypeStr != null && !modelTypeStr.isBlank()) {
+                                p.setModelType(ModelType.valueOf(modelTypeStr));
+                            }
+
                             return p;
                         },
                         item.getProductId()
@@ -173,6 +181,7 @@ public class WorkOrderServiceImpl implements WorkOrderService {
                 WorkOrderItem::getQuantity
         ));
     }
+
 
     @Override
     public void updateWorkOrderWithItems(int workOrderId, String description, Map<Integer, Integer> productMap) {

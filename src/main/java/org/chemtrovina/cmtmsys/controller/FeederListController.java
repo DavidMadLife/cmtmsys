@@ -10,6 +10,7 @@ import org.chemtrovina.cmtmsys.model.*;
 import org.chemtrovina.cmtmsys.model.enums.ModelType;
 import org.chemtrovina.cmtmsys.service.base.*;
 import org.chemtrovina.cmtmsys.utils.FxClipboardUtils;
+import org.chemtrovina.cmtmsys.utils.TableUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -25,6 +26,8 @@ public class FeederListController {
     @FXML private Button btnLoadFeeders;
 
     @FXML private TableView<Feeder> tblFeederList;
+    @FXML private TableColumn<Feeder, Integer> colNo;
+
     @FXML private TableColumn<Feeder, String> colFeederCode;
     @FXML private TableColumn<Feeder, String> colSapCode;
     @FXML private TableColumn<Feeder, Integer> colQty;
@@ -37,6 +40,8 @@ public class FeederListController {
     @FXML private Button btnChooseFile;
     @FXML private Text txtSelectedFileName;
     @FXML private Button btnImportFeederList;
+    @FXML private Button btnDeleteSelectedFeeders;
+
 
     private File selectedFile;
     private ObservableList<Feeder> allFeeders = FXCollections.observableArrayList();
@@ -67,8 +72,8 @@ public class FeederListController {
         setupImport();
         setupSearch();
         enableClipboardSupport();
-
-
+        setupDelete();
+        TableUtils.centerAlignAllColumns(tblFeederList);
     }
 
     private void setupModelTypeComboBox() {
@@ -107,11 +112,26 @@ public class FeederListController {
     }
 
     private void setupTable() {
+
+        colNo.setCellValueFactory(cell -> new javafx.beans.property.SimpleIntegerProperty(
+                tblFeederList.getItems().indexOf(cell.getValue()) + 1
+        ).asObject());
         colFeederCode.setCellValueFactory(cell -> new javafx.beans.property.SimpleStringProperty(cell.getValue().getFeederCode()));
         colSapCode.setCellValueFactory(cell -> new javafx.beans.property.SimpleStringProperty(cell.getValue().getSapCode()));
         colQty.setCellValueFactory(cell -> new javafx.beans.property.SimpleIntegerProperty(cell.getValue().getQty()).asObject());
         colMachine.setCellValueFactory(cell -> new javafx.beans.property.SimpleStringProperty(cell.getValue().getMachine()));
+
+        TableUtils.centerAlignColumn(colNo);
+        TableUtils.centerAlignColumn(colFeederCode);
+        TableUtils.centerAlignColumn(colSapCode);
+        TableUtils.centerAlignColumn(colQty);
+        TableUtils.centerAlignColumn(colMachine);
+
         tblFeederList.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+
+
+
+
     }
 
     private void loadFeederList() {
@@ -210,6 +230,40 @@ public class FeederListController {
             selectedFile = null;
         });
     }
+
+    private void setupDelete() {
+        btnDeleteSelectedFeeders.setOnAction(e -> {
+            List<Feeder> selected = tblFeederList.getSelectionModel().getSelectedItems();
+
+            if (selected == null || selected.isEmpty()) {
+                showAlert(Alert.AlertType.WARNING, "Không có lựa chọn", "Vui lòng chọn feeder để xóa.");
+                return;
+            }
+
+            Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+            confirm.setTitle("Xác nhận xóa");
+            confirm.setHeaderText(null);
+            confirm.setContentText("Bạn có chắc chắn muốn xóa " + selected.size() + " feeder?");
+            confirm.showAndWait().ifPresent(result -> {
+                if (result == ButtonType.OK) {
+                    try {
+                        for (Feeder feeder : selected) {
+                            feederService.deleteFeederById(feeder.getFeederId()); // 🚀 Xóa feeder + xóa modelLine nếu cần
+                        }
+
+                        showAlert(Alert.AlertType.INFORMATION, "Thành công", "Đã xóa feeder.");
+                        loadFeederList(); // Refresh lại danh sách
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        showAlert(Alert.AlertType.ERROR, "Lỗi", "Không thể xóa feeder: " + ex.getMessage());
+                    }
+                }
+            });
+        });
+
+        tblFeederList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+    }
+
 
     private void enableClipboardSupport() {
 

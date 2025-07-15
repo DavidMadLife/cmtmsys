@@ -30,8 +30,8 @@ public class ProductionPlanServiceImpl implements ProductionPlanService {
     }
 
     @Override
-    public void deletePlan(int planId) {
-        repository.deleteById(planId);
+    public void deleteWeeklyPlan(int planId) {
+        repository.deleteWeeklyPlan(planId);
     }
 
     @Override
@@ -52,6 +52,16 @@ public class ProductionPlanServiceImpl implements ProductionPlanService {
     @Override
     public boolean createWeeklyPlan(String lineName, List<SelectedModelDto> modelList, LocalDate fromDate, LocalDate toDate, int weekNo, int year) {
         return repository.createWeeklyPlan(lineName, modelList, fromDate, toDate, weekNo, year);
+    }
+
+    @Override
+    public List<String> getLinesWithPlan(int weekNo, int year) {
+        return repository.getLinesWithPlan(weekNo, year);
+    }
+
+    @Override
+    public int findPlanId(WeeklyPlanDto dto) {
+        return repository.findPlanId(dto);
     }
 
 

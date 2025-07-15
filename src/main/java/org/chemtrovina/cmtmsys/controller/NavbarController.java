@@ -40,7 +40,7 @@ public class NavbarController {
 
     // ==== Planning Menu ====
     @FXML private MenuButton menuPlan;
-    @FXML private MenuItem menuPlanWeekly;
+    @FXML private MenuItem menuPlanWeekly, menuPlanAll;
     @FXML private MenuItem menuTest;
     @FXML private MenuItem menuFeeder, menuFeederRoll;
 
@@ -103,6 +103,7 @@ public class NavbarController {
         // Planning
         menuPlanWeekly.setOnAction(e -> openTab("Planning Weekly", "/org/chemtrovina/cmtmsys/view/weekly_plan.fxml"));
         menuTest.setOnAction(e -> openTab("Test View", "/org/chemtrovina/cmtmsys/view/daily_plan_view.fxml"));
+        menuPlanAll.setOnAction(e -> openTab("Plan Weekly/Daily", "/org/chemtrovina/cmtmsys/view/production_plan.fxml"));
         menuFeeder.setOnAction(e -> openTab("Feeder List", "/org/chemtrovina/cmtmsys/view/feederListView-feature.fxml"));
         menuFeederRoll.setOnAction(e -> openTab("Attach Reel", "/org/chemtrovina/cmtmsys/view/feeder-multi-roll.fxml"));
 

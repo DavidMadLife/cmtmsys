@@ -12,7 +12,7 @@ public interface ProductService {
     Product getProductById(int id);
     List<Product> getAllProducts();
     Product getProductByCode(String code);
-    boolean checkProductExists(String productCode);
+    boolean checkProductExists(String productCode, ModelType modelType);
     void deleteProductWithBOM(int productId);
     Product getProductByCodeAndType(String productCode, ModelType modelType);
 

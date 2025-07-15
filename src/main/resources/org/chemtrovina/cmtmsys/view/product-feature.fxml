@@ -43,6 +43,7 @@
         <Label text="Danh sách BOM:" style="-fx-font-size: 14px;" />
         <TableView fx:id="tblProductBOM" VBox.vgrow="ALWAYS">
             <columns>
+                <TableColumn fx:id="colIndex" text="No" prefWidth="50" />
                 <TableColumn fx:id="colProductCode" text="Mã thành phẩm" prefWidth="150" />
                 <TableColumn fx:id="colModelType" text="Loại model" prefWidth="100"/>
                 <TableColumn fx:id="colSappn" text="Mã vật liệu (SAP)" prefWidth="200" />

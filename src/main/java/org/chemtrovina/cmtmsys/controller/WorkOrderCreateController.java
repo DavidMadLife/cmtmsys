@@ -11,8 +11,10 @@ import javafx.stage.Stage;
 import javafx.util.Pair;
 import org.chemtrovina.cmtmsys.model.Product;
 import org.chemtrovina.cmtmsys.model.WorkOrder;
+import org.chemtrovina.cmtmsys.model.enums.ModelType;
 import org.chemtrovina.cmtmsys.service.base.ProductService;
 import org.chemtrovina.cmtmsys.service.base.WorkOrderService;
+import org.chemtrovina.cmtmsys.utils.TableUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -27,7 +29,10 @@ public class WorkOrderCreateController {
     @FXML private TableColumn<Pair<Product, Integer>, String> colProduct;
     @FXML private TableColumn<Pair<Product, Integer>, String> colDescription;
     @FXML private TableColumn<Pair<Product, Integer>, Integer> colQuantity;
+    @FXML private TableColumn<Pair<Product, Integer>, String> colModelType;
+
     @FXML private Button btnAddItem, btnRemoveItem, btnCreate;
+
 
     private final ObservableList<Pair<Product, Integer>> itemList = FXCollections.observableArrayList();
     private Integer editingWorkOrderId = null;
@@ -46,6 +51,7 @@ public class WorkOrderCreateController {
         setupTable();
         setupActions();
         tblItems.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        TableUtils.centerAlignAllColumns(tblItems);
     }
 
     private void setupTable() {
@@ -53,6 +59,11 @@ public class WorkOrderCreateController {
         colProduct.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getKey().getProductCode()));
         colDescription.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getKey().getDescription()));
         colQuantity.setCellValueFactory(cell -> new SimpleIntegerProperty(cell.getValue().getValue()).asObject());
+        colModelType.setCellValueFactory(cell -> {
+            var modelType = cell.getValue().getKey().getModelType();
+            return new SimpleStringProperty(modelType != null ? modelType.name() : "");
+        });
+
     }
 
     private void setupActions() {
@@ -77,21 +88,33 @@ public class WorkOrderCreateController {
         TextField txtQty = new TextField();
         txtQty.setPromptText("Số lượng");
 
-        VBox content = new VBox(10, new Label("Mã sản phẩm:"), txtCode, new Label("Số lượng:"), txtQty);
+        ComboBox<ModelType> cbType = new ComboBox<>();
+        cbType.setItems(FXCollections.observableArrayList(ModelType.values()));
+        cbType.setPromptText("Chọn Model Type");
+
+        VBox content = new VBox(10,
+                new Label("Mã sản phẩm:"), txtCode,
+                new Label("Loại sản phẩm (Model Type):"), cbType,
+                new Label("Số lượng:"), txtQty
+        );
         dialog.getDialogPane().setContent(content);
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
         dialog.setResultConverter(bt -> {
-            if (bt == ButtonType.OK && !txtCode.getText().isBlank() && !txtQty.getText().isBlank()) {
+            if (bt == ButtonType.OK &&
+                    !txtCode.getText().isBlank() &&
+                    !txtQty.getText().isBlank() &&
+                    cbType.getValue() != null) {
                 try {
                     String code = txtCode.getText().trim();
                     int qty = Integer.parseInt(txtQty.getText().trim());
+                    ModelType type = cbType.getValue();
 
-                    Product product = productService.getProductByCode(code);
+                    Product product = productService.getProductByCodeAndType(code, type);
                     if (product != null) {
                         return new Pair<>(product, qty);
                     } else {
-                        showAlert("❌ Không tìm thấy sản phẩm với mã: " + code);
+                        showAlert("❌ Không tìm thấy sản phẩm với mã: " + code + " và loại: " + type.name());
                     }
                 } catch (NumberFormatException ex) {
                     showAlert("❌ Số lượng không hợp lệ!");
@@ -102,6 +125,7 @@ public class WorkOrderCreateController {
 
         dialog.showAndWait().ifPresent(result -> itemList.add(result));
     }
+
 
     private void handleCreateWorkOrder() {
         if (itemList.isEmpty()) {

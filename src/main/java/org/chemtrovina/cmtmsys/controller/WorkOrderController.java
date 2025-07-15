@@ -40,6 +40,7 @@ import org.chemtrovina.cmtmsys.service.base.WarehouseTransferService;
 import org.chemtrovina.cmtmsys.service.base.WorkOrderService;
 import org.chemtrovina.cmtmsys.utils.FxFilterUtils;
 import org.chemtrovina.cmtmsys.utils.SpringFXMLLoader;
+import org.chemtrovina.cmtmsys.utils.TableUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -51,6 +52,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static org.chemtrovina.cmtmsys.utils.TableUtils.centerAlignColumn;
+
 @Component
 public class WorkOrderController {
 
@@ -118,6 +122,10 @@ public class WorkOrderController {
     }
 
     private void setupWorkOrderTable() {
+        TableUtils.centerAlignAllColumns(tblMaterialByProduct);
+        TableUtils.centerAlignAllColumns(tblWorkOrders);
+
+
         colWOCode.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getWorkOrderCode()));
         colWODesc.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getDescription()));
         colWODate.setCellValueFactory(c -> new SimpleStringProperty(
@@ -279,7 +287,6 @@ public class WorkOrderController {
         }
     }
 
-
     private void openCreateWorkOrderDialog() {
         try {
             FXMLLoader loader = SpringFXMLLoader.load(App.class.getResource("view/work_order_create.fxml"));
@@ -379,9 +386,6 @@ public class WorkOrderController {
 
         showAlert("✅ Đã chuyển " + inserted + " dòng hàng NG vào kho.");
     }
-
-
-
 
 
     private void handleClearFilters() {
@@ -535,7 +539,7 @@ public class WorkOrderController {
 
     private void openUpdateWorkOrderDialog(WorkOrder workOrder) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/org/chemtrovina/cmtmsys/view/work_order_create.fxml"));
+            FXMLLoader loader = SpringFXMLLoader.load(App.class.getResource("view/work_order_create.fxml"));
             Parent root = loader.load();
 
             WorkOrderCreateController controller = loader.getController();

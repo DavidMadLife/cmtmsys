@@ -11,7 +11,7 @@ public class FeederDisplayRow {
 
     private String rollCode = "";
     private Integer materialQty = 0;
-    private String status = "Rỗng"; // mặc định ban đầu
+    private String status = "Chưa gắn"; // mặc định ban đầu
 
     public static FeederDisplayRow fromFeeder(Feeder feeder) {
         FeederDisplayRow row = new FeederDisplayRow();
@@ -22,7 +22,7 @@ public class FeederDisplayRow {
         row.feederQty = feeder.getQty();
         row.rollCode = "";
         row.materialQty = 0;
-        row.status = "Rỗng";
+        row.status = "Chưa gắn";
         return row;
     }
 

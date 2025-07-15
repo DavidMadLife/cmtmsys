@@ -80,6 +80,7 @@ public class ProductionPlanDailyRepositoryImpl implements ProductionPlanDailyRep
             ppi.PlanItemID, 
             p.ProductCode, 
             p.ProductCode AS SapCode, 
+            p.ModelType,
             0 AS Stock,  -- Nếu muốn bỏ luôn stock thì có thể giữ 0 ở đây
 
             MAX(CASE WHEN ppd.RunDate = ? THEN ppd.Quantity ELSE 0 END) AS Day1,
@@ -105,7 +106,7 @@ public class ProductionPlanDailyRepositoryImpl implements ProductionPlanDailyRep
         LEFT JOIN ProductionPlanDaily ppd ON ppi.PlanItemID = ppd.PlanItemID
 
         WHERE w.Name = ? AND pp.WeekNo = ? AND pp.Year = ?
-        GROUP BY ppi.PlanItemID, p.ProductCode
+        GROUP BY ppi.PlanItemID, p.ProductCode, p.ModelType
     """;
 
         LocalDate monday = getStartOfWeek(weekNo, year);
@@ -272,10 +273,6 @@ public class ProductionPlanDailyRepositoryImpl implements ProductionPlanDailyRep
     }
 
 
-
-
-
-
     private static class DailyPlanRowDtoMapper implements RowMapper<DailyPlanRowDto> {
         @Override
         public DailyPlanRowDto mapRow(ResultSet rs, int rowNum) throws SQLException {
@@ -287,8 +284,10 @@ public class ProductionPlanDailyRepositoryImpl implements ProductionPlanDailyRep
                     rs.getInt("Day1"), rs.getInt("Day2"), rs.getInt("Day3"), rs.getInt("Day4"),
                     rs.getInt("Day5"), rs.getInt("Day6"), rs.getInt("Day7"),
                     rs.getInt("A1"), rs.getInt("A2"), rs.getInt("A3"), rs.getInt("A4"),
-                    rs.getInt("A5"), rs.getInt("A6"), rs.getInt("A7")
+                    rs.getInt("A5"), rs.getInt("A6"), rs.getInt("A7"),
+                    rs.getString("ModelType")   // 👈 truyền thêm tham số này
             );
+
         }
     }
 }

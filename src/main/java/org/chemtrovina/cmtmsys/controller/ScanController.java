@@ -37,6 +37,7 @@ import org.chemtrovina.cmtmsys.service.base.HistoryService;
 import org.chemtrovina.cmtmsys.service.base.InvoiceDetailService;
 import org.chemtrovina.cmtmsys.service.base.InvoiceService;
 import org.chemtrovina.cmtmsys.service.base.MOQService;
+import org.chemtrovina.cmtmsys.utils.TableUtils;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
@@ -117,6 +118,9 @@ public class ScanController {
         startAutoGC();
 
         setupSearchShortcut();
+
+        TableUtils.centerAlignAllColumns(tblScanDetails);
+        TableUtils.centerAlignAllColumns(tblInvoiceList);
     }
 
     // ======================== SETUP ========================

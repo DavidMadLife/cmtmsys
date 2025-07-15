@@ -24,6 +24,7 @@ import org.chemtrovina.cmtmsys.service.base.ProductBOMService;
 import org.chemtrovina.cmtmsys.service.base.ProductService;
 import org.chemtrovina.cmtmsys.utils.FxClipboardUtils;
 import org.chemtrovina.cmtmsys.utils.FxFilterUtils;
+import org.chemtrovina.cmtmsys.utils.TableUtils;
 import org.controlsfx.control.textfield.AutoCompletionBinding;
 import org.controlsfx.control.textfield.TextFields;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +40,8 @@ public class ProductController {
     @FXML private TextField txtProductCode;
     @FXML private Button btnLoad;
     @FXML private TableView<ProductBomDto> tblProductBOM;
+    @FXML private TableColumn<ProductBomDto, Number> colIndex;
+
     @FXML private TableColumn<ProductBomDto, String> colProductCode;
     @FXML private TableColumn<ProductBomDto, String> colSappn;
     @FXML private TableColumn<ProductBomDto, Double> colQuantity;
@@ -80,6 +83,7 @@ public class ProductController {
         btnCreateProduct.setOnAction(e -> onCreateProduct());
         tblProductBOM.getSelectionModel().setCellSelectionEnabled(true);
         tblProductBOM.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        TableUtils.centerAlignAllColumns(tblProductBOM);
     }
 
     private void setupTable() {
@@ -96,6 +100,18 @@ public class ProductController {
                 FxClipboardUtils.copySelectionToClipboard(tblProductBOM);
             }
         });
+        colIndex.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(Number item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setText(null);
+                } else {
+                    setText(String.valueOf(getIndex() + 1));
+                }
+            }
+        });
+
 
     }
 

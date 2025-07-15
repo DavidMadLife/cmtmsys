@@ -68,7 +68,7 @@ public class LoginController {
     private void openMainWindow() {
         try {
             FXMLLoader loader = new FXMLLoader(App.class.getResource("view/main.fxml"));
-            Scene scene = new Scene(loader.load(), 1280, 832);
+            Scene scene = new Scene(loader.load());
 
             Stage mainStage = new Stage();
             mainStage.setTitle("cmtmsys");
@@ -76,6 +76,9 @@ public class LoginController {
             mainStage.getIcons().add(new javafx.scene.image.Image(
                     App.class.getResourceAsStream("asserts/logo.png")
             ));
+
+            mainStage.setMaximized(true);
+
             mainStage.setOnCloseRequest(e -> System.exit(0));
             mainStage.show();
         } catch (IOException e) {

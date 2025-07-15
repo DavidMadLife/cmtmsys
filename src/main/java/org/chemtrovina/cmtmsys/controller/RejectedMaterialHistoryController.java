@@ -11,6 +11,7 @@ import org.chemtrovina.cmtmsys.model.RejectedMaterial;
 import org.chemtrovina.cmtmsys.service.base.RejectedMaterialService;
 import org.chemtrovina.cmtmsys.service.base.WorkOrderService;
 import org.chemtrovina.cmtmsys.utils.FxClipboardUtils;
+import org.chemtrovina.cmtmsys.utils.TableUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -65,6 +66,8 @@ public class RejectedMaterialHistoryController {
             txtSearchSAP.clear();
             loadData();
         });
+
+        TableUtils.centerAlignAllColumns(tblRejected);
 
     }
 

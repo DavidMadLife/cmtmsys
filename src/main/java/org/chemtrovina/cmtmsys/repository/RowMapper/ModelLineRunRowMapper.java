@@ -21,6 +21,8 @@ public class ModelLineRunRowMapper implements RowMapper<ModelLineRun> {
         if (endedAt != null) run.setEndedAt(endedAt.toLocalDateTime());
 
         run.setStatus(rs.getString("Status"));
+        run.setRunCode(rs.getString("RunCode"));
+
         return run;
     }
 }

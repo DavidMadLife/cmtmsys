@@ -19,8 +19,8 @@ public class ModelLineRunRepositoryImpl implements ModelLineRunRepository {
 
     @Override
     public void add(ModelLineRun run) {
-        String sql = "INSERT INTO ModelLineRuns (ModelLineID, StartedAt, Status) VALUES (?, ?, ?)";
-        jdbc.update(sql, run.getModelLineId(), run.getStartedAt(), run.getStatus());
+        String sql = "INSERT INTO ModelLineRuns (ModelLineID, StartedAt, Status, RunCode) VALUES (?, ?, ?, ?)";
+        jdbc.update(sql, run.getModelLineId(), run.getStartedAt(), run.getStatus(), run.getRunCode());
     }
 
     @Override

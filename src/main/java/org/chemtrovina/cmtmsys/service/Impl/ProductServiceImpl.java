@@ -52,8 +52,8 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public boolean checkProductExists(String productCode) {
-        return repository.checkProductExists(productCode);
+    public boolean checkProductExists(String productCode, ModelType modelType) {
+        return repository.checkProductExists(productCode, modelType);
     }
 
 

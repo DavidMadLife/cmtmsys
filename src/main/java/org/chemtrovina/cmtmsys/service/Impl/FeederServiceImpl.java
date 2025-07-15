@@ -42,9 +42,26 @@ public class FeederServiceImpl implements FeederService {
     }
 
     @Override
-    public void deleteFeederById(int id) {
-        feederRepository.deleteById(id);
+    public void deleteFeederById(int feederId) {
+        // 1. Lấy feeder trước khi xóa (để biết modelLineId)
+        Feeder feeder = feederRepository.findById(feederId);
+        if (feeder == null) {
+            throw new RuntimeException("Feeder không tồn tại.");
+        }
+
+        int modelLineId = feeder.getModelLineId();
+
+        // 2. Xóa feeder
+        feederRepository.deleteById(feederId);
+
+        // 3. Kiểm tra xem còn feeder nào khác trong modelLine không
+        List<Feeder> remaining = feederRepository.findByModelLineId(modelLineId);
+        if (remaining.isEmpty()) {
+            // 4. Nếu không còn feeder → xóa luôn modelLine
+            modelLineRepository.deleteById(modelLineId);
+        }
     }
+
 
     @Override
     public Feeder getFeederById(int id) {

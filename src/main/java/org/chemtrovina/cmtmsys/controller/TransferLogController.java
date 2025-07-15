@@ -24,6 +24,7 @@ import org.chemtrovina.cmtmsys.service.Impl.WarehouseServiceImpl;
 import org.chemtrovina.cmtmsys.service.base.MaterialService;
 import org.chemtrovina.cmtmsys.service.base.TransferLogService;
 import org.chemtrovina.cmtmsys.service.base.WarehouseService;
+import org.chemtrovina.cmtmsys.utils.TableUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -71,6 +72,8 @@ public class TransferLogController {
         tblTransferLogs.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         setupActions();
         loadData();
+
+        TableUtils.centerAlignAllColumns(tblTransferLogs);
     }
 
     private void setupActions() {

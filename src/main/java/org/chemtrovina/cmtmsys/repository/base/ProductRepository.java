@@ -13,7 +13,7 @@ public interface ProductRepository {
     Product findById(int productId);
     List<Product> findAll();
     Product getProductByCode(String code);
-    boolean checkProductExists(String productCode);
+    boolean checkProductExists(String productCode, ModelType modelType);
 
     Product findByCodeAndModelType(String productCode, ModelType modelType);
 

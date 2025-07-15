@@ -34,6 +34,7 @@
             <Label text="Phiên chạy:" />
             <ComboBox fx:id="cbRunHistory" prefWidth="200" promptText="Chọn phiên" />
             <Button fx:id="btnCreateRun" text="Tạo phiên mới" />
+            <Button fx:id="btnEndRun" text="Kết thúc phiên chạy" />
         </HBox>
 
 

@@ -54,6 +54,7 @@ public class ProductionPlanRepositoryImpl implements ProductionPlanRepository {
         SELECT 
             w.Name AS LineName,
             p.ProductCode,
+            p.ModelType,
             pp.WeekNo AS WeekNumber,
             CONVERT(varchar, pp.FromDate, 23) AS FromDate,
             CONVERT(varchar, pp.ToDate, 23) AS ToDate,
@@ -83,7 +84,16 @@ public class ProductionPlanRepositoryImpl implements ProductionPlanRepository {
         }
 
         sql += condition.toString();
-        sql += " GROUP BY w.Name, p.ProductCode, pp.WeekNo, pp.FromDate, pp.ToDate, ppi.PlannedQuantity";
+        sql += """
+        GROUP BY 
+            w.Name, 
+            p.ProductCode, 
+            p.ModelType,
+            pp.WeekNo, 
+            pp.FromDate, 
+            pp.ToDate, 
+            ppi.PlannedQuantity
+    """;
 
         return jdbcTemplate.query(sql, ps -> {
             int i = 1;
@@ -91,17 +101,27 @@ public class ProductionPlanRepositoryImpl implements ProductionPlanRepository {
             if (model != null && !model.isBlank()) ps.setString(i++, "%" + model + "%");
             if (weekNo != null) ps.setInt(i++, weekNo);
             if (year != null) ps.setInt(i++, year);
-        }, (rs, rowNum) -> new WeeklyPlanDto(
-                rs.getString("LineName"),
-                rs.getString("ProductCode"),
-                rs.getInt("WeekNumber"),
-                rs.getString("FromDate"),
-                rs.getString("ToDate"),
-                rs.getInt("PlannedQuantity"),
-                rs.getInt("ActualQuantity"),
-                rs.getInt("DiffQuantity")
-        ));
+        }, (rs, rowNum) -> {
+            int planned = rs.getInt("PlannedQuantity");
+            int actual = rs.getInt("ActualQuantity");
+            double completionRate = planned == 0 ? 0.0 : (actual * 100.0 / planned);
+
+            WeeklyPlanDto dto = new WeeklyPlanDto(
+                    rs.getString("LineName"),
+                    rs.getString("ProductCode"),
+                    rs.getInt("WeekNumber"),
+                    rs.getString("FromDate"),
+                    rs.getString("ToDate"),
+                    planned,
+                    actual,
+                    rs.getInt("DiffQuantity"),
+                    rs.getString("ModelType")
+            );
+            dto.setCompletionRate(completionRate);
+            return dto;
+        });
     }
+
 
 
     @Override
@@ -124,38 +144,48 @@ public class ProductionPlanRepositoryImpl implements ProductionPlanRepository {
                     warehouseId, weekNo, year, fromDate, toDate);
             if (planId == null) return false;
 
-            // Insert từng item sản phẩm (ProductionPlanItems) + daily theo từng ngày
+            // SQL: Insert từng item kế hoạch tuần
             String insertItemSql = """
             INSERT INTO ProductionPlanItems (PlanID, ProductID, PlannedQuantity, CreatedAt)
             OUTPUT INSERTED.PlanItemID
             VALUES (?, ?, ?, GETDATE())
         """;
 
+            // SQL: Insert daily kế hoạch
             String insertDailySql = """
             INSERT INTO ProductionPlanDaily (PlanItemID, RunDate, Quantity, ActualQuantity)
             VALUES (?, ?, ?, 0)
         """;
 
             for (SelectedModelDto model : modelList) {
-                Integer productId = jdbcTemplate.queryForObject(
-                        "SELECT ProductID FROM Products WHERE ProductCode = ?", Integer.class, model.getModelCode());
+                String modelCode = model.getModelCode();
+                String modelType = model.getModelType().name(); // ENUM → String
 
-                if (productId == null) {
-                    System.err.println("Không tìm thấy ProductCode: " + model.getModelCode());
+                String queryProduct = "SELECT ProductID FROM Products WHERE ProductCode = ? AND ModelType = ?";
+                List<Integer> productIds = jdbcTemplate.queryForList(queryProduct, Integer.class, modelCode, modelType);
+
+                if (productIds.isEmpty()) {
+                    System.err.println("❌ Không tìm thấy ProductCode: " + modelCode + " - " + modelType);
                     continue;
                 }
+
+                if (productIds.size() > 1) {
+                    System.err.println("⚠️ Nhiều sản phẩm trùng ProductCode + ModelType: " + modelCode);
+                }
+
+                Integer productId = productIds.get(0);
 
                 // Tạo item kế hoạch tuần
                 Integer planItemId = jdbcTemplate.queryForObject(insertItemSql, Integer.class,
                         planId, productId, model.getQuantity());
+
                 if (planItemId == null) continue;
 
-                // Không gán Quantity ngay → khởi tạo daily rỗng
+                // Khởi tạo 7 ngày kế hoạch
                 for (int i = 0; i < 7; i++) {
                     LocalDate runDate = fromDate.plusDays(i);
-                    jdbcTemplate.update(insertDailySql, planItemId, runDate, 0); // plan = 0, actual = 0
+                    jdbcTemplate.update(insertDailySql, planItemId, runDate, 0);
                 }
-
             }
 
             return true;
@@ -163,6 +193,63 @@ public class ProductionPlanRepositoryImpl implements ProductionPlanRepository {
         } catch (Exception ex) {
             ex.printStackTrace();
             return false;
+        }
+    }
+
+
+    @Override
+    public List<String> getLinesWithPlan(int weekNo, int year) {
+        String sql = """
+        SELECT DISTINCT w.Name
+        FROM ProductionPlans pp
+        JOIN Warehouses w ON pp.LineWarehouseID = w.WarehouseID
+        WHERE pp.WeekNo = ? AND pp.Year = ?
+    """;
+
+        return jdbcTemplate.queryForList(sql, String.class, weekNo, year);
+    }
+
+    @Override
+    public void deleteWeeklyPlan(int planId) {
+        try {
+            // 1. Xoá ProductionPlanDaily theo PlanID
+            String deleteDailySql = """
+            DELETE FROM ProductionPlanDaily
+            WHERE PlanItemID IN (
+                SELECT PlanItemID FROM ProductionPlanItems WHERE PlanID = ?
+            )
+        """;
+            jdbcTemplate.update(deleteDailySql, planId);
+
+            // 2. Xoá ProductionPlanItems
+            String deleteItemsSql = "DELETE FROM ProductionPlanItems WHERE PlanID = ?";
+            jdbcTemplate.update(deleteItemsSql, planId);
+
+            // 3. Xoá ProductionPlans
+            String deletePlanSql = "DELETE FROM ProductionPlans WHERE PlanID = ?";
+            jdbcTemplate.update(deletePlanSql, planId);
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            throw new RuntimeException("Không thể xóa Weekly Plan với PlanID = " + planId);
+        }
+    }
+
+    @Override
+    public int findPlanId(WeeklyPlanDto dto) {
+        String sql = """
+        SELECT TOP 1 pp.PlanID
+        FROM ProductionPlans pp
+        JOIN Warehouses w ON pp.LineWarehouseID = w.WarehouseID
+        JOIN ProductionPlanItems ppi ON ppi.PlanID = pp.PlanID
+        JOIN Products p ON p.ProductID = ppi.ProductID
+        WHERE w.Name = ? AND p.ProductCode = ? AND pp.WeekNo = ? AND pp.Year = ?
+    """;
+        try {
+            return jdbcTemplate.queryForObject(sql, Integer.class,
+                    dto.getLine(), dto.getProductCode(), dto.getWeekNo(), LocalDate.parse(dto.getFromDate()).getYear());
+        } catch (Exception e) {
+            return -1;
         }
     }
 

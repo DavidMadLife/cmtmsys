@@ -10,7 +10,7 @@ import java.util.List;
 public interface ProductionPlanService {
     void addPlan(ProductionPlan plan);
     void updatePlan(ProductionPlan plan);
-    void deletePlan(int planId);
+    void deleteWeeklyPlan(int planId);
     ProductionPlan getPlanById(int planId);
     List<ProductionPlan> getAllPlans();
     List<WeeklyPlanDto> searchWeeklyPlans(String line, String model, Integer weekNo, Integer year);
@@ -18,6 +18,11 @@ public interface ProductionPlanService {
     boolean createWeeklyPlan(String lineName, List<SelectedModelDto> modelList,
                              LocalDate fromDate, LocalDate toDate, int weekNo, int year);
     ;
+    List<String> getLinesWithPlan(int weekNo, int year);
+
+    int findPlanId(WeeklyPlanDto dto);
+
+
 
 
 }

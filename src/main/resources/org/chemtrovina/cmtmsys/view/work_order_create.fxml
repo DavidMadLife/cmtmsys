@@ -18,6 +18,7 @@
     <TableView fx:id="tblItems" prefHeight="200">
         <columns>
             <TableColumn fx:id="colProduct" text="Thành phẩm" />
+            <TableColumn fx:id="colModelType" text="Model Type" prefWidth="100"/>
             <TableColumn fx:id="colDescription" text="Mô tả" />
             <TableColumn fx:id="colQuantity" text="Số lượng" />
         </columns>

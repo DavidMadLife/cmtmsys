@@ -8,6 +8,7 @@ public class ModelLineRun {
     private LocalDateTime startedAt;
     private LocalDateTime endedAt;
     private String status;
+    private String runCode;
 
     public ModelLineRun() {
         this.startedAt = LocalDateTime.now();
@@ -29,4 +30,14 @@ public class ModelLineRun {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
+
+    public String getRunCode() {
+        return runCode;
+    }
+
+    public void setRunCode(String runCode) {
+        this.runCode = runCode;
+    }
+
 }

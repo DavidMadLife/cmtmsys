@@ -13,4 +13,7 @@ public interface FeederRepository {
     Feeder findByModelLineIdAndFeederCodeAndSapCode(int modelLineId, String feederCode, String sapCode);
     List<Feeder> findByModelAndLine(int productId, int warehouseId);
     List<Feeder> search(int productId, int warehouseId, String feederCode, String sapCode);
+
+    List<Feeder> findByModelLineId(int modelLineId);
+
 }

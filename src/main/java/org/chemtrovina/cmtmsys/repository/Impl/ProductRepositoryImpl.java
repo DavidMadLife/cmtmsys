@@ -69,11 +69,12 @@ public class ProductRepositoryImpl implements ProductRepository {
     }
 
     @Override
-    public boolean checkProductExists(String productCode) {
-        String sql = "SELECT COUNT(1) FROM Products WHERE ProductCode = ?";
-        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, productCode);
+    public boolean checkProductExists(String productCode, ModelType modelType) {
+        String sql = "SELECT COUNT(1) FROM Products WHERE ProductCode = ? AND ModelType = ?";
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, productCode, modelType.name());
         return count != null && count > 0;
     }
+
 
 
     @Override

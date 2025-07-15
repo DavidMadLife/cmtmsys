@@ -8,6 +8,7 @@ import org.chemtrovina.cmtmsys.config.DataSourceConfig;
 import org.chemtrovina.cmtmsys.dto.SelectedModelDto;
 import org.chemtrovina.cmtmsys.dto.WeeklyPlanDto;
 import org.chemtrovina.cmtmsys.model.Warehouse;
+import org.chemtrovina.cmtmsys.model.enums.ModelType;
 import org.chemtrovina.cmtmsys.repository.Impl.ProductRepositoryImpl;
 import org.chemtrovina.cmtmsys.repository.Impl.ProductionPlanRepositoryImpl;
 import org.chemtrovina.cmtmsys.repository.Impl.WarehouseRepositoryImpl;
@@ -20,6 +21,7 @@ import org.chemtrovina.cmtmsys.service.Impl.WarehouseServiceImpl;
 import org.chemtrovina.cmtmsys.service.base.ProductService;
 import org.chemtrovina.cmtmsys.service.base.ProductionPlanService;
 import org.chemtrovina.cmtmsys.service.base.WarehouseService;
+import org.chemtrovina.cmtmsys.utils.TableUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -64,6 +66,8 @@ public class WeeklyPlanController {
     @FXML private TableColumn<SelectedModelDto, Integer> colSelectedQty;
     @FXML private TableColumn<SelectedModelDto, Void> colRemoveAction;
 
+    @FXML private ComboBox<ModelType> cbModelType;
+
     private ObservableList<SelectedModelDto> selectedProducts = FXCollections.observableArrayList();
 
 
@@ -88,7 +92,9 @@ public class WeeklyPlanController {
         loadComboBoxes();
         tblSelectedProducts.setItems(selectedProducts);
         setupSelectedModelTable();
-
+        cbModelType.setItems(FXCollections.observableArrayList(ModelType.values()));
+        TableUtils.centerAlignAllColumns(tblWeeklyPlans);
+        TableUtils.centerAlignAllColumns(tblSelectedProducts);
 
     }
 
@@ -115,8 +121,6 @@ public class WeeklyPlanController {
 
         btnAddModel.setOnAction(e -> handleAddModel());
         btnCreatePlan.setOnAction(e -> handleCreatePlan());
-
-
     }
 
     private void loadComboBoxes() {
@@ -160,14 +164,15 @@ public class WeeklyPlanController {
     private void handleAddModel() {
         String modelCode = txtModelCode.getText().trim();
         String qtyStr = txtPlannedQty.getText().trim();
+        ModelType modelType = cbModelType.getValue();
 
-        if (modelCode.isEmpty() || qtyStr.isEmpty()) {
-            showAlert("Vui lòng nhập đầy đủ model và số lượng.");
+        if (modelCode.isEmpty() || qtyStr.isEmpty() || modelType == null) {
+            showAlert("Vui lòng nhập đầy đủ model, số lượng và chọn Model Type.");
             return;
         }
 
-        if (!productService.checkProductExists(modelCode)) {
-            showAlert("Mã model không tồn tại trong hệ thống.");
+        if (!productService.checkProductExists(modelCode, modelType)) {
+            showAlert("Mã model không tồn tại hoặc sai loại Model Type.");
             return;
         }
 
@@ -180,19 +185,11 @@ public class WeeklyPlanController {
             return;
         }
 
-        /*boolean alreadyExists = selectedProducts.stream()
-                .anyMatch(p -> p.getModelCode().equalsIgnoreCase(modelCode));
-
-        if (alreadyExists) {
-            showAlert("Model đã được thêm rồi.");
-            return;
-        }*/
-
-        selectedProducts.add(new SelectedModelDto(modelCode, qty));
+        selectedProducts.add(new SelectedModelDto(modelCode, qty, modelType));
         txtModelCode.clear();
         txtPlannedQty.clear();
+        cbModelType.getSelectionModel().clearSelection();
     }
-
 
 
 

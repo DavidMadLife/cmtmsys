@@ -10,6 +10,7 @@ import org.chemtrovina.cmtmsys.model.enums.ModelType;
 import org.chemtrovina.cmtmsys.service.base.*;
 import org.chemtrovina.cmtmsys.utils.FxClipboardUtils;
 import org.chemtrovina.cmtmsys.utils.SoundUtils;
+import org.chemtrovina.cmtmsys.utils.TableUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -17,6 +18,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static org.chemtrovina.cmtmsys.utils.TableUtils.centerAlignColumn;
 
 @Component
 public class FeederMultiRollController {
@@ -35,6 +38,8 @@ public class FeederMultiRollController {
     // Buttons
     @FXML private Button btnLoadFeeders;
     @FXML private Button btnCreateRun;
+    @FXML private Button btnEndRun;
+
 
     // Table and columns
     @FXML private TableView<FeederDisplayRow> tblFeederAssignments;
@@ -91,6 +96,7 @@ public class FeederMultiRollController {
         setupComboBoxes();
         setupTableView();
         setupEventHandlers();
+        TableUtils.centerAlignAllColumns(tblFeederAssignments);
     }
 
     private void setupComboBoxes() {
@@ -113,6 +119,33 @@ public class FeederMultiRollController {
                 setText((empty || item == null) ? null : item.getName());
             }
         });
+
+        cbRunHistory.setCellFactory(lv -> new ListCell<>() {
+            @Override
+            protected void updateItem(ModelLineRun item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    String label = item.getRunCode() + " (" + item.getStatus() + ")";
+                    setText(label);
+                }
+            }
+        });
+
+        cbRunHistory.setButtonCell(new ListCell<>() {
+            @Override
+            protected void updateItem(ModelLineRun item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    String label = item.getRunCode() + " (" + item.getStatus() + ")";
+                    setText(label);
+                }
+            }
+        });
+
     }
     private void setupTableView() {
         setupTableColumns();
@@ -131,6 +164,8 @@ public class FeederMultiRollController {
         btnCreateRun.setOnAction(event -> createNewRun());
         txtSearchFeederCode.setOnAction(e -> scrollToFeederCode());
         txtRollCode.setOnAction(e -> handleAttachRollCode());
+        btnEndRun.setOnAction(event -> handleEndRun());
+
 
         cbRunHistory.valueProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null) {
@@ -140,7 +175,6 @@ public class FeederMultiRollController {
         });
     }
 
-
     private void setupTableColumns() {
         colFeederCode.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getFeederCode()));
         colMachine.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getMachine()));
@@ -149,6 +183,36 @@ public class FeederMultiRollController {
         colRollCode.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getRollCode()));
         colMaterialQty.setCellValueFactory(data -> new javafx.beans.property.SimpleIntegerProperty(data.getValue().getMaterialQty()).asObject());
         colStatus.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getStatus()));
+        centerAlignColumn(colFeederCode);
+        centerAlignColumn(colMachine);
+        centerAlignColumn(colSapCode);
+        centerAlignColumn(colFeederQty);
+        centerAlignColumn(colRollCode);
+        centerAlignColumn(colMaterialQty);
+        colStatus.setCellFactory(column -> new TableCell<>() {
+            @Override
+            protected void updateItem(String status, boolean empty) {
+                super.updateItem(status, empty);
+                if (empty || status == null) {
+                    setText(null);
+                    setStyle("-fx-alignment: CENTER;");
+                } else {
+                    setText(status);
+                    switch (status) {
+                        case "Chưa gắn" ->
+                                setStyle("-fx-alignment: CENTER; -fx-background-color: #ffcccc; -fx-text-fill: red;");
+                        case "Đã gắn" ->
+                                setStyle("-fx-alignment: CENTER; -fx-background-color: #ccffcc; -fx-text-fill: green;");
+                        case "Bổ sung" ->
+                                setStyle("-fx-alignment: CENTER; -fx-background-color: #fff0b3; -fx-text-fill: orange;");
+                        default ->
+                                setStyle("-fx-alignment: CENTER;");
+                    }
+                }
+            }
+        });
+
+
     }
 
     private void loadFeederDataByRun(ModelLineRun run) {
@@ -187,15 +251,15 @@ public class FeederMultiRollController {
             } else {
                 row.setRollCode("");
                 row.setMaterialQty(0);
-                row.setStatus("Rỗng");
+                row.setStatus("Chưa gắn");
             }
 
             rows.add(row);
         }
 
         tblFeederAssignments.setItems(rows);
-    }
 
+    }
 
 
     private void loadFeedersAndRuns() {
@@ -253,7 +317,7 @@ public class FeederMultiRollController {
                 } else {
                     row.setRollCode("");
                     row.setMaterialQty(0);
-                    row.setStatus("Rỗng");
+                    row.setStatus("Chưa gắn");
                 }
             } catch (Exception e) {
                 row.setStatus("Lỗi");
@@ -266,7 +330,6 @@ public class FeederMultiRollController {
         }
 
         tblFeederAssignments.setItems(FXCollections.observableArrayList(rows));
-
     }
 
     private void createNewRun() {
@@ -278,7 +341,36 @@ public class FeederMultiRollController {
         currentRun = runService.createRun(currentModelLine.getModelLineId());
         cbRunHistory.getItems().add(0, currentRun);
         cbRunHistory.setValue(currentRun);
+        reloadRuns();
     }
+
+    private void handleEndRun() {
+        if (currentRun == null) {
+            showAlert("⚠️ Không có phiên chạy nào đang được chọn.");
+            return;
+        }
+
+        if (!"Running".equalsIgnoreCase(currentRun.getStatus())) {
+            showAlert("⚠️ Phiên này đã kết thúc.");
+            return;
+        }
+
+        // Xác nhận từ người dùng
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Xác nhận");
+        confirm.setHeaderText(null);
+        confirm.setContentText("Bạn có chắc chắn muốn kết thúc phiên chạy này?");
+        confirm.showAndWait().ifPresent(result -> {
+            if (result == ButtonType.OK) {
+                runService.endRun(currentRun.getRunId()); // 🛠 bạn cần có hàm này trong service
+                txtStatusLog.appendText("✅ Đã kết thúc phiên chạy: " + currentRun.getRunCode() + "\n");
+
+                reloadRuns(); // cập nhật lại danh sách run
+                tblFeederAssignments.setItems(FXCollections.observableArrayList()); // clear bảng
+            }
+        });
+    }
+
 
     private void showAlert(String msg) {
         Alert alert = new Alert(Alert.AlertType.WARNING);
@@ -290,6 +382,8 @@ public class FeederMultiRollController {
     private void scrollToFeederCode() {
         String searchCode = txtSearchFeederCode.getText().trim();
         if (searchCode.isEmpty()) return;
+
+
 
         var items = tblFeederAssignments.getItems();
         for (int i = 0; i < items.size(); i++) {
@@ -364,8 +458,6 @@ public class FeederMultiRollController {
             return;
         }
 
-
-
         // Gắn cuộn nếu hợp lệ
         FeederAssignment assignment = assignmentService.assignFeeder(currentRun.getRunId(), feeder.getFeederId(), "system");
         materialAssignmentService.attachMaterial(assignment.getAssignmentId(), material.getMaterialId(), false, null);
@@ -388,5 +480,18 @@ public class FeederMultiRollController {
         txtSearchFeederCode.requestFocus();
         txtSearchFeederCode.selectAll();
     }
+
+    private void reloadRuns() {
+        if (currentModelLine == null) return;
+
+        List<ModelLineRun> runs = runService.getRunsByModelLineId(currentModelLine.getModelLineId());
+        cbRunHistory.setItems(FXCollections.observableArrayList(runs));
+
+        if (!runs.isEmpty()) {
+            currentRun = runs.get(0);
+            cbRunHistory.setValue(currentRun);
+        }
+    }
+
 
 }

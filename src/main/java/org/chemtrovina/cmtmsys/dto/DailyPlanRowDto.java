@@ -32,14 +32,18 @@ public class DailyPlanRowDto {
 
     private final IntegerProperty totalPlan = new SimpleIntegerProperty();
 
+    private final StringProperty modelType = new SimpleStringProperty();
+
+
     public DailyPlanRowDto(int planItemId, String modelCode, String sapCode, int stock,
                            int d1, int d2, int d3, int d4, int d5, int d6, int d7,
-                           int a1, int a2, int a3, int a4, int a5, int a6, int a7) {
-
+                           int a1, int a2, int a3, int a4, int a5, int a6, int a7,
+                           String modelType) {
         this.planItemId.set(planItemId);
         this.modelCode.set(modelCode);
         this.sapCode.set(sapCode);
         this.stock.set(stock);
+        this.modelType.set(modelType); // 👈 Gán modelType
 
         this.day1Plan.set(d1);
         this.day2Plan.set(d2);
@@ -59,6 +63,7 @@ public class DailyPlanRowDto {
 
         recalculateTotals();
     }
+
 
     public void recalculateTotals() {
         int planTotal = getDay1Plan() + getDay2Plan() + getDay3Plan() + getDay4Plan() +
@@ -157,6 +162,18 @@ public class DailyPlanRowDto {
 
     public int getTotalDiff() { return totalDiff.get(); }
     public IntegerProperty totalDiffProperty() { return totalDiff; }
+
+    public String getModelType() {
+        return modelType.get();
+    }
+
+    public void setModelType(String value) {
+        modelType.set(value);
+    }
+
+    public StringProperty modelTypeProperty() {
+        return modelType;
+    }
 
 
     public void setDayActual(int index, int value) {
