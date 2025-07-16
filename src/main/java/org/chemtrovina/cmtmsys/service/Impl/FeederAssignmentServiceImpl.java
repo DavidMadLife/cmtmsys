@@ -27,4 +27,12 @@ public class FeederAssignmentServiceImpl implements FeederAssignmentService {
 
         return repository.findByRunAndFeeder(runId, feederId);
     }
+
+    @Override
+    public FeederAssignment getAssignment(int runId, int feederId) {
+        return repository.findByRunAndFeeder(runId, feederId);
+    }
+
+
+
 }

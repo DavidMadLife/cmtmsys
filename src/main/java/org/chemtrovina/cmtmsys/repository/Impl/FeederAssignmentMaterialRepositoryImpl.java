@@ -80,6 +80,23 @@ public class FeederAssignmentMaterialRepositoryImpl implements FeederAssignmentM
         }, runId);
     }
 
+    @Override
+    public List<FeederAssignmentMaterial> findActiveByFeederId(int feederId) {
+        String sql = """
+        SELECT fam.*
+        FROM FeederAssignmentMaterials fam
+        JOIN FeederAssignments fa ON fam.AssignmentID = fa.AssignmentID
+        WHERE fa.FeederID = ? AND fam.IsActive = 1
+        ORDER BY fam.AttachedAt ASC
+    """;
+        return jdbc.query(sql, new FeederAssignmentMaterialRowMapper(), feederId);
+    }
+
+    @Override
+    public void deleteById(int id) {
+        String sql = "DELETE FROM FeederAssignmentMaterials WHERE Id = ?";
+        jdbc.update(sql, id);
+    }
 
 
 }

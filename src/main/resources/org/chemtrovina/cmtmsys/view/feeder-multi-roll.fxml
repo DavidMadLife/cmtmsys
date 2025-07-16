@@ -74,6 +74,23 @@
         </GridPane>
 
 
+        <!-- Quét RollCode mới để xem danh sách Feeder theo mã SAP -->
+        <HBox spacing="10" alignment="CENTER_LEFT">
+            <Label text="Scan RollCode để tìm Feeder theo SAP:" />
+            <TextField fx:id="txtScanRollForSap" promptText="Quét mã cuộn..." prefWidth="300" />
+        </HBox>
+
+        <!-- Bảng danh sách Feeder theo SAP -->
+        <TableView fx:id="tblFeederBySap" prefHeight="200" prefWidth="830">
+            <columns>
+                <TableColumn fx:id="colFeederCodeBySap" prefWidth="120" text="Feeder Code" />
+                <TableColumn fx:id="colSapCodeBySap" prefWidth="100" text="SAP Code" />
+                <TableColumn fx:id="colStatusBySap" prefWidth="120" text="Trạng thái" />
+                <TableColumn fx:id="colAttachButton" prefWidth="80" text="Gắn" />
+                <TableColumn fx:id="colDeleteButton" prefWidth="80" text="Xóa" />
+            </columns>
+        </TableView>
+
         <!-- Log trạng thái -->
         <TextArea fx:id="txtStatusLog" editable="false" prefHeight="100" wrapText="true" />
     </VBox>

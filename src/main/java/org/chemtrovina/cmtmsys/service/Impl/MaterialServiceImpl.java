@@ -1,8 +1,6 @@
 package org.chemtrovina.cmtmsys.service.Impl;
 
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.chemtrovina.cmtmsys.dto.MaterialDto;
 import org.chemtrovina.cmtmsys.model.Material;
@@ -109,14 +107,26 @@ public class MaterialServiceImpl implements MaterialService {
             for (Row row : sheet) {
                 if (row.getRowNum() == 0) continue; // Bỏ qua dòng header
 
-                String sapCode = row.getCell(0).getStringCellValue().trim();
-                String spec = row.getCell(1).getStringCellValue().trim();
-                String rollCode = row.getCell(2).getStringCellValue().trim();
-                int quantity = (int) row.getCell(3).getNumericCellValue();
+                Cell sapCell = row.getCell(0);
+                Cell specCell = row.getCell(1);
+                Cell rollCell = row.getCell(2);
+                Cell qtyCell = row.getCell(3);
+
+                if (sapCell == null || rollCell == null || qtyCell == null) continue;
+
+                String sapCode = sapCell.getCellType() == CellType.STRING ? sapCell.getStringCellValue().trim() : "";
+                String spec = (specCell != null && specCell.getCellType() == CellType.STRING) ? specCell.getStringCellValue().trim() : "";
+                String rollCode = rollCell.getCellType() == CellType.STRING ? rollCell.getStringCellValue().trim() : "";
+
+                int quantity = 0;
+                if (qtyCell.getCellType() == CellType.NUMERIC) {
+                    quantity = (int) qtyCell.getNumericCellValue();
+                }
+
+                if (sapCode.isEmpty() || rollCode.isEmpty() || quantity <= 0) continue;
 
                 Material existing = materialRepository.findByRollCode(rollCode);
                 if (existing != null) {
-                    // Update
                     existing.setSapCode(sapCode);
                     existing.setSpec(spec);
                     existing.setQuantity(quantity);
@@ -125,22 +135,16 @@ public class MaterialServiceImpl implements MaterialService {
                     existing.setEmployeeId(employeeId);
                     materialRepository.update(existing);
                 } else {
-                    // Thêm mới
                     Material material = new Material(
-                            0,
-                            sapCode,
-                            rollCode,
-                            quantity,
-                            warehouseId,
-                            LocalDateTime.now(),
-                            spec,
-                            employeeId
+                            0, sapCode, rollCode, quantity,
+                            warehouseId, LocalDateTime.now(), spec, employeeId
                     );
                     materialRepository.add(material);
                 }
 
                 processedCount++;
             }
+
 
             System.out.println("Đã import " + processedCount + " dòng dữ liệu.");
         } catch (IOException e) {

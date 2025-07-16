@@ -1,5 +1,6 @@
 package org.chemtrovina.cmtmsys.service.base;
 
+import org.chemtrovina.cmtmsys.model.FeederAssignment;
 import org.chemtrovina.cmtmsys.model.FeederAssignmentMaterial;
 
 import java.util.List;
@@ -13,6 +14,12 @@ public interface FeederAssignmentMaterialService {
     List<FeederAssignmentMaterial> getActiveByRunId(int runId);
 
     Map<Integer, List<FeederAssignmentMaterial>> getAllActiveByRunGrouped(int runId);
+
+
+    void deleteMaterialAssignment(int assignmentMaterialId);
+
+    List<FeederAssignmentMaterial> getActiveByFeederId(int feederId);
+
 
 
 

@@ -13,6 +13,11 @@ public interface FeederAssignmentMaterialRepository {
     Map<Integer, List<FeederAssignmentMaterial>> findAllActiveByRunGroupedByFeeder(int runId);
 
 
+    List<FeederAssignmentMaterial> findActiveByFeederId(int feederId);
+
+    void deleteById(int id);
+
+
 
 
 }

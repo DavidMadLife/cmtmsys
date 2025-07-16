@@ -93,8 +93,6 @@ public class WeeklyPlanController {
         tblSelectedProducts.setItems(selectedProducts);
         setupSelectedModelTable();
         cbModelType.setItems(FXCollections.observableArrayList(ModelType.values()));
-        TableUtils.centerAlignAllColumns(tblWeeklyPlans);
-        TableUtils.centerAlignAllColumns(tblSelectedProducts);
 
     }
 

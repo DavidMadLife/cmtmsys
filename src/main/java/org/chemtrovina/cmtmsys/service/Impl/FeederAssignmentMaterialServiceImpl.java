@@ -52,6 +52,16 @@ public class FeederAssignmentMaterialServiceImpl implements FeederAssignmentMate
         return repository.findAllActiveByRunGroupedByFeeder(runId);
     }
 
+    @Override
+    public void deleteMaterialAssignment(int assignmentMaterialId) {
+        repository.deleteById(assignmentMaterialId);
+    }
+
+    @Override
+    public List<FeederAssignmentMaterial> getActiveByFeederId(int feederId) {
+        return repository.findActiveByFeederId(feederId);
+    }
+
 
 
 

@@ -91,9 +91,7 @@ public class ProductionPlanController {
 
         cbModelType.setItems(FXCollections.observableArrayList(ModelType.values()));
         cbModelType.getSelectionModel().select(ModelType.NONE); // mặc định
-        TableUtils.centerAlignAllColumns(tblWeeklyPlans);
-        TableUtils.centerAlignAllColumns(tblDailyPlans);
-        TableUtils.centerAlignAllColumns(tblSelectedProducts);
+
 
     }
 
