@@ -17,4 +17,7 @@ public interface WarehouseTransferDetailRepository {
     void updateReturnInfo(String rollCode, int actualReturned, boolean active);
     void reopenReturn(String rollCode);
 
+    void deleteByTransferIdAndRollCode(int transferId, String rollCode);
+
+
 }

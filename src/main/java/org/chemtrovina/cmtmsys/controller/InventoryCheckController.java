@@ -8,6 +8,7 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
+import javafx.scene.layout.GridPane;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import org.chemtrovina.cmtmsys.config.DataSourceConfig;
@@ -79,7 +80,6 @@ public class InventoryCheckController {
 
     @FXML
     public void initialize() {
-
         setupTable();
         //loadData();
         setupFileImport();
@@ -104,6 +104,36 @@ public class InventoryCheckController {
         tblMaterials.getSelectionModel().setCellSelectionEnabled(true);
         tblMaterials.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
+        tblMaterials.setRowFactory(tv -> {
+            TableRow<MaterialDto> row = new TableRow<>();
+            ContextMenu contextMenu = new ContextMenu();
+
+            MenuItem updateItem = new MenuItem("Cập nhật");
+            updateItem.setOnAction(e -> {
+                MaterialDto selected = row.getItem();
+                if (selected != null) {
+                    showUpdateDialog(selected);
+                }
+            });
+
+            MenuItem deleteItem = new MenuItem("Xóa");
+            deleteItem.setOnAction(e -> {
+                MaterialDto selected = row.getItem();
+                if (selected != null) {
+                    deleteMaterial(selected);
+                }
+            });
+
+            contextMenu.getItems().addAll(updateItem, deleteItem);
+
+            row.contextMenuProperty().bind(
+                    javafx.beans.binding.Bindings.when(row.emptyProperty())
+                            .then((ContextMenu) null)
+                            .otherwise(contextMenu)
+            );
+
+            return row;
+        });
 
     }
 
@@ -138,7 +168,6 @@ public class InventoryCheckController {
         });
     }
 
-
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     private void loadData() {
@@ -157,6 +186,67 @@ public class InventoryCheckController {
             showAlert(Alert.AlertType.ERROR, "Lỗi", "Không thể import dữ liệu: " + ex.getMessage());
         }
     }
+
+    private void deleteMaterial(MaterialDto dto) {
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Xác nhận xóa");
+        confirm.setHeaderText("Bạn có chắc chắn muốn xóa vật liệu này?");
+        confirm.setContentText("Mã vật liệu: " + dto.getSapCode());
+
+        confirm.showAndWait().ifPresent(result -> {
+            if (result == ButtonType.OK) {
+                try {
+                    materialService.deleteMaterialById(dto.getMaterialId());
+                    tblMaterials.getItems().remove(dto);
+                    showAlert(Alert.AlertType.INFORMATION, "Đã xóa", "Xóa thành công.");
+                } catch (Exception e) {
+                    showAlert(Alert.AlertType.ERROR, "Lỗi", "Không thể xóa: " + e.getMessage());
+                }
+            }
+        });
+    }
+
+    private void showUpdateDialog(MaterialDto dto) {
+        Dialog<MaterialDto> dialog = new Dialog<>();
+        dialog.setTitle("Cập nhật vật liệu");
+
+        Label lblQuantity = new Label("Số lượng:");
+        TextField txtQuantity = new TextField(String.valueOf(dto.getQuantity()));
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.add(lblQuantity, 0, 0);
+        grid.add(txtQuantity, 1, 0);
+
+        dialog.getDialogPane().setContent(grid);
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+        dialog.setResultConverter(button -> {
+            if (button == ButtonType.OK) {
+                try {
+                    int quantity = Integer.parseInt(txtQuantity.getText().trim());
+                    dto.setQuantity(quantity);
+                    return dto;
+                } catch (NumberFormatException e) {
+                    showAlert(Alert.AlertType.WARNING, "Giá trị không hợp lệ", "Số lượng phải là số.");
+                }
+            }
+            return null;
+        });
+
+        dialog.showAndWait().ifPresent(updatedDto -> {
+            try {
+                materialService.updateMaterialDto(updatedDto);
+                tblMaterials.refresh(); // cập nhật lại bảng
+                showAlert(Alert.AlertType.INFORMATION, "Đã cập nhật", "Cập nhật thành công.");
+            } catch (Exception e) {
+                showAlert(Alert.AlertType.ERROR, "Lỗi", "Không thể cập nhật: " + e.getMessage());
+            }
+        });
+    }
+
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     private void setupSearch() {
@@ -242,10 +332,6 @@ public class InventoryCheckController {
         Clipboard.getSystemClipboard().setContent(clipboardContent);
     }
 
-
-
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     private void clearFilters() {
@@ -299,8 +385,5 @@ public class InventoryCheckController {
         FxFilterUtils.setupFilterMenu(colWarehouse, data, MaterialDto::getWarehouseName, this::applyGeneralFilter);
         FxFilterUtils.setupFilterMenu(colEmployeeId, data, MaterialDto::getEmployeeId, this::applyGeneralFilter);
     }
-
-
-
 
 }

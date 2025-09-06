@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane prefHeight="700" prefWidth="1200" style="-fx-background-color: #ffffff;" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/23.0.1" fx:controller="org.chemtrovina.cmtmsys.controller.PerformanceLogController">
+
+    <!-- TOP: Bộ lọc -->
+    <top>
+        <VBox spacing="10">
+            <padding>
+                <Insets bottom="10" left="10" right="10" top="10" />
+            </padding>
+            <HBox alignment="CENTER_LEFT" spacing="15">
+                <Label text="Thư mục log:" />
+                <TextField fx:id="txtFolderPath" editable="false" prefWidth="400" />
+                <Button fx:id="btnChooseFolder" text="Chọn thư mục" />
+
+                <Label text="Model code:" />
+                <TextField fx:id="txtModelCode" prefWidth="150" promptText="Nhập mã model" />
+
+                <ComboBox fx:id="cbModelType" prefWidth="150" />
+
+                <Label text="Line:" />
+                <ComboBox fx:id="cbWarehouse" prefWidth="180" />
+
+                <Button fx:id="btnProcessLog" text="Xử lý log" />
+                <Button fx:id="btnStopWatching" text="Dừng theo dõi" />
+
+            </HBox>
+        </VBox>
+    </top>
+
+    <!-- CENTER: Bảng dữ liệu -->
+    <center>
+        <TableView fx:id="tblPerformanceLog" prefHeight="350">
+            <columns>
+                <TableColumn fx:id="colCarrierId" prefWidth="160" text="Carrier ID" />
+                <TableColumn fx:id="colAoiCode" prefWidth="100" text="AOI" />
+                <TableColumn fx:id="colTotal" prefWidth="80" text="Tổng" />
+                <TableColumn fx:id="colNg" prefWidth="80" text="NG" />
+                <TableColumn fx:id="colPerformance" prefWidth="120" text="Hiệu suất (%)" />
+                <TableColumn fx:id="colFileName" prefWidth="200" text="Tên file" />
+                <TableColumn fx:id="colCreatedAt" prefWidth="160" text="Thời gian xử lý" />
+            </columns>
+        </TableView>
+    </center>
+
+    <!-- BOTTOM: Kết quả log -->
+    <bottom>
+        <VBox spacing="5">
+            <padding>
+                <Insets bottom="10" left="10" right="10" top="10" />
+            </padding>
+            <Label style="-fx-font-weight: bold;" text="Trạng thái xử lý log:" />
+            <TextArea fx:id="txtLog" editable="false" prefHeight="268.0" prefWidth="1180.0" wrapText="true" />
+        </VBox>
+    </bottom>
+</BorderPane>

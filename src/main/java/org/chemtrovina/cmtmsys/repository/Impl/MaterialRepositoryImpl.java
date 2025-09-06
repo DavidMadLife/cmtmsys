@@ -31,17 +31,40 @@ public class MaterialRepositoryImpl implements MaterialRepository {
 
     @Override
     public void update(Material material) {
-        String sql = "UPDATE Materials SET SapCode = ?, Quantity = ?, Spec = ?, EmployeeID = ?, WarehouseID = ? WHERE MaterialID = ?";
-        jdbcTemplate.update(
-                sql,
-                material.getSapCode(),
-                material.getQuantity(),
-                material.getSpec(),
-                material.getEmployeeId(),
-                material.getWarehouseId(),
-                material.getMaterialId()
-        );
+        Integer treeId = material.getTreeId();
+
+        // Nếu TreeId null hoặc không tồn tại trong MaterialCartTrees, bỏ qua TreeID
+        boolean treeExists = (treeId != null) && jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM MaterialCartTrees WHERE TreeID = ?",
+                Integer.class, treeId) > 0;
+
+        if (treeExists) {
+            String sql = "UPDATE Materials SET SapCode = ?, Quantity = ?, Spec = ?, EmployeeID = ?, WarehouseID = ?, TreeID = ? WHERE MaterialID = ?";
+            jdbcTemplate.update(
+                    sql,
+                    material.getSapCode(),
+                    material.getQuantity(),
+                    material.getSpec(),
+                    material.getEmployeeId(),
+                    material.getWarehouseId(),
+                    treeId,
+                    material.getMaterialId()
+            );
+        } else {
+            String sql = "UPDATE Materials SET SapCode = ?, Quantity = ?, Spec = ?, EmployeeID = ?, WarehouseID = ?, TreeID = NULL WHERE MaterialID = ?";
+            jdbcTemplate.update(
+                    sql,
+                    material.getSapCode(),
+                    material.getQuantity(),
+                    material.getSpec(),
+                    material.getEmployeeId(),
+                    material.getWarehouseId(),
+                    material.getMaterialId()
+            );
+        }
     }
+
+
 
     @Override
     public List<Material> findByIds(Set<Integer> ids) {
@@ -55,6 +78,18 @@ public class MaterialRepositoryImpl implements MaterialRepository {
         return jdbcTemplate.query(sql, new MaterialRowMapper(), ids.toArray());
     }
 
+    @Override
+    public List<Material> findBySapCode(String sapCode) {
+        String sql = "SELECT * FROM Materials WHERE SapCode = ?";
+        return jdbcTemplate.query(sql, new MaterialRowMapper(), sapCode);
+    }
+
+
+    @Override
+    public List<Material> getByTreeId(int treeId) {
+        String sql = "SELECT * FROM Materials WHERE TreeID = ?";
+        return jdbcTemplate.query(sql, new MaterialRowMapper(), treeId);
+    }
 
 
 
@@ -134,6 +169,38 @@ public class MaterialRepositoryImpl implements MaterialRepository {
     """;
         jdbcTemplate.update(sql, quantity, planItemId);
     }
+    public void updateIgnoreTreeId(Material material) {
+        String sql = "UPDATE Materials SET SapCode = ?, Quantity = ?, Spec = ?, EmployeeID = ? WHERE MaterialID = ?";
+        jdbcTemplate.update(
+                sql,
+                material.getSapCode(),
+                material.getQuantity(),
+                material.getSpec(),
+                material.getEmployeeId(),
+                material.getMaterialId()
+        );
+    }
+
+    @Override
+    public List<Material> findByRollCodes(List<String> rollCodes) {
+        if (rollCodes == null || rollCodes.isEmpty()) return List.of();
+
+        final int MAX_PARAMS = 1000; // Đảm bảo không vượt 2100
+        List<Material> result = new ArrayList<>();
+
+        for (int i = 0; i < rollCodes.size(); i += MAX_PARAMS) {
+            List<String> batch = rollCodes.subList(i, Math.min(i + MAX_PARAMS, rollCodes.size()));
+
+            String placeholders = batch.stream().map(code -> "?").collect(Collectors.joining(", "));
+            String sql = "SELECT * FROM Materials WHERE RollCode IN (" + placeholders + ")";
+
+            result.addAll(jdbcTemplate.query(sql, batch.toArray(), new MaterialRowMapper()));
+        }
+
+        return result;
+    }
+
+
 
 
 }

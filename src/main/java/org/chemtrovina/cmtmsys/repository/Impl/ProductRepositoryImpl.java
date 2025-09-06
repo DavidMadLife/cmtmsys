@@ -22,15 +22,18 @@ public class ProductRepositoryImpl implements ProductRepository {
     }
 
     public void add(Product product) {
-        String sql = "INSERT INTO Products (ProductCode, Description, CreatedDate, UpdatedDate) VALUES (?, ?, ?, ?)";
-        LocalDateTime now = LocalDateTime.now();
+        String sql = """
+        INSERT INTO Products (ProductCode, Name, Description, ModelType, CreatedDate, UpdatedDate)
+        VALUES (?, ?, ?, ?, GETDATE(), GETDATE())
+    """;
         jdbcTemplate.update(sql,
                 product.getProductCode(),
-                product.getDescription(),
-                Timestamp.valueOf(now),
-                Timestamp.valueOf(now)
+                product.getName(),                      // có thể null
+                product.getDescription(),               // có thể null
+                product.getModelType() != null ? product.getModelType().name() : "NONE"
         );
     }
+
 
     public void update(Product product) {
         String sql = "UPDATE Products SET ProductCode = ?, Description = ?, UpdatedDate = ? WHERE ProductID = ?";
@@ -108,6 +111,20 @@ public class ProductRepositoryImpl implements ProductRepository {
         String deleteProduct = "DELETE FROM Products WHERE productId = ?";
         jdbcTemplate.update(deleteProduct, productId);
     }
+
+    @Override
+    public List<Product> findAllByCodeContainedInText(String text) {
+        // SQL Server: ? LIKE '%' + ProductCode + '%'
+        String sql = """
+        SELECT *
+        FROM Products
+        WHERE ? LIKE '%' + ProductCode + '%'
+        ORDER BY LEN(ProductCode) DESC
+    """;
+        return jdbcTemplate.query(sql, new ProductRowMapper(), text);
+    }
+
+
 
 
 }

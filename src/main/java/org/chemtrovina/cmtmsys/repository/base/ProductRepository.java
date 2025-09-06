@@ -21,5 +21,8 @@ public interface ProductRepository {
     void deleteProductWithBOM(int productId);
 
 
+    List<Product> findAllByCodeContainedInText(String text);
+
+
 
 }

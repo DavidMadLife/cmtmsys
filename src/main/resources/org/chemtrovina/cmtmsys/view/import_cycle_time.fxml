@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane prefHeight="620" prefWidth="980"
+            xmlns="http://javafx.com/javafx/23.0.1"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="org.chemtrovina.cmtmsys.controller.ProductCycleTimeController">
+
+    <VBox spacing="10" AnchorPane.topAnchor="10" AnchorPane.leftAnchor="10"
+          AnchorPane.rightAnchor="10" AnchorPane.bottomAnchor="10">
+
+        <Label text="Quản lý Cycle Time theo Line" style="-fx-font-size: 18px; -fx-font-weight: bold;" />
+
+        <!-- Filters -->
+        <HBox spacing="10">
+            <Label text="Product:" />
+            <TextField fx:id="txtProductCode" promptText="Nhập mã sản phẩm" prefWidth="200"/>
+            <Label text="ModelType:" />
+            <ComboBox fx:id="cbModelTypeFilter" promptText="Loại" prefWidth="120"/>
+            <Label text="Line:" />
+            <ComboBox fx:id="cbLines" promptText="Chọn line" prefWidth="180"/>
+            <Button fx:id="btnLoad" text="Tải CTime" />
+        </HBox>
+
+        <!-- Import -->
+        <HBox spacing="10">
+            <Button fx:id="btnChooseFile" text="Chọn file Excel (CTime)" />
+            <TextField fx:id="txtFileName" promptText="Chưa chọn file" editable="false" prefWidth="320"/>
+            <Button fx:id="btnImport" text="Import CTime" />
+        </HBox>
+
+        <!-- Table -->
+        <TableView fx:id="tblCTime" VBox.vgrow="ALWAYS">
+            <columns>
+                <TableColumn fx:id="colIndex" text="STT" prefWidth="60"/>
+                <TableColumn fx:id="colProductCode" text="ProductCode" prefWidth="160"/>
+                <TableColumn fx:id="colModelType" text="ModelType" prefWidth="100"/>
+                <TableColumn fx:id="colLine" text="Line" prefWidth="140"/>
+                <TableColumn fx:id="colArray" text="Array" prefWidth="80"/>
+                <TableColumn fx:id="colCTSec" text="CT (s)" prefWidth="120"/>
+                <TableColumn fx:id="colVersion" text="Ver" prefWidth="80"/>
+                <TableColumn fx:id="colActive" text="Active" prefWidth="80"/>
+                <TableColumn fx:id="colCreatedAt" text="CreatedAt" prefWidth="180"/>
+            </columns>
+        </TableView>
+
+    </VBox>
+</AnchorPane>

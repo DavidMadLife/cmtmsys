@@ -3,6 +3,7 @@ package org.chemtrovina.cmtmsys.repository.base;
 import org.chemtrovina.cmtmsys.model.Warehouse;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface WarehouseRepository {
     void add(Warehouse warehouse);
@@ -13,4 +14,8 @@ public interface WarehouseRepository {
 
     Warehouse findByName(String name);
     String getWarehouseNameByTransferId(int transferId, boolean isFrom);
+    Integer findIdByLineToken(String lineToken);
+    Warehouse findByNameContainingNumber(int number);
+
+    Integer getIdByName(String name);
 }

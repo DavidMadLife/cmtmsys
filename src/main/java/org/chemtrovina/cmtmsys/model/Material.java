@@ -12,7 +12,9 @@ public class Material {
     private String spec;
     private String employeeId;
 
-    public Material(int materialId, String sapCode, String rollCode, int quantity, int warehouseId, LocalDateTime createdAt, String spec, String employeeId) {
+    private Integer treeId;
+
+    public Material(int materialId, String sapCode, String rollCode, int quantity, int warehouseId, LocalDateTime createdAt, String spec, String employeeId, Integer treeId) {
         this.materialId = materialId;
         this.sapCode = sapCode;
         this.rollCode = rollCode;
@@ -21,6 +23,7 @@ public class Material {
         this.createdAt = createdAt;
         this.spec = spec;
         this.employeeId = employeeId;
+        this.treeId = treeId;
     }
 
     // Getters & setters
@@ -71,6 +74,13 @@ public class Material {
     }
     public void setEmployeeId(String employeeId) {
         this.employeeId = employeeId;
+    }
+
+    public Integer getTreeId() {
+        return treeId;
+    }
+    public void setTreeId(Integer treeId) {
+        this.treeId = treeId;
     }
 
 }

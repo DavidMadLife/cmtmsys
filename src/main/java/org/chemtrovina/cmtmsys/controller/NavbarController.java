@@ -37,14 +37,30 @@ public class NavbarController {
     @FXML private MenuItem menuTransferLog;
     @FXML private MenuItem menuProduct;
     @FXML private MenuItem menuWorkOrder;
+    @FXML private MenuItem menuMaterialCart;
+    @FXML private MenuItem menuMaterialCartCreate;
+
+
 
     // ==== Planning Menu ====
     @FXML private MenuButton menuPlan;
     @FXML private MenuItem menuPlanWeekly, menuPlanAll;
+    @FXML private MenuItem menuPlanDaily;
+
     @FXML private MenuItem menuTest;
     @FXML private MenuItem menuFeeder, menuFeederRoll;
 
     @FXML private MenuButton menuUser;
+
+    // ==== PCB Performance Menu ====
+    @FXML private MenuButton menuPerformance;
+    @FXML private MenuItem menuPcbPerformanceLog;
+    @FXML private MenuItem menuPcbPerformanceHistory;
+    @FXML private MenuItem menuImportCycleTime;
+
+    @FXML private MenuItem menuStencilManager;
+
+
 
 
     @FXML private MenuItem menuChangePassword, menuManageAccount;
@@ -59,25 +75,48 @@ public class NavbarController {
     private void applyRolePermissions() {
         UserRole role = UserContext.getUser().getRole();
 
+        // === Planning Menu ===
         if (role != UserRole.ADMIN && role != UserRole.SUBLEEDER && role != UserRole.INVENTORY) {
             menuPlan.setVisible(false);
             menuPlan.setManaged(false);
         }
+
+        // === Employee Menu ===
         if (role != UserRole.ADMIN && role != UserRole.EMPLOYEE) {
             menuEmployee.setVisible(false);
             menuEmployee.setManaged(false);
         }
-        if (role != UserRole.ADMIN && role != UserRole.INVENTORY) {
+
+        // === Inventory Menu ===
+        if (role != UserRole.ADMIN && role != UserRole.INVENTORY && role != UserRole.SUBLEEDER) {
             menuInventory.setVisible(false);
             menuInventory.setManaged(false);
-            menuWarehouse.setVisible(false);
-            menuWarehouse.setManaged(false);
         }
-        if (role != UserRole.ADMIN && role != UserRole.GENERALWAREHOUSE) {
-            menuWarehouse.setVisible(false);
-            menuWarehouse.setManaged(false);
-        }
+
+        // === Warehouse Menu Items phân quyền ===
+        boolean isAdminOrWarehouse = role == UserRole.ADMIN || role == UserRole.GENERALWAREHOUSE;
+        boolean isLimitedRole = role == UserRole.INVENTORY || role == UserRole.SUBLEEDER;
+
+        btnInvoice.setVisible(isAdminOrWarehouse);
+        btnScan.setVisible(isAdminOrWarehouse);
+        btnHistory.setVisible(isAdminOrWarehouse);
+        btnMOQ.setVisible(isAdminOrWarehouse || isLimitedRole);
+
+        // Nếu có ít nhất một item visible thì hiện menu
+        boolean anyVisible = btnInvoice.isVisible() || btnScan.isVisible()
+                || btnHistory.isVisible() || btnMOQ.isVisible();
+
+        menuWarehouse.setVisible(anyVisible);
+        menuWarehouse.setManaged(anyVisible);
+
+        // === Material Cart permission for SUBLEEDER ===
+        boolean allowCartAccess = role == UserRole.ADMIN || role == UserRole.INVENTORY || role == UserRole.SUBLEEDER;
+        menuMaterialCart.setVisible(allowCartAccess);
+        menuMaterialCartCreate.setVisible(allowCartAccess);
+        System.out.println("User role: " + role);
     }
+
+
 
 
     private void setupMenuActions() {
@@ -99,16 +138,29 @@ public class NavbarController {
         menuWorkOrder.setOnAction(e -> openTab("W/O", "/org/chemtrovina/cmtmsys/view/workOrder-feature.fxml"));
         menuTransferMaterialReturn.setOnAction(e -> openTab("Transfer Material Return", "/org/chemtrovina/cmtmsys/view/material_return.fxml"));
         menuCheckNG.setOnAction(e -> openTab("Check NG", "/org/chemtrovina/cmtmsys/view/rejected_material_history.fxml"));
+        menuMaterialCart.setOnAction(e -> openTab("Material Cart", "/org/chemtrovina/cmtmsys/view/material_cart_view.fxml"));
+        menuMaterialCartCreate.setOnAction(e -> openTab("Create Cart", "/org/chemtrovina/cmtmsys/view/material_cart_create.fxml"));
+
 
         // Planning
-        menuPlanWeekly.setOnAction(e -> openTab("Planning Weekly", "/org/chemtrovina/cmtmsys/view/weekly_plan.fxml"));
-        menuTest.setOnAction(e -> openTab("Test View", "/org/chemtrovina/cmtmsys/view/daily_plan_view.fxml"));
+       /* menuPlanWeekly.setOnAction(e -> openTab("Planning Weekly", "/org/chemtrovina/cmtmsys/view/weekly_plan.fxml"));
+        menuTest.setOnAction(e -> openTab("Test View", "/org/chemtrovina/cmtmsys/view/daily_plan_view.fxml"));*/
         menuPlanAll.setOnAction(e -> openTab("Plan Weekly/Daily", "/org/chemtrovina/cmtmsys/view/production_plan.fxml"));
         menuFeeder.setOnAction(e -> openTab("Feeder List", "/org/chemtrovina/cmtmsys/view/feederListView-feature.fxml"));
         menuFeederRoll.setOnAction(e -> openTab("Attach Reel", "/org/chemtrovina/cmtmsys/view/feeder-multi-roll.fxml"));
+        //menuPlanDaily.setOnAction(e -> openTab("Kế hoạch ngày", "/org/chemtrovina/cmtmsys/view/daily_plan_view.fxml"));
 
 
         menuManageAccount.setOnAction(e -> openTab("Manage Account", "/org/chemtrovina/cmtmsys/view/user-management.fxml"));
+
+        // PCB Performance
+        menuPcbPerformanceLog.setOnAction(e -> openTab("Hiệu suất PCB", "/org/chemtrovina/cmtmsys/view/performance_log_view.fxml"));
+        menuPcbPerformanceHistory.setOnAction(e -> openTab("Lịch sử hiệu suất", "/org/chemtrovina/cmtmsys/view/performance_log_history_view.fxml"));
+        menuImportCycleTime.setOnAction(e -> openTab("Import Cycle Time", "/org/chemtrovina/cmtmsys/view/import_cycle_time.fxml"));
+
+        menuStencilManager.setOnAction(e -> openTab("Stencil Manager", "/org/chemtrovina/cmtmsys/view/stencil_manager_view.fxml"));
+
+
         menuChangePassword.setOnAction(e -> openChangePasswordDialog());
         menuLogout.setOnAction(e -> handleLogout());
     }
@@ -140,7 +192,7 @@ public class NavbarController {
 
         // Mở lại màn hình login
         try {
-            FXMLLoader loader = new FXMLLoader(App.class.getResource("view/login.fxml"));
+            FXMLLoader loader = SpringFXMLLoader.load(App.class.getResource("view/login.fxml"));
             Scene scene = new Scene(loader.load());
 
             Stage loginStage = new Stage();

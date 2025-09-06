@@ -37,6 +37,7 @@ import org.chemtrovina.cmtmsys.service.base.HistoryService;
 import org.chemtrovina.cmtmsys.service.base.InvoiceDetailService;
 import org.chemtrovina.cmtmsys.service.base.InvoiceService;
 import org.chemtrovina.cmtmsys.service.base.MOQService;
+import org.chemtrovina.cmtmsys.utils.FxClipboardUtils;
 import org.chemtrovina.cmtmsys.utils.TableUtils;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -115,9 +116,38 @@ public class ScanController {
         setupIdleTimer();
         setupActivityListeners();
         loadInvoicePNsToComboBox();
-        startAutoGC();
 
         setupSearchShortcut();
+        startAutoGC();
+        tblScanDetails.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        tblScanDetails.getSelectionModel().setCellSelectionEnabled(true);
+        tblScanDetails.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+
+
+        tblScanDetails.setOnKeyPressed(event -> {
+            if (event.isControlDown() && event.getCode() == KeyCode.C) {
+                FxClipboardUtils.copySelectionToClipboard(tblScanDetails);
+            }
+
+            if (event.isControlDown() && event.getCode() == KeyCode.F) {
+                openSearchDialog();
+            }
+        });
+
+        tblInvoiceList.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        tblInvoiceList.getSelectionModel().setCellSelectionEnabled(true);
+        tblInvoiceList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+
+
+        tblInvoiceList.setOnKeyPressed(event -> {
+            if (event.isControlDown() && event.getCode() == KeyCode.C) {
+                FxClipboardUtils.copySelectionToClipboard(tblInvoiceList);
+            }
+
+            if (event.isControlDown() && event.getCode() == KeyCode.F) {
+                openSearchDialog();
+            }
+        });
 
         TableUtils.centerAlignAllColumns(tblScanDetails);
         TableUtils.centerAlignAllColumns(tblInvoiceList);
@@ -188,6 +218,7 @@ public class ScanController {
             String makerPN = txtScanCode.getText().trim();
             if (!makerPN.isEmpty()) {
                 handleScanCode(makerPN);
+
                 txtScanCode.clear();
             }
         });
@@ -444,31 +475,27 @@ public class ScanController {
         Map<String, HistoryDetailViewDto> groupedMap = new LinkedHashMap<>();
 
         for (HistoryDetailViewDto dto : rawList) {
-            String makerCode = dto.getMakerCode();
-            int moq = dto.getMoq();
-            int qty = dto.getQty();
+            String key = dto.getSapCode() + "_" + dto.getMakerCode(); // phân biệt rõ ràng
 
-            System.out.println(qty);
-
-            if (groupedMap.containsKey(makerCode)) {
-                HistoryDetailViewDto existing = groupedMap.get(makerCode);
-                existing.setQty(existing.getQty() + qty);         // cộng dồn qty thật
-                System.out.println(existing.getQty());
-                existing.setReelQty(existing.getReelQty() + 1);   // tăng reel count
+            if (groupedMap.containsKey(key)) {
+                HistoryDetailViewDto existing = groupedMap.get(key);
+                existing.setQty(existing.getQty() + dto.getQty());
+                existing.setReelQty(existing.getReelQty() + 1);
             } else {
-                groupedMap.put(makerCode, new HistoryDetailViewDto(
+                groupedMap.put(key, new HistoryDetailViewDto(
                         0,
                         dto.getMakerCode(),
                         dto.getSapCode(),
                         dto.getMaker(),
-                        moq,
-                        qty,
-                        1,     // reel đầu tiên
-                        "",     // sẽ cập nhật trạng thái sau
+                        dto.getMoq(),
+                        dto.getQty(),
+                        1,
+                        "",
                         dto.getSpec()
                 ));
             }
         }
+
 
 
         // Kiểm tra trạng thái O/X cho từng mã và cập nhật vào invoice field
@@ -577,15 +604,12 @@ public class ScanController {
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    //Scan
     private void handleScanCode(String rawInput) {
-
         String extractedMakerPN = historyService.extractRealMakerPN(rawInput);
         if (extractedMakerPN == null) {
             showAlert("Scan NG", "Không nhận diện được MakerPN từ chuỗi: " + rawInput);
             return;
         }
-
 
         List<MOQ> moqList = moqService.getAllMOQsByMakerPN(extractedMakerPN);
 
@@ -594,20 +618,38 @@ public class ScanController {
             return;
         }
 
+        // ==============================================
+        // Ưu tiên chọn SAP có trong invoice và CHƯA ĐỦ
         MOQ matchedMOQ = null;
 
         for (MOQ moq : moqList) {
             String sapPN = moq.getSapPN();
             InvoiceDetail invoiceDetail = invoiceDetailService.getInvoiceDetailBySapPNAndInvoiceId(sapPN, selectedInvoiceId);
-
             if (invoiceDetail != null) {
-                matchedMOQ = moq;
-                break; // tìm được mã SAP trùng trong invoice, dừng lại
+                int expectedQty = invoiceDetail.getQuantity();
+                int scannedQty = historyService.getTotalScannedQuantityBySapPN(sapPN, selectedInvoiceId);
+
+                if (scannedQty < expectedQty) {
+                    matchedMOQ = moq; // ✅ dòng chưa đủ
+                    break;
+                }
             }
         }
 
+        // Nếu tất cả SAP đều đủ → vẫn lấy dòng đầu tiên để lưu, nhưng báo "Over"
         if (matchedMOQ == null) {
-            MOQ fallbackMOQ = moqList.get(0); // lấy đại 1 bản MOQ bất kỳ để hiển thị
+            for (MOQ moq : moqList) {
+                InvoiceDetail invoiceDetail = invoiceDetailService.getInvoiceDetailBySapPNAndInvoiceId(moq.getSapPN(), selectedInvoiceId);
+                if (invoiceDetail != null) {
+                    matchedMOQ = moq; // ✅ vẫn lưu nhưng sẽ hiển thị "Over"
+                    break;
+                }
+            }
+        }
+
+        // Nếu vẫn không có mã nào trong invoice → báo không tồn tại
+        if (matchedMOQ == null) {
+            MOQ fallbackMOQ = moqList.get(0); // lấy đại để hiển thị
             updateTableScanSummary(extractedMakerPN, fallbackMOQ, fallbackMOQ.getMoq());
             handleNotExistInInvoice(fallbackMOQ.getSapPN());
             lastScannedMakerPN = extractedMakerPN;
@@ -615,28 +657,30 @@ public class ScanController {
             return;
         }
 
-        saveScanToHistory(matchedMOQ);
+        // ====================== THỰC HIỆN LƯU SCAN ======================
+        saveScanToHistory(matchedMOQ); // ✅ vẫn lưu kể cả khi Over
         lastScannedMakerPN = matchedMOQ.getMakerPN();
 
         updateTableScanSummary(extractedMakerPN, matchedMOQ, matchedMOQ.getMoq());
 
         boolean isGood = isValidScan(extractedMakerPN);
 
-
         if (!isGood) {
             updateScanResultUI(false);
             txtScanCode.setDisable(true);
             return;
         }
+        else{
+            updateScanResultUI(true);
+        }
 
-        updateScanResultUI(true);
-        checkQuantityAndUpdateStatus(matchedMOQ.getSapPN(), extractedMakerPN); // ✅ truyền makerPN
+        // ✅ cập nhật trạng thái O/X/Over
+        checkQuantityAndUpdateStatus(matchedMOQ.getSapPN(), extractedMakerPN);
 
-
-        //lastAcceptedMakerPN = extractedMakerPN;
+        // ✅ luôn load lại bảng sau mỗi lần scan
+        refreshHistoryTable();
         txtScanCode.clear();
         tblScanDetails.refresh();
-
     }
 
 

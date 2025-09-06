@@ -11,10 +11,10 @@ import org.springframework.stereotype.Repository;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Locale;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.time.temporal.WeekFields;
-import java.util.Map;
+import java.util.stream.Collectors;
 
 @Repository
 public class ProductionPlanDailyRepositoryImpl implements ProductionPlanDailyRepository {
@@ -191,7 +191,7 @@ public class ProductionPlanDailyRepositoryImpl implements ProductionPlanDailyRep
     public void consumeMaterialByActual(int planItemId, LocalDate runDate, int actualQty) {
         // 1. Lấy ProductID và PlanID từ PlanItem
         String getProductSql = "SELECT ProductID, PlanID FROM ProductionPlanItems WHERE PlanItemID = ?";
-        var productAndPlan = jdbcTemplate.queryForMap(getProductSql, planItemId);
+        Map<String, Object> productAndPlan = jdbcTemplate.queryForMap(getProductSql, planItemId);
 
         int productId = (int) productAndPlan.get("ProductID");
         int planId = (int) productAndPlan.get("PlanID");
@@ -200,26 +200,35 @@ public class ProductionPlanDailyRepositoryImpl implements ProductionPlanDailyRep
         String getWarehouseSql = "SELECT LineWarehouseID FROM ProductionPlans WHERE PlanID = ?";
         int warehouseId = jdbcTemplate.queryForObject(getWarehouseSql, Integer.class, planId);
 
-        // 3. Tìm RunID đang chạy (status = 'Running') của ModelLine
+        // 3. Tìm RunID đang chạy
         String getRunIdSql = """
         SELECT r.RunID
         FROM ModelLineRuns r
         JOIN ModelLines ml ON r.ModelLineID = ml.ModelLineID
         WHERE ml.ProductID = ? AND ml.WarehouseID = ? AND r.Status = 'Running'
     """;
-
         Integer runId = jdbcTemplate.queryForObject(getRunIdSql, Integer.class, productId, warehouseId);
-        if (runId == null) throw new RuntimeException("Không tìm thấy phiên đang chạy để trừ liệu.");
+        if (runId == null) {
+            throw new RuntimeException("Không tìm thấy phiên đang chạy để trừ liệu.");
+        }
 
-        // 4. Lấy danh sách Feeder của model-line này
-        String getFeedersSql = "SELECT FeederID, SapCode FROM Feeders WHERE ProductID = ? AND WarehouseID = ?";
+        // 4. Lấy danh sách Feeder (CẦN LẤY THÊM cột Qty)
+        String getFeedersSql = """
+        SELECT f.FeederID, f.SapCode, f.Qty
+        FROM Feeders f
+        JOIN ModelLines ml ON f.ModelLineID = ml.ModelLineID
+        WHERE ml.ProductID = ? AND ml.WarehouseID = ?
+    """;
         List<Map<String, Object>> feeders = jdbcTemplate.queryForList(getFeedersSql, productId, warehouseId);
 
         for (Map<String, Object> feeder : feeders) {
             int feederId = (int) feeder.get("FeederID");
             String sapCode = (String) feeder.get("SapCode");
+            int feederQty = (int) feeder.get("Qty");  // SỐ LIỆU TIÊU THỤ MỖI SẢN PHẨM
 
-            // 5. Lấy tất cả cuộn được gắn cho Feeder đó trong phiên đang chạy (FIFO)
+            int qtyToConsume = actualQty * feederQty;
+
+            // 5. Lấy cuộn theo FIFO
             String getMaterialsSql = """
             SELECT m.MaterialID, m.Quantity
             FROM FeederAssignmentMaterials fam
@@ -228,9 +237,7 @@ public class ProductionPlanDailyRepositoryImpl implements ProductionPlanDailyRep
             WHERE fa.FeederID = ? AND fa.RunID = ? AND fam.IsActive = 1
             ORDER BY fam.AttachedAt ASC
         """;
-
             List<Map<String, Object>> assignedRolls = jdbcTemplate.queryForList(getMaterialsSql, feederId, runId);
-            int qtyToConsume = actualQty;
 
             for (Map<String, Object> roll : assignedRolls) {
                 if (qtyToConsume <= 0) break;
@@ -262,6 +269,7 @@ public class ProductionPlanDailyRepositoryImpl implements ProductionPlanDailyRep
 
 
 
+
     @Override
     public int getActualQuantity(int planItemId, LocalDate runDate) {
         String sql = "SELECT COALESCE(ActualQuantity, 0) FROM ProductionPlanDaily WHERE PlanItemID = ? AND RunDate = ?";
@@ -271,6 +279,83 @@ public class ProductionPlanDailyRepositoryImpl implements ProductionPlanDailyRep
 
         return result.isEmpty() ? 0 : result.get(0);
     }
+    @Override
+    public ProductionPlanDaily findByPlanItemIdAndRunDate(int planItemId, LocalDate runDate) {
+        String sql = "SELECT * FROM ProductionPlanDaily WHERE PlanItemID = ? AND RunDate = ?";
+        List<ProductionPlanDaily> list = jdbcTemplate.query(sql, new ProductionPlanDailyRowMapper(), planItemId, runDate);
+        return list.isEmpty() ? null : list.get(0);
+    }
+
+    @Override
+    public ProductionPlanDaily findByModelCodeAndLineAndDate(String modelCode, String lineName, LocalDate runDate) {
+        String sql = """
+    SELECT d.*
+    FROM ProductionPlanDaily d
+    JOIN ProductionPlanItems i ON d.PlanItemID = i.PlanItemID
+    JOIN ProductionPlans pp ON i.PlanID = pp.PlanID
+    JOIN Warehouses w ON pp.LineWarehouseID = w.WarehouseID
+    JOIN Products p ON i.ProductID = p.ProductID
+    WHERE p.ProductCode = ? AND w.Name = ? AND d.RunDate = ?
+""";
+
+
+        return jdbcTemplate.query(sql, new Object[]{modelCode, lineName, runDate}, rs -> {
+            if (rs.next()) {
+                ProductionPlanDaily daily = new ProductionPlanDaily();
+                daily.setDailyID(rs.getInt("DailyId"));
+                daily.setPlanItemID(rs.getInt("PlanItemId"));
+                daily.setRunDate(rs.getDate("RunDate").toLocalDate());
+                daily.setQuantity(rs.getInt("Quantity"));
+                daily.setCreatedAt(rs.getTimestamp("CreatedAt").toLocalDateTime());
+                return daily;
+            }
+            return null;
+        });
+    }
+
+    @Override
+    public Map<String, ProductionPlanDaily> findByModelLineAndDates(Set<String> keys) {
+        if (keys == null || keys.isEmpty()) return new HashMap<>();
+
+        String sql = """
+        SELECT d.*, p.ProductCode, w.Name AS WarehouseName
+        FROM ProductionPlanDaily d
+        JOIN ProductionPlanItems i ON d.PlanItemId = i.PlanItemId
+        JOIN Products p ON i.ProductId = p.ProductId
+        JOIN ProductionPlans pp ON i.PlanId = pp.PlanId
+        JOIN Warehouses w ON pp.LineWarehouseId = w.WarehouseId
+        WHERE (p.ProductCode + '|' + w.Name + '|' + FORMAT(d.RunDate, 'yyyy-MM-dd')) IN (%s)
+    """;
+
+        // Tạo placeholders ?, ?, ?...
+        String placeholders = keys.stream().map(k -> "?").collect(Collectors.joining(", "));
+        sql = String.format(sql, placeholders);
+
+        List<Object> params = new ArrayList<>(keys);
+
+        return jdbcTemplate.query(sql, params.toArray(), rs -> {
+            Map<String, ProductionPlanDaily> map = new HashMap<>();
+            while (rs.next()) {
+                ProductionPlanDaily daily = new ProductionPlanDaily();
+                daily.setDailyID(rs.getInt("DailyID"));
+                daily.setPlanItemID(rs.getInt("PlanItemID"));
+                daily.setRunDate(rs.getDate("RunDate").toLocalDate());
+                daily.setQuantity(rs.getInt("Quantity"));
+                daily.setCreatedAt(rs.getTimestamp("CreatedAt").toLocalDateTime());
+                daily.setActualQuantity(rs.getInt("ActualQuantity"));
+
+                String model = rs.getString("ProductCode");
+                String line = rs.getString("WarehouseName");
+                LocalDate date = rs.getDate("RunDate").toLocalDate();
+
+                String key = model + "|" + line + "|" + date;
+                map.put(key, daily);
+            }
+            return map;
+        });
+    }
+
+
 
 
     private static class DailyPlanRowDtoMapper implements RowMapper<DailyPlanRowDto> {

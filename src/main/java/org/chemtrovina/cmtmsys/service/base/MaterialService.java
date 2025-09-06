@@ -11,6 +11,9 @@ import java.util.Set;
 public interface MaterialService {
     void addMaterial(Material material);
     void updateMaterial(Material material);
+
+    void updateMaterialDto(MaterialDto dto);
+
     void deleteMaterialById(int id);
     Material getMaterialById(int id);
     Material getMaterialByRollCode(String rollCode);
@@ -25,7 +28,11 @@ public interface MaterialService {
     List<Material> getMaterialsByIds(Set<Integer> ids);
 
 
+    List<Material> findBySapCode(String sapCode);
 
+    List<Material> getByTreeId(int treeId);
+
+    Material addMaterialToTree(int treeId, String rollCode);
 
 
 }

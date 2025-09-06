@@ -30,6 +30,7 @@ public class ProductionPlanDaily {
     public void setPlanItemID(int planItemID) { this.planItemID = planItemID; }
 
     public LocalDate getRunDate() { return runDate; }
+
     public void setRunDate(LocalDate runDate) { this.runDate = runDate; }
 
     public int getQuantity() { return quantity; }

@@ -24,19 +24,19 @@
         <!-- Bảng kế hoạch ngày -->
         <TableView fx:id="tblDailyPlans" editable="true" prefHeight="550">
             <columns>
-                <TableColumn fx:id="colLine" text="Line" prefWidth="100"/>
+                <TableColumn fx:id="colDailyLine" text="Line" prefWidth="100"/>
                 <TableColumn fx:id="colModel" text="Model" prefWidth="150"/>
-                <TableColumn fx:id="colProductCode" text="Product Code" prefWidth="120"/>
+                <TableColumn fx:id="colDailyModelType" text="Model Type" prefWidth="120"/>
+                <TableColumn fx:id="colDailyProductCode" text="Product Code" prefWidth="120"/>
                 <TableColumn fx:id="colType" text="Công đoạn" prefWidth="100"/>
-                <TableColumn fx:id="colD1" text="06/30" prefWidth="80"/>
-                <TableColumn fx:id="colD2" text="07/01" prefWidth="80"/>
-                <TableColumn fx:id="colD3" text="07/02" prefWidth="80"/>
-                <TableColumn fx:id="colD4" text="07/03" prefWidth="80"/>
-                <TableColumn fx:id="colD5" text="07/04" prefWidth="80"/>
-                <TableColumn fx:id="colD6" text="07/05" prefWidth="80"/>
-                <TableColumn fx:id="colD7" text="07/06" prefWidth="80"/>
-
-                <TableColumn fx:id="colTotal" text="Total W27" prefWidth="100"/>
+                <TableColumn fx:id="colD1" text="D1" prefWidth="80"/>
+                <TableColumn fx:id="colD2" text="D2" prefWidth="80"/>
+                <TableColumn fx:id="colD3" text="D3" prefWidth="80"/>
+                <TableColumn fx:id="colD4" text="D4" prefWidth="80"/>
+                <TableColumn fx:id="colD5" text="D5" prefWidth="80"/>
+                <TableColumn fx:id="colD6" text="D6" prefWidth="80"/>
+                <TableColumn fx:id="colD7" text="D7" prefWidth="80"/>
+                <TableColumn fx:id="colTotal" text="Total WXX" prefWidth="100"/>
             </columns>
         </TableView>
 

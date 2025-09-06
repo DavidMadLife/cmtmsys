@@ -120,13 +120,14 @@ public class HistoryRepositoryImpl extends GenericRepositoryImpl<History> implem
     }
 
     @Override
-    public List<History> search(String invoiceNo, String maker, String makerPN, String sapPN, LocalDate date, String MSL, String InvoicePN) {
+    public List<History> search(String invoiceNo, String maker, String makerPN, String sapPN,
+                                LocalDate date, String MSL, String invoicePN) {
         StringBuilder sql = new StringBuilder(
-                "SELECT h.* FROM History h LEFT JOIN Invoice i ON h.InvoiceId = i.Id WHERE 1=1 "
+                "SELECT h.*, i.InvoiceNo FROM History h " +
+                        "LEFT JOIN Invoice i ON h.InvoiceId = i.Id WHERE 1=1 "
         );
 
-        // Danh sách parameter
-        List<Object> params = new java.util.ArrayList<>();
+        List<Object> params = new ArrayList<>();
 
         if (invoiceNo != null && !invoiceNo.isBlank()) {
             sql.append("AND i.InvoiceNo = ? ");
@@ -152,36 +153,20 @@ public class HistoryRepositoryImpl extends GenericRepositoryImpl<History> implem
             sql.append("AND h.Date = ? ");
             params.add(date);
         }
-        if (MSL != null) {
+
+        if (MSL != null && !MSL.isBlank()) {
             sql.append("AND h.MSL = ? ");
             params.add(MSL);
         }
 
-        if (InvoicePN != null) {
+        if (invoicePN != null && !invoicePN.isBlank()) {
             sql.append("AND h.InvoicePN = ? ");
-            params.add(InvoicePN);
-        }
-        List<History> list = jdbcTemplate.query(sql.toString(), params.toArray(), new HistoryRowMapper());
-
-        for (History history : list) {
-            if (history.getInvoiceId() != null) {
-                try {
-                    String invNo = jdbcTemplate.queryForObject(
-                            "SELECT InvoiceNo FROM Invoice WHERE Id = ?",
-                            new Object[]{history.getInvoiceId()},
-                            String.class
-                    );
-                    history.setInvoiceNo(invNo);
-                } catch (EmptyResultDataAccessException e) {
-                    // Không tìm thấy invoice -> giữ nguyên hoặc log cảnh báo
-                    System.out.println("Không tìm thấy InvoiceNo cho InvoiceId = " + history.getInvoiceId());
-                }
-
-            }
+            params.add(invoicePN);
         }
 
-        return list;
+        return jdbcTemplate.query(sql.toString(), params.toArray(), new HistoryRowMapper());
     }
+
 
     @Override
     public boolean existsByScanCodeAndMakerPN(String scanCode, String makerPN) {
@@ -223,7 +208,7 @@ public class HistoryRepositoryImpl extends GenericRepositoryImpl<History> implem
     static class HistoryRowMapper implements RowMapper<History> {
         @Override
         public History mapRow(ResultSet rs, int rowNum) throws SQLException {
-            return new History(
+            History h = new History(
                     rs.getInt("Id"),
                     rs.getInt("InvoiceId"),
                     rs.getDate("Date").toLocalDate(),
@@ -239,6 +224,11 @@ public class HistoryRepositoryImpl extends GenericRepositoryImpl<History> implem
                     rs.getString("InvoicePN"),
                     rs.getString("Spec")
             );
+            try {
+                h.setInvoiceNo(rs.getString("InvoiceNo"));
+            } catch (SQLException ignore) {}
+            return h;
         }
     }
+
 }

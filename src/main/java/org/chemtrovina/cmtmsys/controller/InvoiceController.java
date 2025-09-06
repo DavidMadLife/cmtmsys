@@ -12,9 +12,8 @@ import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.StringConverter;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.chemtrovina.cmtmsys.config.DataSourceConfig;
 import org.chemtrovina.cmtmsys.dto.InvoiceDataDto;
@@ -31,11 +30,13 @@ import org.chemtrovina.cmtmsys.service.Impl.MOQServiceImpl;
 import org.chemtrovina.cmtmsys.service.base.InvoiceService;
 import org.chemtrovina.cmtmsys.service.base.MOQService;
 import org.chemtrovina.cmtmsys.utils.AutoCompleteUtils;
+import org.chemtrovina.cmtmsys.utils.FxClipboardUtils;
 import org.controlsfx.control.textfield.TextFields;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
+
 
 import javax.sql.DataSource;
 import java.io.File;
@@ -112,6 +113,35 @@ public class InvoiceController {
         initComboBox();
         loadInvoiceList();
         startAutoGC();
+        tblData.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        tblData.getSelectionModel().setCellSelectionEnabled(true);
+        tblData.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+
+
+        tblData.setOnKeyPressed(event -> {
+            if (event.isControlDown() && event.getCode() == KeyCode.C) {
+                FxClipboardUtils.copySelectionToClipboard(tblData);
+            }
+
+            if (event.isControlDown() && event.getCode() == KeyCode.F) {
+                openSearchDialog();
+            }
+        });
+
+        tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        tableView.getSelectionModel().setCellSelectionEnabled(true);
+        tableView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+
+
+        tableView.setOnKeyPressed(event -> {
+            if (event.isControlDown() && event.getCode() == KeyCode.C) {
+                FxClipboardUtils.copySelectionToClipboard(tableView);
+            }
+
+            if (event.isControlDown() && event.getCode() == KeyCode.F) {
+                openSearchDialog();
+            }
+        });
     }
 
     private void initTableView() {
@@ -579,7 +609,6 @@ public class InvoiceController {
             return;
         }
 
-        // YÊU CẦU NHẬP InvoicePN
         TextInputDialog dialog = new TextInputDialog();
         dialog.setTitle("Enter InvoicePN");
         dialog.setHeaderText("Please input InvoicePN for this import:");
@@ -603,16 +632,47 @@ public class InvoiceController {
             String invoiceNo = generateInvoiceNo(LocalDate.now());
             Invoice invoice = new Invoice();
             invoice.setInvoiceNo(invoiceNo);
-            invoice.setInvoicePN(invoicePN); // gán InvoicePN người dùng nhập
+            invoice.setInvoicePN(invoicePN);
             invoice.setInvoiceDate(LocalDate.now());
             invoice.setCreatedAt(LocalDate.now());
             invoice.setStatus("New");
 
             for (Row row : sheet) {
-                if (row.getRowNum() == 0) continue; // Bỏ qua header
+                if (row == null || row.getRowNum() == 0) continue;
 
-                String sapCode = row.getCell(0).getStringCellValue().trim();
-                int quantity = (int) row.getCell(1).getNumericCellValue();
+                Cell sapCell = row.getCell(0);
+                Cell qtyCell = row.getCell(1);
+
+                if (sapCell == null || qtyCell == null) continue;
+
+                String sapCode = "";
+                try {
+                    if (sapCell.getCellType() == CellType.STRING) {
+                        sapCode = sapCell.getStringCellValue().trim();
+                    } else if (sapCell.getCellType() == CellType.NUMERIC) {
+                        sapCode = String.valueOf((int) sapCell.getNumericCellValue());
+                    } else {
+                        continue;
+                    }
+                } catch (Exception ex) {
+                    System.out.println("Lỗi đọc SAP Code tại dòng " + (row.getRowNum() + 1));
+                    continue;
+                }
+
+                int quantity = 0;
+                try {
+                    if (qtyCell.getCellType() == CellType.NUMERIC) {
+                        quantity = (int) qtyCell.getNumericCellValue();
+                    } else if (qtyCell.getCellType() == CellType.STRING) {
+                        String qtyStr = qtyCell.getStringCellValue().replace(",", "").trim();
+                        quantity = Integer.parseInt(qtyStr);
+                    } else {
+                        continue;
+                    }
+                } catch (Exception ex) {
+                    System.out.println("Lỗi đọc Quantity tại dòng " + (row.getRowNum() + 1));
+                    continue;
+                }
 
                 MOQ moq = moqService.getMOQbySAPPN(sapCode);
                 if (moq == null || moq.getMoq() == null || moq.getMoq() == 0) {
@@ -645,10 +705,11 @@ public class InvoiceController {
             cbInvoiceNo.getSelectionModel().select(invoice);
             dpDate.setValue(invoice.getInvoiceDate());
             invoiceDetailDtoList.clear();
+
             for (InvoiceDetail detail : detailList) {
                 InvoiceDetailViewDto dto = new InvoiceDetailViewDto();
                 dto.setInvoiceNo(invoice.getInvoiceNo());
-                dto.setInvoicePN(invoicePN); // gán vào DTO
+                dto.setInvoicePN(invoicePN);
                 dto.setInvoiceDate(invoice.getInvoiceDate());
                 dto.setSapCode(detail.getSapPN());
                 dto.setQuantity(detail.getQuantity());
@@ -671,6 +732,7 @@ public class InvoiceController {
             showAlert("Error", "Unexpected error: " + e.getMessage(), Alert.AlertType.ERROR);
         }
     }
+
 
 
 

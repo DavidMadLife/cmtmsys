@@ -1,5 +1,6 @@
 package org.chemtrovina.cmtmsys.controller;
 
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -39,7 +40,8 @@ public class FeederMultiRollController {
     // Buttons
     @FXML private Button btnLoadFeeders;
     @FXML private Button btnCreateRun;
-    @FXML private Button btnEndRun;
+    @FXML private Button btnToggleRun;
+
 
 
     // Table and columns
@@ -61,6 +63,27 @@ public class FeederMultiRollController {
     @FXML private TableColumn<FeederDisplayRow, Void> colAttachButton;
     @FXML private TableColumn<FeederDisplayRow, Void> colDeleteButton;
 
+    @FXML private ComboBox<MaterialCart> cbTruckCode;
+    @FXML private TextField txtTreeCode;
+    @FXML private TextField txtRollCodeSearch;
+    @FXML private TextField txtSapSearch;
+    @FXML private Button btnSearchTree;
+
+    @FXML private TableView<MaterialCartTree> tblTreeList;
+    @FXML private TableView<Material> tblRollInTree;
+
+    @FXML private TableColumn<MaterialCartTree, String> colTreeCode;
+    @FXML private TableColumn<MaterialCartTree, String> colCreatedDate;
+    @FXML private TableColumn<MaterialCartTree, String> colFloor;
+
+    @FXML private TableColumn<Material, String> colRollCodeInTree;
+    @FXML private TableColumn<Material, String> colSapCodeInTree;
+    @FXML private TableColumn<Material, String> colQtyInTree;
+    @FXML private TableColumn<Material, String> colWarehouseInTree;
+
+    private ObservableList<MaterialCartTree> treeData = FXCollections.observableArrayList();
+    private ObservableList<Material> rollData = FXCollections.observableArrayList();
+
     // Logs
     @FXML private TextArea txtStatusLog;
 
@@ -76,6 +99,9 @@ public class FeederMultiRollController {
     private final ModelLineRunService runService;
     private final WarehouseService warehouseService;
 
+    private final MaterialCartService materialCartService;
+    private final MaterialCartTreeService materialCartTreeService;
+
 
     private ModelLine currentModelLine;
     private ModelLineRun currentRun;
@@ -88,7 +114,9 @@ public class FeederMultiRollController {
                                      ModelLineRunService runService,
                                      MaterialService materialService,
                                      FeederAssignmentService assignmentService,
-                                     FeederAssignmentMaterialService materialAssignmentService) {
+                                     FeederAssignmentMaterialService materialAssignmentService,
+                                     MaterialCartTreeService materialCartTreeService,
+                                     MaterialCartService materialCartService) {
         this.warehouseService = warehouseService;
         this.productService = productService;
         this.feederService = feederService;
@@ -97,6 +125,8 @@ public class FeederMultiRollController {
         this.materialService = materialService;
         this.assignmentService = assignmentService;
         this.materialAssignmentService = materialAssignmentService;
+        this.materialCartService = materialCartService;
+        this.materialCartTreeService = materialCartTreeService;
     }
 
 
@@ -106,7 +136,40 @@ public class FeederMultiRollController {
         setupTableView();
         setupEventHandlers();
         setupFeederBySapTable();
+        setupMaterialCartSearch();
+    }
 
+    private void setupMaterialCartSearch() {
+        cbTruckCode.setItems(FXCollections.observableArrayList(materialCartService.getAllCarts()));
+        tblTreeList.setItems(treeData);
+        tblRollInTree.setItems(rollData);
+
+        colTreeCode.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getTreeCode()));
+        colCreatedDate.setCellValueFactory(data -> new SimpleStringProperty(
+                data.getValue().getCreatedAt() != null ? data.getValue().getCreatedAt().toString() : ""));
+        colFloor.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getLevelNote()));
+
+        colRollCodeInTree.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getRollCode()));
+        colSapCodeInTree.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getSapCode()));
+        colQtyInTree.setCellValueFactory(data -> new SimpleStringProperty(String.valueOf(data.getValue().getQuantity())));
+        colWarehouseInTree.setCellValueFactory(data -> {
+            String name = warehouseService.getAllWarehouses().stream()
+                    .filter(w -> w.getWarehouseId() == data.getValue().getWarehouseId())
+                    .map(Warehouse::getName).findFirst().orElse("N/A");
+            return new SimpleStringProperty(name);
+        });
+
+        btnSearchTree.setOnAction(e -> handleSearchMaterialCart());
+
+        tblTreeList.setRowFactory(tv -> {
+            TableRow<MaterialCartTree> row = new TableRow<>();
+            row.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2 && !row.isEmpty()) {
+                    loadRollsByTree(row.getItem().getTreeId());
+                }
+            });
+            return row;
+        });
     }
 
     private void setupComboBoxes() {
@@ -174,7 +237,7 @@ public class FeederMultiRollController {
         btnCreateRun.setOnAction(event -> createNewRun());
         txtSearchFeederCode.setOnAction(e -> scrollToFeederCode());
         txtRollCode.setOnAction(e -> handleAttachRollCode());
-        btnEndRun.setOnAction(event -> handleEndRun());
+        btnToggleRun.setOnAction(event -> handleToggleRun());
 
 
         cbRunHistory.valueProperty().addListener((obs, oldVal, newVal) -> {
@@ -272,25 +335,27 @@ public class FeederMultiRollController {
     }
 
     private void loadFeederDataByRun(ModelLineRun run) {
+        // 1. Lấy danh sách feeder cho model + line
         List<Feeder> feeders = feederService.getFeedersByModelAndLine(
                 currentModelLine.getProductId(),
                 currentModelLine.getWarehouseId()
         );
 
-        // Lấy toàn bộ assignment-material theo Run
-        Map<Integer, List<FeederAssignmentMaterial>> matMap = materialAssignmentService.getAllActiveByRunGrouped(run.getRunId());
+        // 2. Lấy tất cả assignment-material theo run và gom nhóm theo feederId
+        Map<Integer, List<FeederAssignmentMaterial>> matMap =
+                materialAssignmentService.getAllActiveByRunGrouped(run.getRunId());
 
-        // Thu tất cả materialId để lấy 1 lượt
+        // 3. Lấy toàn bộ materialId từ tất cả assignment-material
         Set<Integer> materialIds = matMap.values().stream()
                 .flatMap(List::stream)
                 .map(FeederAssignmentMaterial::getMaterialId)
                 .collect(Collectors.toSet());
 
-        Map<Integer, Material> materialMap = materialService.getMaterialsByIds(materialIds)
-                .stream()
+        // 4. Truy vấn 1 lần để lấy tất cả Material
+        Map<Integer, Material> materialMap = materialService.getMaterialsByIds(materialIds).stream()
                 .collect(Collectors.toMap(Material::getMaterialId, m -> m));
 
-
+        // 5. Tạo rows cho TableView
         ObservableList<FeederDisplayRow> rows = FXCollections.observableArrayList();
 
         for (Feeder feeder : feeders) {
@@ -301,9 +366,15 @@ public class FeederMultiRollController {
                 FeederAssignmentMaterial latest = mats.get(mats.size() - 1);
                 Material mat = materialMap.get(latest.getMaterialId());
 
-                row.setRollCode(mat != null ? mat.getRollCode() : "");
-                row.setMaterialQty(mat != null ? mat.getQuantity() : 0);
-                row.setStatus(mats.size() > 1 ? "Bổ sung" : "Đã gắn");
+                if (mat != null) {
+                    row.setRollCode(mat.getRollCode());
+                    row.setMaterialQty(mat.getQuantity());
+                    row.setStatus(mats.size() > 1 ? "Bổ sung" : "Đã gắn");
+                } else {
+                    row.setRollCode("N/A");
+                    row.setMaterialQty(0);
+                    row.setStatus("Dữ liệu lỗi");
+                }
             } else {
                 row.setRollCode("");
                 row.setMaterialQty(0);
@@ -314,9 +385,7 @@ public class FeederMultiRollController {
         }
 
         tblFeederAssignments.setItems(rows);
-
     }
-
 
     private void loadFeedersAndRuns() {
         String modelCode = txtModelCode.getText().trim();
@@ -400,32 +469,37 @@ public class FeederMultiRollController {
         reloadRuns();
     }
 
-    private void handleEndRun() {
+    private void handleToggleRun() {
         if (currentRun == null) {
-            showAlert("⚠️ Không có phiên chạy nào đang được chọn.");
+            showAlert("⚠️ Không có phiên chạy nào được chọn.");
             return;
         }
 
-        if (!"Running".equalsIgnoreCase(currentRun.getStatus())) {
-            showAlert("⚠️ Phiên này đã kết thúc.");
-            return;
-        }
+        boolean isRunning = "Running".equalsIgnoreCase(currentRun.getStatus());
 
-        // Xác nhận từ người dùng
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
         confirm.setTitle("Xác nhận");
         confirm.setHeaderText(null);
-        confirm.setContentText("Bạn có chắc chắn muốn kết thúc phiên chạy này?");
+        confirm.setContentText(isRunning
+                ? "Bạn có chắc chắn muốn kết thúc phiên chạy này?"
+                : "Bạn có muốn mở lại phiên chạy này?");
         confirm.showAndWait().ifPresent(result -> {
             if (result == ButtonType.OK) {
-                runService.endRun(currentRun.getRunId()); // 🛠 bạn cần có hàm này trong service
-                txtStatusLog.appendText("✅ Đã kết thúc phiên chạy: " + currentRun.getRunCode() + "\n");
+                if (isRunning) {
+                    runService.endRun(currentRun.getRunId());
+                    txtStatusLog.appendText("✅ Đã kết thúc phiên: " + currentRun.getRunCode() + "\n");
+                } else {
+                    runService.reopenRun(currentRun.getRunId()); // 🛠 bạn cần có hàm này trong service
+                    txtStatusLog.appendText("🔁 Đã mở lại phiên: " + currentRun.getRunCode() + "\n");
+                }
 
-                reloadRuns(); // cập nhật lại danh sách run
-                tblFeederAssignments.setItems(FXCollections.observableArrayList()); // clear bảng
+                reloadRuns();
+                loadFeederDataByRun(currentRun);
+                updateToggleRunButton(); // Cập nhật lại nút
             }
         });
     }
+
 
     private void handleSearchFeederBySap() {
         String rollCode = txtScanRollForSap.getText().trim();
@@ -436,6 +510,17 @@ public class FeederMultiRollController {
             txtStatusLog.appendText("❌ Không tìm thấy cuộn [" + rollCode + "]\n");
             SoundUtils.playSound("Wrong.mp3");
             return;
+        }
+
+        // 🆕 HIỂN THỊ CÂY VÀ XE CHỨA CUỘN
+        if (material.getTreeId() != null) {
+            MaterialCartTree tree = materialCartTreeService.getById(material.getTreeId());
+            if (tree != null) {
+                MaterialCart cart = materialCartService.getCartById(tree.getCartId());
+                txtStatusLog.appendText(
+                        "📦 Cuộn [" + rollCode + "] đang ở cây [" + tree.getTreeCode() + "] trong xe [" + (cart != null ? cart.getCartCode() : "N/A") + "]\n"
+                );
+            }
         }
 
         // Lọc feeder theo sapCode
@@ -472,43 +557,13 @@ public class FeederMultiRollController {
     }
 
     private void handleAttachToFeeder(FeederDisplayRow row) {
-        if (currentRun == null) {
-            showAlert("Vui lòng chọn phiên chạy trước.");
-            return;
+        if (attachRollToFeeder(row.getRollCode(), row)) {
+            tblFeederBySap.refresh();
+            tblFeederAssignments.refresh();
+            loadFeederDataByRun(currentRun);
+            txtScanRollForSap.requestFocus();
+            txtScanRollForSap.selectAll();
         }
-
-        Material mat = materialService.getMaterialByRollCode(row.getRollCode());
-        if (mat == null) {
-            txtStatusLog.appendText("❌ Cuộn không hợp lệ: " + row.getRollCode() + "\n");
-            return;
-        }
-
-        // ✅ CHẶN CUỘN ĐÃ GẮN TRONG PHIÊN
-        List<FeederAssignmentMaterial> assignedInRun = materialAssignmentService.getActiveByRunId(currentRun.getRunId());
-        boolean alreadyAssignedInRun = assignedInRun.stream()
-                .anyMatch(m -> m.getMaterialId() == mat.getMaterialId());
-
-        if (alreadyAssignedInRun) {
-            txtStatusLog.appendText("❌ Cuộn [" + mat.getRollCode() + "] đã được gắn trong phiên hiện tại.\n");
-            SoundUtils.playSound("Wrong.mp3");
-            return;
-        }
-
-        Feeder feeder = feederService.getFeederById(row.getFeederId());
-        FeederAssignment ass = assignmentService.assignFeeder(currentRun.getRunId(), feeder.getFeederId(), "system");
-        materialAssignmentService.attachMaterial(ass.getAssignmentId(), mat.getMaterialId(), false, null);
-
-        txtStatusLog.appendText("✅ Gắn cuộn [" + mat.getRollCode() + "] vào Feeder [" + feeder.getFeederCode() + "]\n");
-
-
-
-
-        handleSearchFeederBySap();        // reload bảng phụ
-        loadFeederDataByRun(currentRun);  // reload bảng chính
-
-        txtScanRollForSap.requestFocus();
-        txtScanRollForSap.selectAll();
-
     }
 
 
@@ -582,11 +637,6 @@ public class FeederMultiRollController {
 
 
     private void handleAttachRollCode() {
-        if (currentRun == null) {
-            txtStatusLog.appendText("⚠️ Vui lòng tạo phiên chạy trước khi gắn cuộn.\n");
-            return;
-        }
-
         String rollCode = txtRollCode.getText().trim();
         if (rollCode.isEmpty()) return;
 
@@ -596,75 +646,15 @@ public class FeederMultiRollController {
             return;
         }
 
-        Material material = materialService.getMaterialByRollCode(rollCode);
-        if (material == null) {
-            txtStatusLog.appendText("❌ Không tìm thấy cuộn vật liệu: " + rollCode + "\n");
-            SoundUtils.playSound("Wrong.mp3");
-
-            return;
+        if (attachRollToFeeder(rollCode, selectedRow)) {
+            tblFeederAssignments.refresh();
+            txtSearchFeederCode.requestFocus();
+            txtRollCode.selectAll();
+            txtSearchFeederCode.clear();
         }
-
-        Feeder feeder = feederService.getFeederById(selectedRow.getFeederId());
-        if (feeder == null) {
-            txtStatusLog.appendText("❌ Không xác định được Feeder từ dòng đã chọn.\n");
-            SoundUtils.playSound("Wrong.mp3");
-
-            return;
-        }
-
-        // ✅ KIỂM TRA MÃ SAP
-        if (!material.getSapCode().equalsIgnoreCase(feeder.getSapCode())) {
-            txtStatusLog.appendText("❌ Mã SAP [" + material.getSapCode() + "] không khớp với Feeder [" + feeder.getSapCode() + "]\n");
-            SoundUtils.playSound("Wrong.mp3");
-
-            return;
-        }
-
-        // ✅ KIỂM TRA KHO
-        if (material.getWarehouseId() != cbLines.getValue().getWarehouseId()) {
-            txtStatusLog.appendText("❌ Cuộn không nằm trong đúng kho [" + cbLines.getValue().getName() + "]\n");
-            SoundUtils.playSound("Wrong.mp3");
-
-            return;
-        }
-
-        List<FeederAssignmentMaterial> assignedInRun = materialAssignmentService.getActiveByRunId(currentRun.getRunId());
-        boolean alreadyAssignedInRun = assignedInRun.stream()
-                .anyMatch(m -> m.getMaterialId() == material.getMaterialId());
-
-        if (alreadyAssignedInRun) {
-            txtStatusLog.appendText("❌ Cuộn [" + rollCode + "] đã được gắn trong phiên hiện tại.\n");
-            SoundUtils.playSound("Wrong.mp3");
-
-            return;
-        }
-
-        // Gắn cuộn nếu hợp lệ
-        FeederAssignment assignment = assignmentService.assignFeeder(currentRun.getRunId(), feeder.getFeederId(), "system");
-        materialAssignmentService.attachMaterial(assignment.getAssignmentId(), material.getMaterialId(), false, null);
-
-        // Cập nhật lại dòng đã chọn
-        List<FeederAssignmentMaterial> mats = materialAssignmentService.getMaterialsByAssignment(assignment.getAssignmentId());
-        if (!mats.isEmpty()) {
-            FeederAssignmentMaterial lastMat = mats.get(mats.size() - 1);
-            Material mat = materialService.getMaterialById(lastMat.getMaterialId());
-
-            selectedRow.setRollCode(mat.getRollCode());
-            selectedRow.setMaterialQty(mat.getQuantity());
-            selectedRow.setStatus(mats.size() > 1 ? "Bổ sung" : "Đã gắn");
-
-            tblFeederAssignments.refresh(); // Cập nhật hiển thị TableView
-        }
-
-        txtStatusLog.appendText("✅ Đã gắn cuộn [" + rollCode + "] vào Feeder [" + feeder.getFeederCode() + "]\n");
-        SoundUtils.playSound("done.mp3");
-
-        txtSearchFeederCode.requestFocus();
-        txtRollCode.selectAll();
-        txtSearchFeederCode.clear();
-
-
     }
+
+
 
     private void reloadRuns() {
         if (currentModelLine == null) return;
@@ -678,6 +668,136 @@ public class FeederMultiRollController {
         }
     }
 
+    private void handleSearchMaterialCart() {
+        String treeCode = txtTreeCode.getText().trim();
+        String rollCode = txtRollCodeSearch.getText().trim();
+        String sapCode = txtSapSearch.getText().trim();
+
+        treeData.clear();
+        rollData.clear();
+
+        if (!treeCode.isEmpty()) {
+            MaterialCartTree tree = materialCartTreeService.getTreeByCode(treeCode);
+            if (tree != null) {
+                treeData.add(tree);
+                MaterialCart cart = materialCartService.getCartById(tree.getCartId());
+                if (cart != null) cbTruckCode.setValue(cart);
+            }
+            return;
+        }
+
+        if (!rollCode.isEmpty()) {
+            Material mat = materialService.getMaterialByRollCode(rollCode);
+            if (mat != null && mat.getTreeId() != null) {
+                MaterialCartTree tree = materialCartTreeService.getById(mat.getTreeId());
+                if (tree != null) {
+                    treeData.add(tree);
+                    MaterialCart cart = materialCartService.getCartById(tree.getCartId());
+                    if (cart != null) cbTruckCode.setValue(cart);
+                }
+            }
+            return;
+        }
+
+        if (!sapCode.isEmpty()) {
+            List<Material> materials = materialService.findBySapCode(sapCode);
+            List<Integer> treeIds = materials.stream().map(Material::getTreeId)
+                    .filter(id -> id != null).distinct().collect(Collectors.toList());
+            treeData.setAll(materialCartTreeService.getByIds(treeIds));
+        }
+
+        if (cbTruckCode.getValue() != null && treeCode.isEmpty() && rollCode.isEmpty() && sapCode.isEmpty()) {
+            List<MaterialCartTree> trees = materialCartTreeService.getTreesByCartId(cbTruckCode.getValue().getCartId());
+            treeData.setAll(trees);
+        }
+    }
+
+    private void loadRollsByTree(int treeId) {
+        List<Material> rolls = materialService.getByTreeId(treeId);
+        rollData.setAll(rolls);
+    }
+    private void updateToggleRunButton() {
+        if (currentRun == null) {
+            btnToggleRun.setText("Chọn phiên");
+        } else if ("Running".equalsIgnoreCase(currentRun.getStatus())) {
+            btnToggleRun.setText("Kết thúc phiên chạy");
+        } else {
+            btnToggleRun.setText("Mở lại phiên chạy");
+        }
+    }
+
+
+    private boolean attachRollToFeeder(String rollCode, FeederDisplayRow targetFeederRow) {
+        if (currentRun == null) {
+            txtStatusLog.appendText("⚠️ Vui lòng tạo phiên chạy trước khi gắn cuộn.\n");
+            return false;
+        }
+
+        Material material = materialService.getMaterialByRollCode(rollCode);
+        if (material == null) {
+            txtStatusLog.appendText("❌ Không tìm thấy cuộn vật liệu: " + rollCode + "\n");
+            SoundUtils.playSound("Wrong.mp3");
+            return false;
+        }
+
+        Feeder feeder = feederService.getFeederById(targetFeederRow.getFeederId());
+        if (feeder == null) {
+            txtStatusLog.appendText("❌ Không xác định được Feeder từ dòng đã chọn.\n");
+            SoundUtils.playSound("Wrong.mp3");
+            return false;
+        }
+
+        // ✅ KIỂM TRA MÃ SAP
+        if (!material.getSapCode().equalsIgnoreCase(feeder.getSapCode())) {
+            txtStatusLog.appendText("❌ Mã SAP [" + material.getSapCode() + "] không khớp với Feeder [" + feeder.getSapCode() + "]\n");
+            SoundUtils.playSound("Wrong.mp3");
+            return false;
+        }
+
+        /*// ✅ KIỂM TRA KHO
+        if (material.getWarehouseId() != cbLines.getValue().getWarehouseId()) {
+            txtStatusLog.appendText("❌ Cuộn không nằm trong đúng kho [" + cbLines.getValue().getName() + "]\n");
+            SoundUtils.playSound("Wrong.mp3");
+            return false;
+        }*/
+
+        // ✅ CẢNH BÁO nếu đã gắn ở feeder khác
+        List<FeederAssignmentMaterial> assignedInRun = materialAssignmentService.getActiveByRunId(currentRun.getRunId());
+        boolean alreadyAssignedInRun = assignedInRun.stream()
+                .anyMatch(m -> m.getMaterialId() == material.getMaterialId());
+
+        if (alreadyAssignedInRun) {
+            Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+            confirm.setTitle("Xác nhận gắn lại");
+            confirm.setHeaderText("Cuộn này đã được gắn vào feeder khác trong phiên.");
+            confirm.setContentText("Bạn có chắc muốn gắn lại cuộn [" + rollCode + "] vào feeder [" + feeder.getFeederCode() + "]?");
+            confirm.showAndWait();
+
+            if (confirm.getResult() != ButtonType.OK) {
+                txtStatusLog.appendText("⛔ Hủy gắn cuộn [" + rollCode + "]\n");
+                return false;
+            }
+        }
+
+        // Gắn cuộn nếu hợp lệ
+        FeederAssignment assignment = assignmentService.assignFeeder(currentRun.getRunId(), feeder.getFeederId(), "system");
+        materialAssignmentService.attachMaterial(assignment.getAssignmentId(), material.getMaterialId(), false, null);
+
+        // Cập nhật lại dòng
+        List<FeederAssignmentMaterial> mats = materialAssignmentService.getMaterialsByAssignment(assignment.getAssignmentId());
+        if (!mats.isEmpty()) {
+            FeederAssignmentMaterial lastMat = mats.get(mats.size() - 1);
+            Material mat = materialService.getMaterialById(lastMat.getMaterialId());
+
+            targetFeederRow.setRollCode(mat.getRollCode());
+            targetFeederRow.setMaterialQty(mat.getQuantity());
+            targetFeederRow.setStatus(mats.size() > 1 ? "Bổ sung" : "Đã gắn");
+        }
+
+        txtStatusLog.appendText("✅ Đã gắn cuộn [" + rollCode + "] vào Feeder [" + feeder.getFeederCode() + "]\n");
+        SoundUtils.playSound("done.mp3");
+        return true;
+    }
 
 
 

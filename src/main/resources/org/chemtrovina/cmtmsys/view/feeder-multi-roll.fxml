@@ -1,97 +1,126 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.ComboBox?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.TableColumn?>
-<?import javafx.scene.control.TableView?>
-<?import javafx.scene.control.TextArea?>
-<?import javafx.scene.control.TextField?>
-<?import javafx.scene.layout.AnchorPane?>
-<?import javafx.scene.layout.ColumnConstraints?>
-<?import javafx.scene.layout.GridPane?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.RowConstraints?>
-<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
 
-<AnchorPane prefHeight="700.0" prefWidth="850.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.chemtrovina.cmtmsys.controller.FeederMultiRollController">
+<AnchorPane prefHeight="700.0" prefWidth="900.0"
+            xmlns="http://javafx.com/javafx/23.0.1"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="org.chemtrovina.cmtmsys.controller.FeederMultiRollController">
 
-    <VBox spacing="12" AnchorPane.bottomAnchor="10" AnchorPane.leftAnchor="10" AnchorPane.rightAnchor="10" AnchorPane.topAnchor="10">
+    <VBox spacing="10" AnchorPane.topAnchor="10" AnchorPane.leftAnchor="10" AnchorPane.rightAnchor="10" AnchorPane.bottomAnchor="10">
 
         <!-- Tiêu đề -->
-        <Label style="-fx-font-size: 18px; -fx-font-weight: bold;" text="Quản lý Gắn Cuộn cho Feeder" />
+        <Label text="Quản lý Gắn Cuộn cho Feeder" style="-fx-font-size: 18px; -fx-font-weight: bold;" />
 
-        <!-- Chọn Model, Line, ModelType -->
+        <!-- Chọn model -->
         <HBox spacing="10">
-            <TextField fx:id="txtModelCode" prefWidth="150" promptText="Mã Model" />
-            <ComboBox fx:id="cbModelType" prefWidth="120" promptText="Loại Model" />
-            <ComboBox fx:id="cbLines" prefWidth="180" promptText="Chọn Line" />
+            <TextField fx:id="txtModelCode" promptText="Mã Model" prefWidth="120" />
+            <ComboBox fx:id="cbModelType" promptText="Loại Model" prefWidth="120" />
+            <ComboBox fx:id="cbLines" promptText="Chọn Line" prefWidth="180" />
             <Button fx:id="btnLoadFeeders" text="Tải Feeders" />
         </HBox>
 
-        <!-- Quản lý phiên chạy -->
-        <HBox alignment="CENTER_LEFT" spacing="10">
+        <!-- Phiên chạy -->
+        <HBox spacing="10">
             <Label text="Phiên chạy:" />
-            <ComboBox fx:id="cbRunHistory" prefWidth="200" promptText="Chọn phiên" />
+            <ComboBox fx:id="cbRunHistory" promptText="Chọn phiên" prefWidth="150" />
             <Button fx:id="btnCreateRun" text="Tạo phiên mới" />
-            <Button fx:id="btnEndRun" text="Kết thúc phiên chạy" />
+            <Button fx:id="btnToggleRun" text="ON/OFF" />
+
+
         </HBox>
 
-
-
-        <!-- Bảng Feeder và cuộn đang gắn -->
-        <TableView fx:id="tblFeederAssignments" prefHeight="380.0" prefWidth="830.0">
+        <!-- Bảng feeder -->
+        <TableView fx:id="tblFeederAssignments" prefHeight="380.0">
             <columns>
-                <TableColumn fx:id="colFeederCode" prefWidth="120" text="Feeder Code" />
-                <TableColumn fx:id="colMachine" prefWidth="100" text="Machine" />
-                <TableColumn fx:id="colSapCode" prefWidth="100" text="SAP Code" />
-                <TableColumn fx:id="colFeederQty" prefWidth="80" text="Feeder Qty" />
-                <TableColumn fx:id="colRollCode" prefWidth="140" text="Cuộn đang gắn" />
-                <TableColumn fx:id="colMaterialQty" prefWidth="80" text="SL Cuộn" />
-                <TableColumn fx:id="colStatus" prefWidth="120" text="Trạng thái" />
+                <TableColumn fx:id="colFeederCode" text="Feeder Code" prefWidth="100" />
+                <TableColumn fx:id="colMachine" text="Machine" prefWidth="100" />
+                <TableColumn fx:id="colSapCode" text="SAP Code" prefWidth="100" />
+                <TableColumn fx:id="colFeederQty" text="Feeder Qty" prefWidth="80" />
+                <TableColumn fx:id="colRollCode" text="Cuộn đang gắn" prefWidth="140" />
+                <TableColumn fx:id="colMaterialQty" text="SL Cuộn" prefWidth="80" />
+                <TableColumn fx:id="colStatus" text="Trạng thái" prefWidth="120" />
             </columns>
         </TableView>
 
-        <!-- Scan FeederCode để nhảy đến dòng -->
-        <HBox alignment="CENTER_LEFT" spacing="10">
-            <Label text="Scan FeederCode:" />
-            <TextField fx:id="txtSearchFeederCode" prefWidth="200" promptText="Quét mã Feeder..." />
+        <!-- Chia đôi phần dưới -->
+        <HBox spacing="20" HBox.hgrow="ALWAYS">
+            <!-- Bên trái: Gắn/cuộn tìm feeder -->
+            <VBox spacing="10" HBox.hgrow="ALWAYS">
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <Label text="Scan FeederCode:" />
+                    <TextField fx:id="txtSearchFeederCode" promptText="Quét mã Feeder..." prefWidth="200" />
+                </HBox>
+
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <Label text="Scan RollCode để GẮN:" />
+                    <TextField fx:id="txtRollCode" promptText="Quét mã cuộn để gắn vào feeder" prefWidth="200" />
+                </HBox>
+
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <Label text="Scan RollCode để tìm Feeder theo SAP:" />
+                    <TextField fx:id="txtScanRollForSap" promptText="Quét mã cuộn..." prefWidth="200" />
+                </HBox>
+
+                <TableView fx:id="tblFeederBySap" prefHeight="250" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="colFeederCodeBySap" text="Feeder Code" prefWidth="100" />
+                        <TableColumn fx:id="colSapCodeBySap" text="SAP Code" prefWidth="100" />
+                        <TableColumn fx:id="colStatusBySap" text="Trạng thái" prefWidth="100" />
+                        <TableColumn fx:id="colAttachButton" text="Gắn" prefWidth="60" />
+                        <TableColumn fx:id="colDeleteButton" text="Xóa" prefWidth="60" />
+                    </columns>
+                </TableView>
+            </VBox>
+
+            <!-- Bên phải: Tìm cuộn theo Xe/Cây -->
+            <VBox spacing="10" HBox.hgrow="ALWAYS" prefHeight="370"> <!-- 👈 Giới hạn chiều cao -->
+                <TitledPane text="📦 Tìm cuộn theo Xe / Cây" expanded="true">
+                    <VBox spacing="10">
+
+                        <HBox spacing="5">
+                            <Label text="Xe cây:" />
+                            <ComboBox fx:id="cbTruckCode" prefWidth="100" promptText="Chọn mã xe..." />
+                            <Label text="Mã cây:" />
+                            <TextField fx:id="txtTreeCode" promptText="Nhập mã cây..." prefWidth="100" />
+                            <Label text="Mã cuộn:" />
+                            <TextField fx:id="txtRollCodeSearch" promptText="Nhập mã cuộn..." prefWidth="100" />
+                            <Label text="SAP Code:" />
+                            <TextField fx:id="txtSapSearch" promptText="SAP..." prefWidth="80" />
+                            <Button fx:id="btnSearchTree" text="🔍" />
+                        </HBox>
+
+                        <TitledPane text="📄 Danh sách Cây trong Xe đã chọn" expanded="true">
+                            <TableView fx:id="tblTreeList" prefHeight="120">
+                                <columns>
+                                    <TableColumn fx:id="colTreeCode" text="Mã Cây" />
+                                    <TableColumn fx:id="colCreatedDate" text="Ngày tạo" />
+                                    <TableColumn fx:id="colFloor" text="Tầng" />
+                                </columns>
+                            </TableView>
+                        </TitledPane>
+
+                        <TitledPane text="📦 Danh sách Cuộn trong Cây đã chọn" expanded="true">
+                            <TableView fx:id="tblRollInTree" prefHeight="120">
+                                <columns>
+                                    <TableColumn fx:id="colRollCodeInTree" text="Mã Cuộn" />
+                                    <TableColumn fx:id="colSapCodeInTree" text="SAP Code" />
+                                    <TableColumn fx:id="colQtyInTree" text="Số lượng" />
+                                    <TableColumn fx:id="colWarehouseInTree" text="Kho" />
+                                </columns>
+                            </TableView>
+                        </TitledPane>
+
+                    </VBox>
+                </TitledPane>
+            </VBox>
         </HBox>
-        <!-- Quét và gắn cuộn mới -->
-        <!-- Quét và gắn/cuộn tháo tự động -->
-        <GridPane hgap="10" vgap="8">
-            <!-- Scan gắn cuộn -->
-            <Label text="Scan RollCode để GẮN:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
-            <TextField fx:id="txtRollCode" prefWidth="300" promptText="Quét mã cuộn để gắn vào feeder" GridPane.columnIndex="1" GridPane.rowIndex="0" />
-         <columnConstraints>
-            <ColumnConstraints />
-            <ColumnConstraints />
-         </columnConstraints>
-         <rowConstraints>
-            <RowConstraints />
-            <RowConstraints />
-         </rowConstraints>
-        </GridPane>
 
 
-        <!-- Quét RollCode mới để xem danh sách Feeder theo mã SAP -->
-        <HBox spacing="10" alignment="CENTER_LEFT">
-            <Label text="Scan RollCode để tìm Feeder theo SAP:" />
-            <TextField fx:id="txtScanRollForSap" promptText="Quét mã cuộn..." prefWidth="300" />
-        </HBox>
 
-        <!-- Bảng danh sách Feeder theo SAP -->
-        <TableView fx:id="tblFeederBySap" prefHeight="200" prefWidth="830">
-            <columns>
-                <TableColumn fx:id="colFeederCodeBySap" prefWidth="120" text="Feeder Code" />
-                <TableColumn fx:id="colSapCodeBySap" prefWidth="100" text="SAP Code" />
-                <TableColumn fx:id="colStatusBySap" prefWidth="120" text="Trạng thái" />
-                <TableColumn fx:id="colAttachButton" prefWidth="80" text="Gắn" />
-                <TableColumn fx:id="colDeleteButton" prefWidth="80" text="Xóa" />
-            </columns>
-        </TableView>
+        <!-- Log -->
+        <TextArea fx:id="txtStatusLog" editable="false" prefHeight="80" wrapText="true" />
 
-        <!-- Log trạng thái -->
-        <TextArea fx:id="txtStatusLog" editable="false" prefHeight="100" wrapText="true" />
     </VBox>
 </AnchorPane>

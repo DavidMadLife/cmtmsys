@@ -1,20 +1,26 @@
-.button {
-    -fx-font-size: 17px;
+/* styles.css */
+
+.root {
+    -fx-font-size: 13px;         /* Áp dụng cho toàn bộ scene */
+    -fx-font-family: "Segoe UI"; /* Tuỳ chọn font đẹp */
+}
+
+.label {
     -fx-font-weight: bold;
-    -fx-cursor: hand;
-    -fx-background-radius: 5;
-    -fx-border-radius: 5;
-    -fx-padding: 8 16 8 16;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 2, 0, 0, 1);
-    -fx-scale-x: 1;
-    -fx-scale-y: 1;
-    -fx-translate-y: 0;
 }
 
-.button:hover {
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 3, 0, 0, 2);
+.button {
+    -fx-font-size: 13px;
 }
 
-.button:pressed {
-    -fx-translate-y: 1;
+.combo-box, .text-field, .date-picker {
+    -fx-font-size: 13px;
+}
+
+.table-view {
+    -fx-font-size: 13px;
+}
+
+.table-row-cell {
+    -fx-cell-size: 28px; /* tăng độ cao hàng nếu cần */
 }

@@ -3,6 +3,7 @@ package org.chemtrovina.cmtmsys.dto;
 import java.time.LocalDateTime;
 
 public class ProductBomDto {
+
     private String productCode;
     private String sappn;
     private double quantity;

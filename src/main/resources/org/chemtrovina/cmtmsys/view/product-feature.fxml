@@ -19,18 +19,27 @@
         <HBox spacing="10">
             <Label text="Chọn model:" />
             <TextField fx:id="txtProductCode" promptText="Nhập mã sản phẩm" prefWidth="200"/>
+            <ComboBox fx:id="cbModelTypeFilter" promptText="Loại model" prefWidth="120"/>
             <Button fx:id="btnLoad" text="Tải BOM" />
             <Button fx:id="btnUpdateProduct" text="Cập nhật sản phẩm" />
             <Button fx:id="btnDeleteProduct" text="Xóa sản phẩm" />
         </HBox>
+
+        <!-- Create Product -->
         <!-- Create Product -->
         <HBox spacing="10">
             <Label text="Tạo sản phẩm mới:" />
             <TextField fx:id="txtNewProductCode" promptText="Nhập mã thành phẩm" prefWidth="200"/>
+
+            <Label text="Tên model:" />
+            <TextField fx:id="txtNewProductName" promptText="Nhập tên model" prefWidth="200"/>
+
             <Label text="Loại model:" />
             <ComboBox fx:id="cbNewModelType" promptText="Chọn loại" prefWidth="150"/>
+
             <Button fx:id="btnCreateProduct" text="Tạo" />
         </HBox>
+
 
         <!-- Import -->
         <HBox spacing="10">
@@ -39,19 +48,31 @@
             <Button fx:id="btnImport" text="Import BOM" />
         </HBox>
 
+        <VBox spacing="5" prefHeight="180">
+            <Label text="📄 Danh sách sản phẩm hiện có:" style="-fx-font-size: 14px;" />
+            <TableView fx:id="tblProducts">
+                <columns>
+                    <TableColumn fx:id="colProductCodeList" text="Mã sản phẩm" prefWidth="150"/>
+                    <TableColumn fx:id="colModelTypeList" text="Loại model" prefWidth="100"/>
+                    <TableColumn fx:id="colDescriptionList" text="Mô tả" prefWidth="200"/>
+                </columns>
+            </TableView>
+        </VBox>
+
+
         <!-- Table -->
         <Label text="Danh sách BOM:" style="-fx-font-size: 14px;" />
         <TableView fx:id="tblProductBOM" VBox.vgrow="ALWAYS">
             <columns>
-                <TableColumn fx:id="colIndex" text="No" prefWidth="50" />
-                <TableColumn fx:id="colProductCode" text="Mã thành phẩm" prefWidth="150" />
-                <TableColumn fx:id="colModelType" text="Loại model" prefWidth="100"/>
-                <TableColumn fx:id="colSappn" text="Mã vật liệu (SAP)" prefWidth="200" />
-                <TableColumn fx:id="colQuantity" text="Số lượng" prefWidth="100" />
-                <TableColumn fx:id="colCreatedDate" text="Ngày tạo" prefWidth="150" />
-                <TableColumn fx:id="colUpdatedDate" text="Ngày cập nhật" prefWidth="150" />
+                <TableColumn fx:id="colIndex" text="STT" prefWidth="50" />
+                <TableColumn fx:id="colProductCode" text="Mã thành phẩm" />
+                <TableColumn fx:id="colModelType" text="Loại model" />
+                <TableColumn fx:id="colSappn" text="Mã vật liệu (SAP)" />
+                <TableColumn fx:id="colQuantity" text="Số lượng" />
+                <TableColumn fx:id="colCreatedDate" text="Ngày tạo" />
+                <TableColumn fx:id="colUpdatedDate" text="Ngày cập nhật" />
             </columns>
         </TableView>
-    </VBox>
 
+    </VBox>
 </AnchorPane>

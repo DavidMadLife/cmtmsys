@@ -4,105 +4,236 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<AnchorPane prefHeight="872.0" prefWidth="1334.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.chemtrovina.cmtmsys.controller.ProductionPlanController">
+<?import java.net.URL?>
+<AnchorPane prefHeight="872.0" prefWidth="1334.0"
+            xmlns="http://javafx.com/javafx/23.0.1"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="org.chemtrovina.cmtmsys.controller.ProductionPlanController">
 
-    <VBox spacing="10" AnchorPane.bottomAnchor="10" AnchorPane.leftAnchor="10" AnchorPane.rightAnchor="10" AnchorPane.topAnchor="10">
+    <stylesheets>
+        <URL value="@../css/style.css"/>
+    </stylesheets>
+    <VBox spacing="10" AnchorPane.bottomAnchor="10" AnchorPane.leftAnchor="10"
+          AnchorPane.rightAnchor="10" AnchorPane.topAnchor="10">
         <padding>
             <Insets bottom="10" left="10" right="10" top="10"/>
         </padding>
 
         <Label style="-fx-font-size: 18px; -fx-font-weight: bold" text="Quản lý Kế hoạch Sản xuất"/>
 
-        <TitledPane expanded="true" prefHeight="310.0" prefWidth="1294.0" text="Kế hoạch tuần">
-            <VBox spacing="10">
-                <!-- Hàng 1: Tìm kiếm -->
-                <HBox spacing="10">
-                    <ComboBox fx:id="cbSearchLine" promptText="Chọn Line để tìm kiếm" />
-                    <TextField fx:id="txtSearchProduct" promptText="Tìm Model" />
-                    <DatePicker fx:id="dpSearchWeek" promptText="Chọn ngày trong tuần" />
-                    <Button fx:id="btnSearchPlans" text="Tìm kiếm kế hoạch" />
-                    <Button fx:id="btnResetFilters" text="Xoá lọc" />
-                </HBox>
+        <!-- Pane 1: cho phép giãn chiếm chỗ khi pane 2 collapse -->
+        <TitledPane text="Kế hoạch tuần" expanded="false" VBox.vgrow="ALWAYS">
+            <content>
+                <VBox spacing="10" prefHeight="310.0" prefWidth="1294.0">
+                    <HBox spacing="10">
+                        <ComboBox fx:id="cbSearchLine" promptText="Chọn Line để tìm kiếm" />
+                        <TextField fx:id="txtSearchProduct" promptText="Tìm Model" />
+                        <DatePicker fx:id="dpSearchWeek" promptText="Chọn ngày trong tuần" />
+                        <Button fx:id="btnSearchPlans" text="Tìm kiếm kế hoạch" />
+                        <Button fx:id="btnResetFilters" text="Xoá lọc" />
+                    </HBox>
 
-                <!-- Hàng 2: Chọn line và ngày -->
-                <HBox spacing="10">
-                    <ComboBox fx:id="cbLine" promptText="Chọn Line" />
-                    <DatePicker fx:id="dpFromDate" promptText="Từ ngày" />
-                    <DatePicker fx:id="dpToDate" promptText="Đến ngày" />
-                    <Button fx:id="btnCreatePlan" text="Tạo kế hoạch" />
-                </HBox>
+                    <HBox spacing="10">
+                        <ComboBox fx:id="cbLine" promptText="Chọn Line" />
+                        <DatePicker fx:id="dpFromDate" promptText="Từ ngày" />
+                        <DatePicker fx:id="dpToDate" promptText="Đến ngày" />
+                        <Button fx:id="btnCreatePlan" text="Tạo kế hoạch" />
+                    </HBox>
 
-                <!-- Hàng 3: Nhập mã model và số lượng -->
-                <HBox spacing="10">
-                    <TextField fx:id="txtModelCode" promptText="Nhập mã model" />
-                    <ComboBox fx:id="cbModelType" promptText="Loại model" prefWidth="130"/>
-                    <TextField fx:id="txtPlannedQty" promptText="Số lượng kế hoạch cho model" />
-                    <Button fx:id="btnAddModel" text="+" />
-                </HBox>
+                    <HBox spacing="10">
+                        <TextField fx:id="txtModelCode" promptText="Nhập mã model" />
+                        <ComboBox fx:id="cbModelType" promptText="Loại model" prefWidth="130"/>
+                        <TextField fx:id="txtPlannedQty" promptText="Số lượng kế hoạch cho model" />
+                        <Button fx:id="btnAddModel" text="+" />
+                    </HBox>
 
-                <!-- Hàng 4: Hai bảng nằm song song -->
-                <HBox spacing="10">
-                    <TableView fx:id="tblSelectedProducts" prefWidth="350" prefHeight="120">
+                    <HBox spacing="10">
+                        <TableView fx:id="tblSelectedProducts" prefWidth="350" VBox.vgrow="ALWAYS">
+                            <columns>
+                                <TableColumn fx:id="colSelectedProductCode" text="Model" prefWidth="120"/>
+                                <TableColumn fx:id="colSelectedModelType" text="Model Type" prefWidth="100"/>
+                                <TableColumn fx:id="colSelectedQty" text="Số lượng" prefWidth="80"/>
+                                <TableColumn fx:id="colRemoveAction" text="Xoá" prefWidth="50"/>
+                            </columns>
+                        </TableView>
+
+                        <TableView fx:id="tblWeeklyPlans" prefWidth="890" VBox.vgrow="ALWAYS">
+                            <columns>
+                                <TableColumn fx:id="colLine" text="Line" prefWidth="80"/>
+                                <TableColumn fx:id="colProductCode" text="Mã Model" prefWidth="100"/>
+                                <TableColumn fx:id="colModelType" text="Model Type" prefWidth="100"/>
+                                <TableColumn fx:id="colWeekNo" text="Tuần" prefWidth="60"/>
+                                <TableColumn fx:id="colFromDate" text="Từ ngày" prefWidth="100"/>
+                                <TableColumn fx:id="colToDate" text="Đến ngày" prefWidth="100"/>
+                                <TableColumn fx:id="colPlannedQty" text="Kế hoạch" prefWidth="80"/>
+                                <TableColumn fx:id="colActualQty" text="Thực tế" prefWidth="80"/>
+                                <TableColumn fx:id="colDiffQty" text="Chênh lệch" prefWidth="80"/>
+                                <TableColumn fx:id="colCompletionRate" text="Hoàn thành (%)" prefWidth="110"/>
+                            </columns>
+                        </TableView>
+                    </HBox>
+                </VBox>
+            </content>
+        </TitledPane>
+
+        <!-- Pane 2: cũng cho phép giãn -->
+        <TitledPane text="Kế hoạch ngày" expanded="false" VBox.vgrow="ALWAYS">
+            <content>
+                <VBox spacing="10" prefWidth="1260.0">
+                    <HBox spacing="10">
+                        <ComboBox fx:id="cbLineFilter" promptText="Chọn Line"/>
+                        <DatePicker fx:id="dpWeekDate" promptText="Chọn ngày trong tuần"/>
+                        <Button fx:id="btnLoadDailyPlans" text="Tải kế hoạch ngày"/>
+                    </HBox>
+
+                    <TableView fx:id="tblDailyPlans" editable="true" prefHeight="550" VBox.vgrow="ALWAYS">
                         <columns>
-                            <TableColumn fx:id="colSelectedProductCode" text="Model" prefWidth="120"/>
-                            <TableColumn fx:id="colSelectedModelType" text="Model Type" prefWidth="100"/>
-                            <TableColumn fx:id="colSelectedQty" text="Số lượng" prefWidth="80"/>
-                            <TableColumn fx:id="colRemoveAction" text="Xoá" prefWidth="50"/>
+                            <TableColumn fx:id="colDailyLine" text="Line" prefWidth="100"/>
+                            <TableColumn fx:id="colModel" text="Model" prefWidth="150"/>
+                            <TableColumn fx:id="colDailyModelType" text="Model Type" prefWidth="120"/>
+                            <TableColumn fx:id="colDailyProductCode" text="Product Code" prefWidth="120"/>
+                            <TableColumn fx:id="colType" text="Công đoạn" prefWidth="100"/>
+                            <TableColumn fx:id="colD1" text="D1" prefWidth="75"/>
+                            <TableColumn fx:id="colD2" text="D2" prefWidth="75"/>
+                            <TableColumn fx:id="colD3" text="D3" prefWidth="75"/>
+                            <TableColumn fx:id="colD4" text="D4" prefWidth="75"/>
+                            <TableColumn fx:id="colD5" text="D5" prefWidth="75"/>
+                            <TableColumn fx:id="colD6" text="D6" prefWidth="75"/>
+                            <TableColumn fx:id="colD7" text="D7" prefWidth="75"/>
+                            <TableColumn fx:id="colTotal" text="Total WXX" prefWidth="100"/>
                         </columns>
                     </TableView>
 
+                    <HBox alignment="CENTER_RIGHT" spacing="10">
+                        <Button fx:id="btnRollbackMaterial" text="↩ Hoàn tác trừ liệu"/>
+                        <Button fx:id="btnSaveActuals" text="Lưu số lượng thực tế"/>
+                    </HBox>
+                </VBox>
+            </content>
+        </TitledPane>
 
-                    <TableView fx:id="tblWeeklyPlans" prefWidth="890" prefHeight="120">
+        <!-- Pane 3: Thực tế theo khung giờ -->
+        <TitledPane text="Thực tế theo khung giờ" expanded="false" VBox.vgrow="ALWAYS">
+            <content>
+                <VBox spacing="10">
+                    <HBox spacing="10">
+                        <ComboBox fx:id="cbLineHourly" promptText="Chọn Line"/>
+                        <DatePicker fx:id="dpHourlyDate" promptText="Chọn ngày"/>
+                        <Button fx:id="btnLoadHourly" text="Tải thực tế theo khung giờ"/>
+                    </HBox>
+
+                    <TableView fx:id="tblHourly" editable="false" prefHeight="400" VBox.vgrow="ALWAYS">
                         <columns>
-                            <TableColumn fx:id="colLine" text="Line" prefWidth="80"/>
-                            <TableColumn fx:id="colProductCode" text="Mã Model" prefWidth="100"/>
-                            <TableColumn fx:id="colModelType" text="Model Type" prefWidth="100"/>
-                            <TableColumn fx:id="colWeekNo" text="Tuần" prefWidth="60"/>
-                            <TableColumn fx:id="colFromDate" text="Từ ngày" prefWidth="100"/>
-                            <TableColumn fx:id="colToDate" text="Đến ngày" prefWidth="100"/>
-                            <TableColumn fx:id="colPlannedQty" text="Kế hoạch" prefWidth="80"/>
-                            <TableColumn fx:id="colActualQty" text="Thực tế" prefWidth="80"/>
-                            <TableColumn fx:id="colDiffQty" text="Chênh lệch" prefWidth="80"/>
-                            <TableColumn fx:id="colCompletionRate" text="Hoàn thành (%)" prefWidth="110"/>
+                            <TableColumn fx:id="colHLine" text="Line" prefWidth="90"/>
+                            <TableColumn fx:id="colHModel" text="Model" prefWidth="120"/>
+                            <TableColumn fx:id="colHModelType" text="Model Type" prefWidth="100"/>
+                            <TableColumn fx:id="colHProduct" text="Product Code" prefWidth="110"/>
+                            <TableColumn fx:id="colHStage" text="Công đoạn" prefWidth="100"/>
+
+                            <!-- 12 slot 2 giờ: 08→08 ngày sau -->
+                            <TableColumn fx:id="colS1"  text="08-10" prefWidth="72"/>
+                            <TableColumn fx:id="colS2"  text="10-12" prefWidth="72"/>
+                            <TableColumn fx:id="colS3"  text="12-14" prefWidth="72"/>
+                            <TableColumn fx:id="colS4"  text="14-16" prefWidth="72"/>
+                            <TableColumn fx:id="colS5"  text="16-18" prefWidth="72"/>
+                            <TableColumn fx:id="colS6"  text="18-20" prefWidth="72"/>
+                            <TableColumn fx:id="colS7"  text="20-22" prefWidth="72"/>
+                            <TableColumn fx:id="colS8"  text="22-00" prefWidth="72"/>
+                            <TableColumn fx:id="colS9"  text="00-02" prefWidth="72"/>
+                            <TableColumn fx:id="colS10" text="02-04" prefWidth="72"/>
+                            <TableColumn fx:id="colS11" text="04-06" prefWidth="72"/>
+                            <TableColumn fx:id="colS12" text="06-08" prefWidth="72"/>
+
+                            <TableColumn fx:id="colHTotal" text="Total (Good)" prefWidth="95"/>
                         </columns>
                     </TableView>
-                </HBox>
-            </VBox>
+                </VBox>
+            </content>
         </TitledPane>
 
+        <!-- Pane 4: Cấu hình Auto Scan theo Line -->
+        <TitledPane text="Cấu hình Auto Scan theo Line" expanded="false">
+            <content>
+                <ScrollPane fitToWidth="true">
+                    <content>
+                        <GridPane hgap="10" vgap="6" style="-fx-padding: 10;">
+                            <columnConstraints>
+                                <ColumnConstraints minWidth="80" halignment="LEFT"/>
+                                <ColumnConstraints minWidth="140" halignment="CENTER"/>
+                                <ColumnConstraints minWidth="120" halignment="LEFT"/>
+                            </columnConstraints>
 
-        <!-- Daily Plan Section -->
-        <TitledPane expanded="true" prefWidth="1260.0" text="Kế hoạch ngày">
-            <VBox spacing="10">
-                <HBox spacing="10">
-                    <ComboBox fx:id="cbLineFilter" promptText="Chọn Line"/>
-                    <DatePicker fx:id="dpWeekDate" promptText="Chọn ngày trong tuần"/>
-                    <Button fx:id="btnLoadDailyPlans" text="Tải kế hoạch ngày"/>
-                </HBox>
+                            <children>
+                                <Label text="Line" GridPane.rowIndex="0" GridPane.columnIndex="0" style="-fx-font-weight: bold;"/>
+                                <Label text="Apply Auto Scan" GridPane.rowIndex="0" GridPane.columnIndex="1" style="-fx-font-weight: bold;"/>
+                                <Label text="Percent (%)" GridPane.rowIndex="0" GridPane.columnIndex="2" style="-fx-font-weight: bold;"/>
 
-                <TableView fx:id="tblDailyPlans" editable="true" prefHeight="550" VBox.vgrow="ALWAYS">
-                    <columns>
-                        <TableColumn fx:id="colDailyLine" text="Line" prefWidth="100"/>
-                        <TableColumn fx:id="colModel" text="Model" prefWidth="150"/>
-                        <TableColumn fx:id="colDailyModelType" text="Model Type" prefWidth="120"/>
-                        <TableColumn fx:id="colDailyProductCode" text="Product Code" prefWidth="120"/>
-                        <TableColumn fx:id="colType" text="Công đoạn" prefWidth="100"/>
-                        <TableColumn fx:id="colD1" text="D1" prefWidth="75"/>
-                        <TableColumn fx:id="colD2" text="D2" prefWidth="75"/>
-                        <TableColumn fx:id="colD3" text="D3" prefWidth="75"/>
-                        <TableColumn fx:id="colD4" text="D4" prefWidth="75"/>
-                        <TableColumn fx:id="colD5" text="D5" prefWidth="75"/>
-                        <TableColumn fx:id="colD6" text="D6" prefWidth="75"/>
-                        <TableColumn fx:id="colD7" text="D7" prefWidth="75"/>
-                        <TableColumn fx:id="colTotal" text="Total WXX" prefWidth="100"/>
-                    </columns>
-                </TableView>
+                                <!-- Repeat for A1 to A15 -->
+                                <Label text="A1" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                                <CheckBox fx:id="chkA1" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+                                <TextField prefWidth="90" GridPane.rowIndex="1" GridPane.columnIndex="2"/>
 
-                <HBox alignment="CENTER_RIGHT" spacing="10">
-                    <Button fx:id="btnRollbackMaterial" text="↩ Hoàn tác trừ liệu"/>
-                    <Button fx:id="btnSaveActuals" text="Lưu số lượng thực tế"/>
-                </HBox>
-            </VBox>
+                                <Label text="A2" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                                <CheckBox fx:id="chkA2" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+                                <TextField fx:id="tfA2Percent" prefWidth="90" GridPane.rowIndex="2" GridPane.columnIndex="2"/>
+
+                                <Label text="A3" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+                                <CheckBox fx:id="chkA3" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+                                <TextField fx:id="tfA3Percent" prefWidth="90" GridPane.rowIndex="3" GridPane.columnIndex="2"/>
+
+                                <Label text="A4" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+                                <CheckBox fx:id="chkA4" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+                                <TextField fx:id="tfA4Percent" prefWidth="90" GridPane.rowIndex="4" GridPane.columnIndex="2"/>
+
+                                <Label text="A5" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
+                                <CheckBox fx:id="chkA5" GridPane.rowIndex="5" GridPane.columnIndex="1"/>
+                                <TextField fx:id="tfA5Percent"  prefWidth="90" GridPane.rowIndex="5" GridPane.columnIndex="2"/>
+
+                                <Label text="A6" GridPane.rowIndex="6" GridPane.columnIndex="0"/>
+                                <CheckBox fx:id="chkA6" GridPane.rowIndex="6" GridPane.columnIndex="1"/>
+                                <TextField fx:id="tfA6Percent" prefWidth="90" GridPane.rowIndex="6" GridPane.columnIndex="2"/>
+
+                                <Label text="A7" GridPane.rowIndex="7" GridPane.columnIndex="0"/>
+                                <CheckBox fx:id="chkA7" GridPane.rowIndex="7" GridPane.columnIndex="1"/>
+                                <TextField fx:id="tfA7Percent"  prefWidth="90" GridPane.rowIndex="7" GridPane.columnIndex="2"/>
+
+                                <Label text="A8" GridPane.rowIndex="8" GridPane.columnIndex="0"/>
+                                <CheckBox fx:id="chkA8" GridPane.rowIndex="8" GridPane.columnIndex="1"/>
+                                <TextField fx:id="tfA8Percent"  prefWidth="90" GridPane.rowIndex="8" GridPane.columnIndex="2"/>
+
+                                <Label text="A9" GridPane.rowIndex="9" GridPane.columnIndex="0"/>
+                                <CheckBox fx:id="chkA9" GridPane.rowIndex="9" GridPane.columnIndex="1"/>
+                                <TextField fx:id="tfA9Percent" prefWidth="90" GridPane.rowIndex="9" GridPane.columnIndex="2"/>
+
+                                <Label text="A10" GridPane.rowIndex="10" GridPane.columnIndex="0"/>
+                                <CheckBox fx:id="chkA10" GridPane.rowIndex="10" GridPane.columnIndex="1"/>
+                                <TextField fx:id="tfA10Percent"  prefWidth="90" GridPane.rowIndex="10" GridPane.columnIndex="2"/>
+
+                                <Label text="A11" GridPane.rowIndex="11" GridPane.columnIndex="0"/>
+                                <CheckBox fx:id="chkA11" GridPane.rowIndex="11" GridPane.columnIndex="1"/>
+                                <TextField fx:id="tfA11Percent"  prefWidth="90" GridPane.rowIndex="11" GridPane.columnIndex="2"/>
+
+                                <Label text="A12" GridPane.rowIndex="12" GridPane.columnIndex="0"/>
+                                <CheckBox fx:id="chkA12" GridPane.rowIndex="12" GridPane.columnIndex="1"/>
+                                <TextField fx:id="tfA12Percent"  prefWidth="90" GridPane.rowIndex="12" GridPane.columnIndex="2"/>
+
+                                <Label text="A13" GridPane.rowIndex="13" GridPane.columnIndex="0"/>
+                                <CheckBox fx:id="chkA13" GridPane.rowIndex="13" GridPane.columnIndex="1"/>
+                                <TextField fx:id="tfA13Percent"  prefWidth="90" GridPane.rowIndex="13" GridPane.columnIndex="2"/>
+
+                                <Label text="A14" GridPane.rowIndex="14" GridPane.columnIndex="0"/>
+                                <CheckBox fx:id="chkA14" GridPane.rowIndex="14" GridPane.columnIndex="1"/>
+                                <TextField fx:id="tfA14Percent"  prefWidth="90" GridPane.rowIndex="14" GridPane.columnIndex="2"/>
+
+                                <Label text="A15" GridPane.rowIndex="15" GridPane.columnIndex="0"/>
+                                <CheckBox fx:id="chkA15" GridPane.rowIndex="15" GridPane.columnIndex="1"/>
+                                <TextField fx:id="tfA15Percent"  prefWidth="90" GridPane.rowIndex="15" GridPane.columnIndex="2"/>
+                            </children>
+                        </GridPane>
+                    </content>
+                </ScrollPane>
+            </content>
         </TitledPane>
-    </VBox>
+
+   </VBox>
 </AnchorPane>

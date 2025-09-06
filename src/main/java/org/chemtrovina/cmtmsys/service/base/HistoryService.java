@@ -43,4 +43,6 @@ public interface HistoryService {
     int getLastScannedQuantityBySapPN(String sapPN, int invoiceId);
 
 
+
+
 }

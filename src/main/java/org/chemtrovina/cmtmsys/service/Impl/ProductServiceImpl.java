@@ -62,5 +62,10 @@ public class ProductServiceImpl implements ProductService {
         return repository.findByCodeAndModelType(productCode, modelType);
     }
 
+    @Override
+    public List<Product> getProductsByCodeContainedInText(String text) {
+        return repository.findAllByCodeContainedInText(text);
+    }
+
 
 }

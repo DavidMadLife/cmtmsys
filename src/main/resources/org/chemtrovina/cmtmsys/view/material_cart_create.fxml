@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.chemtrovina.cmtmsys.controller.MaterialCartCreateController">
+
+    <top>
+        <VBox spacing="10">
+            <padding><Insets bottom="10" left="10" right="10" top="10" /></padding>
+
+            <HBox spacing="10">
+                <Label text="Chọn xe:" />
+                <ComboBox fx:id="cbCartSelect" prefWidth="200" promptText="Chọn xe hoặc tạo mới" />
+                <Button fx:id="btnCreateCart" text="➕ Tạo xe" />
+                <Button fx:id="btnDeleteTreesOnCart" text="🗑️ Xoá cây trên xe" />
+            </HBox>
+
+            <HBox spacing="10">
+                <Label text="Tầng:" />
+                <ComboBox fx:id="cbLevelSelect" prefWidth="100" promptText="Chọn tầng" />
+            </HBox>
+
+            <!-- ✅ Ô quét nhanh -->
+            <HBox spacing="10">
+                <Label text="Scan:" />
+                <TextField fx:id="txtScanInput" prefWidth="300" promptText="Scan mã cây hoặc mã cuộn ở đây" />
+            </HBox>
+
+            <HBox spacing="10">
+                <Label text="Scan mã cây:" />
+                <TextField fx:id="txtScanTree" promptText="Nhập mã cây" />
+                <Button fx:id="btnAddTree" text="Thêm cây" />
+            </HBox>
+
+            <HBox spacing="10">
+                <Label text="Scan mã cuộn:" />
+                <TextField fx:id="txtScanMaterial" promptText="Nhập mã cuộn" />
+                <Button fx:id="btnAddMaterial" text="Thêm cuộn vào cây" />
+            </HBox>
+        </VBox>
+    </top>
+
+
+    <center>
+        <SplitPane dividerPositions="0.5">
+            <VBox spacing="5" VBox.vgrow="ALWAYS">
+                <Label text="📦 Danh sách cây" />
+                <TableView fx:id="tblTrees" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="colTreeCode" prefWidth="200" text="Mã cây" />
+                        <TableColumn fx:id="colTreeCreated" prefWidth="200" text="Ngày tạo" />
+                        <TableColumn fx:id="colTreeLevel" prefWidth="100" text="Tầng" />
+                    </columns>
+                </TableView>
+            </VBox>
+
+            <VBox spacing="5" VBox.vgrow="ALWAYS">
+                <Label text="🧵 Danh sách cuộn trên cây đã chọn" />
+                <TableView fx:id="tblMaterials" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="colRollCode" prefWidth="200" text="Mã cuộn" />
+                        <TableColumn fx:id="colSapCode" prefWidth="150" text="SAP Code" />
+                        <TableColumn fx:id="colQuantity" prefWidth="100" text="Số lượng" />
+                        <TableColumn fx:id="colWarehouseName" prefWidth="150" text="Line" />
+                    </columns>
+                </TableView>
+            </VBox>
+        </SplitPane>
+    </center>
+
+
+    <bottom>
+        <HBox alignment="CENTER_RIGHT" spacing="10">
+            <padding>
+                <Insets bottom="10" left="10" right="10" top="10" />
+            </padding>
+
+            <Button fx:id="btnSaveAll" text="💾 Lưu tất cả" />
+            <Button fx:id="btnClearAllTrees" text="🧹 Xoá toàn bộ cây và gỡ cuộn" />
+        </HBox>
+
+        <TextArea fx:id="txtStatus" editable="false" prefHeight="195.0" prefRowCount="2" prefWidth="1112.0" style="-fx-font-size: 18px; -fx-text-fill: green;" wrapText="true" />
+    </bottom>
+</BorderPane>

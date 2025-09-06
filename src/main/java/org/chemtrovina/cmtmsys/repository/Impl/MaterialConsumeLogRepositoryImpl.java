@@ -5,6 +5,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.util.List;
 
 
 @Repository
@@ -40,5 +41,19 @@ public class MaterialConsumeLogRepositoryImpl implements MaterialConsumeLogRepos
         String sql = "SELECT COALESCE(ConsumedQty, 0) FROM MaterialConsumeLog WHERE PlanItemID = ? AND RunDate = ?";
         return jdbcTemplate.queryForObject(sql, Integer.class, planItemId, runDate);
     }
+
+    @Override
+    public Integer getLoggedQuantity(int planItemId, LocalDate runDate) {
+        String sql = "SELECT ConsumedQty FROM MaterialConsumeLog WHERE PlanItemID = ? AND RunDate = ?";
+        List<Integer> result = jdbcTemplate.query(sql, (rs, rowNum) -> rs.getInt("ConsumedQty"), planItemId, runDate);
+        return result.isEmpty() ? null : result.get(0);
+    }
+
+    @Override
+    public void update(int planItemId, LocalDate runDate, int consumedQty) {
+        String sql = "UPDATE MaterialConsumeLog SET ConsumedQty = ?, CreatedAt = GETDATE() WHERE PlanItemID = ? AND RunDate = ?";
+        jdbcTemplate.update(sql, consumedQty, planItemId, runDate);
+    }
+
 
 }

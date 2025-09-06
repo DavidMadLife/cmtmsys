@@ -2,7 +2,6 @@ module org.chemtrovina.cmtmsys {
     requires javafx.controls;
     requires javafx.fxml;
     requires org.controlsfx.controls;
-
     requires net.synedra.validatorfx;
     requires org.kordamp.ikonli.javafx;
     requires org.kordamp.bootstrapfx.core;
@@ -16,18 +15,18 @@ module org.chemtrovina.cmtmsys {
     requires javafx.media;
 
     opens org.chemtrovina.cmtmsys to javafx.fxml;
+    opens org.chemtrovina.cmtmsys.controller; // ✅ mở full package controller
+    opens org.chemtrovina.cmtmsys.helper;     // ✅ để Spring inject helper
+    opens org.chemtrovina.cmtmsys.model to javafx.base;
+    opens org.chemtrovina.cmtmsys.dto to javafx.base, spring.beans;
+
     exports org.chemtrovina.cmtmsys;
     exports org.chemtrovina.cmtmsys.controller;
-    opens org.chemtrovina.cmtmsys.controller to javafx.fxml;
-
-    //Inject
-    opens org.chemtrovina.cmtmsys.model to javafx.base;
     exports org.chemtrovina.cmtmsys.config;
     exports org.chemtrovina.cmtmsys.repository.base;
     exports org.chemtrovina.cmtmsys.repository.Impl;
     exports org.chemtrovina.cmtmsys.service.base;
     exports org.chemtrovina.cmtmsys.service.Impl;
-    opens org.chemtrovina.cmtmsys.dto to javafx.base;
     exports org.chemtrovina.cmtmsys.utils;
-
+    exports org.chemtrovina.cmtmsys.helper;
 }

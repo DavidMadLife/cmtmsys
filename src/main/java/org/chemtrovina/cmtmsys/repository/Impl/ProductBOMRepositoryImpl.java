@@ -74,5 +74,26 @@ public class ProductBOMRepositoryImpl implements ProductBOMRepository {
         ), productCode);
     }
 
+    @Override
+    public List<ProductBomDto> findBomDtoByProductCodeAndModelType(String productCode, String modelType) {
+        String sql = """
+        SELECT p.ProductCode, b.SAPPN, b.Quantity, 
+               p.ModelType,
+               FORMAT(b.CreatedDate, 'yyyy-MM-dd HH:mm:ss') AS CreatedDate,
+               FORMAT(b.UpdatedDate, 'yyyy-MM-dd HH:mm:ss') AS UpdatedDate
+        FROM ProductBOM b
+        JOIN Products p ON p.ProductID = b.ProductID
+        WHERE p.ProductCode = ? AND p.ModelType = ?
+    """;
+
+        return jdbcTemplate.query(sql, (rs, rowNum) -> new ProductBomDto(
+                rs.getString("ProductCode"),
+                rs.getString("SAPPN"),
+                rs.getDouble("Quantity"),
+                rs.getString("ModelType"),
+                rs.getTimestamp("CreatedDate").toLocalDateTime(),
+                rs.getTimestamp("UpdatedDate").toLocalDateTime()
+        ), productCode, modelType);
+    }
 
 }

@@ -47,6 +47,10 @@ public class ProductBOMServiceImpl implements ProductBOMService {
         return repository.findBomDtoByProductCode(productCode);
     }
 
+    @Override
+    public List<ProductBomDto> getBomDtoByCodeAndModel(String productCode, String modelType) {
+        return repository.findBomDtoByProductCodeAndModelType(productCode, modelType);
+    }
 
 
 }

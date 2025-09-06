@@ -11,54 +11,79 @@
 
     <items>
 
-        <!-- Menu: Warehouse -->
-        <MenuButton fx:id="menuWarehouse" text="Warehouse" style="-fx-font-weight: bold;" prefWidth="126.0">
+        <!-- Menu: Warehouse / Kho -->
+        <MenuButton fx:id="menuWarehouse" text="Kho (Warehouse)" style="-fx-font-weight: bold;" prefWidth="140">
             <items>
-                <MenuItem fx:id="btnInvoice" text="Invoice" />
-                <MenuItem fx:id="btnScan" text="Scan" />
-                <MenuItem fx:id="btnHistory" text="History" />
+                <MenuItem fx:id="btnInvoice" text="Hoá đơn (Invoice)" />
+                <MenuItem fx:id="btnScan" text="Quét mã (Scan)" />
+                <MenuItem fx:id="btnHistory" text="Lịch sử (History)" />
                 <MenuItem fx:id="btnMOQ" text="MOQ" />
             </items>
         </MenuButton>
 
-        <!-- Menu: Manage Employee -->
-        <MenuButton fx:id="menuEmployee" text="Manage Employee" style="-fx-font-weight: bold;" prefWidth="160.0">
+        <!-- Menu: Quản lý nhân sự / Manage Employee -->
+        <MenuButton fx:id="menuEmployee" text="Nhân sự (Employee)" style="-fx-font-weight: bold;" prefWidth="170">
             <items>
-                <MenuItem fx:id="btnEmployee" text="Employee" />
-                <MenuItem fx:id="btnShiftScheduling" text="Shift Scheduling" />
+                <MenuItem fx:id="btnEmployee" text="Danh sách (Employee)" />
+                <MenuItem fx:id="btnShiftScheduling" text="Xếp ca (Shift Scheduling)" />
             </items>
         </MenuButton>
 
-        <!-- Menu: Inventory -->
-        <MenuButton fx:id="menuInventory" text="Inventory" style="-fx-font-weight: bold;" prefWidth="126.0">
+        <!-- Menu: Tồn kho / Inventory -->
+        <MenuButton fx:id="menuInventory" text="Tồn kho (Inventory)" style="-fx-font-weight: bold;" prefWidth="160">
             <items>
-                <MenuItem fx:id="menuInventoryCheck" text="Check Inventory" />
-                <MenuItem fx:id="menuInventoryTransfer" text="Transfer Inventory" />
-                <MenuItem fx:id="menuTransferLog" text="Transfer Log" />
-                <MenuItem fx:id="menuTransferMaterialReturn" text="Transfer Material Return" />
-                <MenuItem fx:id="menuProduct" text="BOM" />
-                <MenuItem fx:id="menuWorkOrder" text="W/O" />
+                <MenuItem fx:id="menuInventoryCheck" text="Kiểm tra (Check Inventory)" />
+                <MenuItem fx:id="menuInventoryTransfer" text="Chuyển kho (Transfer Inventory)" />
+                <MenuItem fx:id="menuTransferLog" text="Lịch sử chuyển (Transfer Log)" />
+                <MenuItem fx:id="menuTransferMaterialReturn" text="Trả liệu (Material Return)" />
+                <MenuItem fx:id="menuProduct" text="Định mức (BOM)" />
+                <MenuItem fx:id="menuWorkOrder" text="Lệnh sản xuất (W/O)" />
                 <MenuItem fx:id="menuCheckNG" text="Check NG" />
+
+                <!-- ✅ Xe nguyên liệu -->
+                <MenuItem fx:id="menuMaterialCart" text="Xe nguyên liệu (Material Cart)" />
+                <MenuItem fx:id="menuMaterialCartCreate" text="➕ Tạo xe nguyên liệu (Create Cart)" />
             </items>
         </MenuButton>
 
-        <MenuButton fx:id="menuPlan" text="Manage Plan" style="-fx-font-weight: bold;" prefWidth="160.0">
+        <!-- Menu: Kế hoạch / Plan -->
+        <MenuButton fx:id="menuPlan" text="Kế hoạch (Plan)" style="-fx-font-weight: bold;" prefWidth="160">
             <items>
-                <MenuItem fx:id="menuPlanWeekly" text="Planning Weekly" />
-                <MenuItem fx:id="menuTest" text="Test view" />
-                <MenuItem fx:id="menuPlanAll" text="Plan Weekly/Daily" />
-                <MenuItem fx:id="menuFeeder" text="Feeder List" />
-                <MenuItem fx:id="menuFeederRoll" text="Attach Reel"/>
+                <!--<MenuItem fx:id="menuPlanWeekly" text="Kế hoạch tuần (Planning Weekly)" />
+                <MenuItem fx:id="menuTest" text="Kiểm tra (Test view)" />-->
+                <MenuItem fx:id="menuPlanAll" text="Kế hoạch tổng (Plan Weekly/Daily)" />
+
+                <!--<MenuItem fx:id="menuPlanDaily" text="Kế hoạch ngày (Plan Daily)" />-->
+                <MenuItem fx:id="menuFeeder" text="Danh sách Feeder" />
+                <MenuItem fx:id="menuFeederRoll" text="Gắn cuộn (Attach Reel)" />
             </items>
         </MenuButton>
 
-        <MenuButton fx:id="menuUser" text="Tài khoản" style="-fx-font-weight: bold;" prefWidth="120.0">
+        <!-- Menu: Tài khoản / User -->
+        <MenuButton fx:id="menuUser" text="Tài khoản (User)" style="-fx-font-weight: bold;" prefWidth="140">
             <items>
-                <MenuItem fx:id="menuManageAccount" text="Quản lý Account"/>
-                <MenuItem fx:id="menuChangePassword" text="Đổi mật khẩu" />
-                <MenuItem fx:id="menuLogout" text="Đăng xuất" />
+                <MenuItem fx:id="menuManageAccount" text="QL tài khoản (Manage Account)" />
+                <MenuItem fx:id="menuChangePassword" text="Đổi mật khẩu (Change Password)" />
+                <MenuItem fx:id="menuLogout" text="Đăng xuất (Logout)" />
             </items>
         </MenuButton>
+
+        <!-- Menu: Hiệu suất PCB -->
+        <MenuButton fx:id="menuPerformance" text="Hiệu suất PCB" style="-fx-font-weight: bold;" prefWidth="160">
+            <items>
+                <MenuItem fx:id="menuPcbPerformanceLog" text="Xử lý log hiệu suất" />
+                <MenuItem fx:id="menuPcbPerformanceHistory" text="Lịch sử hiệu suất" />
+                <MenuItem fx:id="menuImportCycleTime" text="Import Cycle Time" />
+            </items>
+        </MenuButton>
+
+        <!-- Menu: Quản lý Stencil -->
+        <MenuButton fx:id="menuStencil" text="Stencil" style="-fx-font-weight: bold;" prefWidth="140">
+            <items>
+                <MenuItem fx:id="menuStencilManager" text="Quản lý Stencil"/>
+            </items>
+        </MenuButton>
+
 
     </items>
 </ToolBar>

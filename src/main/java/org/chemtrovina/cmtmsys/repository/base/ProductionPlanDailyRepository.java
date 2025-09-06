@@ -4,7 +4,10 @@ import org.chemtrovina.cmtmsys.dto.DailyPlanRowDto;
 import org.chemtrovina.cmtmsys.model.ProductionPlanDaily;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public interface ProductionPlanDailyRepository {
     void add(ProductionPlanDaily daily);
@@ -27,7 +30,11 @@ public interface ProductionPlanDailyRepository {
     void consumeMaterialByActual(int planItemId, LocalDate runDate, int actualQty);
 
     int getActualQuantity(int planItemId, LocalDate runDate);
+    ProductionPlanDaily findByPlanItemIdAndRunDate(int planItemId, LocalDate runDate);
+    ProductionPlanDaily findByModelCodeAndLineAndDate(String modelCode, String lineName, LocalDate runDate);
 
+
+    Map<String, ProductionPlanDaily> findByModelLineAndDates(Set<String> keys);
 
 
 

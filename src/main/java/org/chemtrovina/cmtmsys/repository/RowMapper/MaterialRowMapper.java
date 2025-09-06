@@ -17,7 +17,8 @@ public class MaterialRowMapper implements RowMapper<Material> {
                 rs.getInt("WarehouseID"),
                 rs.getTimestamp("CreatedAt").toLocalDateTime(),
                 rs.getString("Spec"),
-                rs.getString("EmployeeID")
+                rs.getString("EmployeeID"),
+                rs.getInt("TreeID")
         );
     }
 }

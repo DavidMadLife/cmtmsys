@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/23"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="org.chemtrovina.cmtmsys.controller.StencilManagerController"
+            prefWidth="1300" prefHeight="780">
+
+    <!-- TOP: Scan/Transfer + Filters -->
+    <top>
+        <VBox spacing="8">
+            <children>
+                <ToolBar>
+                    <items>
+                        <Label text="Scan Barcode:"/>
+                        <TextField fx:id="tfScanBarcode" promptText="Nhập / quét barcode..."/>
+                        <Label text="From:"/>
+                        <ComboBox fx:id="cbFromWarehouse" promptText="Kho/Line hiện tại"/>
+                        <Label text="To:"/>
+                        <ComboBox fx:id="cbToWarehouse" promptText="Chuyển đến kho/line"/>
+                        <Button fx:id="btnScanTransfer" text="Scan &amp; Transfer"/>
+                        <Separator orientation="VERTICAL"/>
+                        <CheckBox fx:id="chkEnforceLatest" text="Chỉ cho chuyển nếu bản mới nhất" selected="true"/>
+                    </items>
+                </ToolBar>
+
+                <ToolBar>
+                    <items>
+                        <Label text="Tìm:"/>
+                        <TextField fx:id="tfSearch" promptText="Barcode / StencilNo / ProductCode / Name" prefWidth="320"/>
+                        <Label text="Model:"/>
+                        <ComboBox fx:id="cbProduct" promptText="Chọn model"/>
+                        <Label text="Status:"/>
+                        <ComboBox fx:id="cbStatus" promptText="All"/>
+                        <Label text="Warehouse:"/>
+                        <ComboBox fx:id="cbWarehouse" promptText="All"/>
+                        <Button fx:id="btnRefresh" text="Làm mới"/>
+                        <Button fx:id="btnClearFilters" text="Xoá lọc"/>
+                        <Region VBox.vgrow="ALWAYS"/>
+                        <Button fx:id="btnImportExcel" text="Import Excel..."/>
+                        <Button fx:id="btnExport" text="Export..."/>
+                    </items>
+                </ToolBar>
+            </children>
+            <padding>
+                <Insets top="0" right="0" bottom="0" left="0"/>
+            </padding>
+        </VBox>
+    </top>
+
+    <!-- CENTER: Table -->
+    <center>
+        <TableView fx:id="tblStencils">
+            <columns>
+                <TableColumn fx:id="colSTT" text="STT" prefWidth="50"/>
+                <TableColumn fx:id="colBarcode" text="Barcode" prefWidth="150"/>
+                <TableColumn fx:id="colStencilNo" text="Stencil No" prefWidth="100"/>
+                <TableColumn fx:id="colProductCode" text="Model Code" prefWidth="130"/>
+                <TableColumn fx:id="colProductName" text="Model Name" prefWidth="220"/>
+                <TableColumn fx:id="colModelType" text="Model Type" prefWidth="120"/>
+                <TableColumn fx:id="colVersion" text="Version" prefWidth="90"/>
+                <TableColumn fx:id="colSize" text="Size" prefWidth="100"/>
+                <TableColumn fx:id="colArray" text="Array" prefWidth="70"/>
+                <TableColumn fx:id="colStatus" text="Status" prefWidth="100"/>
+                <TableColumn fx:id="colWarehouse" text="Warehouse/Line" prefWidth="160"/>
+                <TableColumn fx:id="colReceived" text="Received" prefWidth="110"/>
+                <TableColumn fx:id="colNote" text="Note" prefWidth="220"/>
+            </columns>
+        </TableView>
+    </center>
+
+    <!-- RIGHT: New / Actions / Info -->
+    <right>
+        <ScrollPane fitToWidth="true" prefWidth="380">
+            <content>
+                <VBox spacing="10">
+                    <children>
+                        <TitledPane text="Upload / Thêm Stencil mới" expanded="true">
+                            <content>
+                                <VBox spacing="8">
+                                    <children>
+                                        <TextField fx:id="tfNewBarcode" promptText="Barcode *"/>
+                                        <TextField fx:id="tfNewStencilNo" promptText="Stencil No * (ví dụ C-05)"/>
+                                        <ComboBox fx:id="cbNewProduct" promptText="Model *"/>
+                                        <ComboBox fx:id="cbNewWarehouse" promptText="Warehouse (tùy chọn)"/>
+                                        <TextField fx:id="tfNewVersion" promptText="Version (ví dụ V2.0)"/>
+                                        <TextField fx:id="tfNewSize" promptText="Size (ví dụ 650x550)"/>
+                                        <Spinner fx:id="spNewArray"/>
+                                        <DatePicker fx:id="dpNewReceived" promptText="Received date *"/>
+                                        <ComboBox fx:id="cbNewStatus" promptText="Status *"/>
+                                        <TextArea fx:id="taNewNote" promptText="Ghi chú" prefRowCount="3"/>
+                                        <Button fx:id="btnAddNew" text="Thêm mới"/>
+                                    </children>
+                                    <padding>
+                                        <Insets top="10" right="10" bottom="10" left="10"/>
+                                    </padding>
+                                </VBox>
+                            </content>
+                        </TitledPane>
+
+                        <TitledPane text="Hành động" expanded="true">
+                            <content>
+                                <VBox spacing="8">
+                                    <children>
+                                        <Button fx:id="btnLock" text="Lock (Old Ver)"/>
+                                        <Button fx:id="btnUnlock" text="Unlock"/>
+                                        <Button fx:id="btnReturnToStock" text="Chuyển về Kho SMT"/>
+                                        <Button fx:id="btnDelete" text="Xoá Stencil"/>
+                                    </children>
+                                    <padding>
+                                        <Insets top="10" right="10" bottom="10" left="10"/>
+                                    </padding>
+                                </VBox>
+                            </content>
+                        </TitledPane>
+
+                        <TitledPane text="Thông tin nhanh" expanded="true">
+                            <content>
+                                <VBox spacing="6">
+                                    <children>
+                                        <Label fx:id="lblSelectedInfo" text="Chọn một dòng trong bảng..."/>
+                                        <Label fx:id="lblIsLatest" text="Latest: ?"/>
+                                    </children>
+                                    <padding>
+                                        <Insets top="10" right="10" bottom="10" left="10"/>
+                                    </padding>
+                                </VBox>
+                            </content>
+                        </TitledPane>
+                    </children>
+                    <padding>
+                        <Insets top="10" right="10" bottom="10" left="10"/>
+                    </padding>
+                </VBox>
+            </content>
+            <padding>
+                <Insets top="0" right="0" bottom="0" left="0"/>
+            </padding>
+        </ScrollPane>
+    </right>
+
+    <!-- BOTTOM: Status bar -->
+    <bottom>
+        <HBox spacing="10">
+            <children>
+                <Label text="Tổng:"/>
+                <Label fx:id="lblTotal"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label text="HINT: Double-click một dòng để xem chi tiết."/>
+            </children>
+            <padding>
+                <Insets top="10" right="10" bottom="10" left="10"/>
+            </padding>
+        </HBox>
+    </bottom>
+</BorderPane>

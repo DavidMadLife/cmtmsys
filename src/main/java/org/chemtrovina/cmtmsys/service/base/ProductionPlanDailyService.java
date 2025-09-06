@@ -2,9 +2,13 @@ package org.chemtrovina.cmtmsys.service.base;
 
 import org.chemtrovina.cmtmsys.dto.DailyPlanRowDto;
 import org.chemtrovina.cmtmsys.model.ProductionPlanDaily;
+import org.chemtrovina.cmtmsys.model.ProductionPlanHourly;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public interface ProductionPlanDailyService {
     void addDaily(ProductionPlanDaily daily);
@@ -26,9 +30,16 @@ public interface ProductionPlanDailyService {
     int getActualQuantity(int planItemId, LocalDate runDate);
     void rollbackConsumeMaterial(int planItemId, LocalDate runDate);
 
+    void backfillActualFromPerformanceByGoodModules(
+            String lineNameOrNull, LocalDate weekMonday, boolean insertMissingDaily);
 
 
+    boolean updateHourlyPlanWithValidation(int planItemId, int slotIndex, int newSlotQty, LocalDate runDate);
+    ProductionPlanDaily findByModelLineAndDate(String modelCode, String lineName, LocalDate date);
+
+    Map<String, ProductionPlanDaily> findByModelLineAndDates(Set<String> keys);
+    // key = "model|line|date"
 
 
-
+    List<ProductionPlanHourly> getHourlyPlansByDailyId(int dailyId);
 }

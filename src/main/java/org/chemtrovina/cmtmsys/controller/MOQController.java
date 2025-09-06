@@ -17,6 +17,7 @@ import org.chemtrovina.cmtmsys.repository.base.MOQRepository;
 import org.chemtrovina.cmtmsys.service.Impl.MOQServiceImpl;
 import org.chemtrovina.cmtmsys.service.base.MOQService;
 import org.chemtrovina.cmtmsys.utils.AutoCompleteUtils;
+import org.chemtrovina.cmtmsys.utils.FxClipboardUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -86,6 +87,21 @@ public class MOQController {
         moqTableView.setOnKeyPressed(event -> {
             if (event.isControlDown() && event.getCode() == KeyCode.F) {
                 openSearchDialog(); // Mở dialog tìm kiếm
+            }
+        });
+
+        moqTableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        moqTableView.getSelectionModel().setCellSelectionEnabled(true);
+        moqTableView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        startAutoGC();
+
+        moqTableView.setOnKeyPressed(event -> {
+            if (event.isControlDown() && event.getCode() == KeyCode.C) {
+                FxClipboardUtils.copySelectionToClipboard(moqTableView);
+            }
+
+            if (event.isControlDown() && event.getCode() == KeyCode.F) {
+                openSearchDialog();
             }
         });
     }
@@ -346,13 +362,19 @@ public class MOQController {
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == updateButtonType) {
                 try {
-                    int newMoq = Integer.parseInt(moqField.getText().trim());
-                    moq.setMaker(makerField.getText().trim());
-                    moq.setMakerPN(makerPNField.getText().trim());
-                    moq.setSapPN(sapPNField.getText().trim());
+                    String maker = makerField.getText() == null ? "" : makerField.getText().trim();
+                    String makerPN = makerPNField.getText() == null ? "" : makerPNField.getText().trim();
+                    String sapPN = sapPNField.getText() == null ? "" : sapPNField.getText().trim();
+                    String msl = mslField.getText() == null ? "" : mslField.getText().trim();
+                    String spec = specField.getText() == null ? "" : specField.getText().trim();
+                    int newMoq = Integer.parseInt(moqField.getText() == null ? "0" : moqField.getText().trim());
+
+                    moq.setMaker(maker);
+                    moq.setMakerPN(makerPN);
+                    moq.setSapPN(sapPN);
                     moq.setMoq(newMoq);
-                    moq.setMsql(mslField.getText().trim());
-                    moq.setSpec(specField.getText().trim());
+                    moq.setMsql(msl);
+                    moq.setSpec(spec);
                     return moq;
                 } catch (NumberFormatException e) {
                     showAlert(Alert.AlertType.ERROR, "Invalid Input", "MOQ must be a number!");
@@ -361,6 +383,7 @@ public class MOQController {
             }
             return null;
         });
+
 
         dialog.showAndWait().ifPresent(updatedMoq -> {
             moqService.updateImportedData(updatedMoq);

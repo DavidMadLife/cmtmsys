@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 public class Product {
     private int productId;
     private String productCode;
+    private String name;
     private String description;
     private ModelType modelType;  // Thêm dòng này
     private LocalDateTime createdDate;
@@ -24,6 +25,13 @@ public class Product {
     }
     public void setProductCode(String productCode) {
         this.productCode = productCode;
+    }
+
+    public String getName() {
+        return name;
+    }
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getDescription() {

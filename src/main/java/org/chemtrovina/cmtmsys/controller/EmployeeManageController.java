@@ -19,6 +19,7 @@ import org.chemtrovina.cmtmsys.repository.base.MOQRepository;
 import org.chemtrovina.cmtmsys.service.Impl.EmployeeServiceImpl;
 import org.chemtrovina.cmtmsys.service.Impl.MOQServiceImpl;
 import org.chemtrovina.cmtmsys.service.base.EmployeeService;
+import org.chemtrovina.cmtmsys.utils.FxClipboardUtils;
 import org.chemtrovina.cmtmsys.utils.FxFilterUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -109,6 +110,10 @@ public class EmployeeManageController {
         colStatus.setCellValueFactory(new PropertyValueFactory<>("status")); // nếu có enum -> text
         colExitDate.setCellValueFactory(new PropertyValueFactory<>("exitDate"));
 
+        tblEmployee.getSelectionModel().setCellSelectionEnabled(true);
+        tblEmployee.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        tblSummary.getSelectionModel().setCellSelectionEnabled(true);
+        tblSummary.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
     }
 
@@ -141,9 +146,22 @@ public class EmployeeManageController {
         btnClearFilter.setOnAction(event -> clearFilter());
         tblEmployee.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         tblSummary.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        tblSummary.setOnKeyPressed(event -> {
+            if (event.isControlDown() && event.getCode().toString().equals("C")) {
+                FxClipboardUtils.copySelectionToClipboard(tblSummary);
+            }
+        });
+
+        tblEmployee.setOnKeyPressed(event -> {
+            if (event.isControlDown() && event.getCode().toString().equals("C")) {
+                FxClipboardUtils.copySelectionToClipboard(tblEmployee);
+            }
+        });
 
 
     }
+
+
 
     private void setupStatusFilter() {
         cbStatusFilter.getItems().add(null); // default option

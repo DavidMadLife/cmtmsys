@@ -40,7 +40,9 @@ public class ProductController {
     @FXML private TextField txtProductCode;
     @FXML private Button btnLoad;
     @FXML private TableView<ProductBomDto> tblProductBOM;
-    @FXML private TableColumn<ProductBomDto, Number> colIndex;
+
+    @FXML
+    private TableColumn<ProductBomDto, Number> colIndex;
 
     @FXML private TableColumn<ProductBomDto, String> colProductCode;
     @FXML private TableColumn<ProductBomDto, String> colSappn;
@@ -49,6 +51,12 @@ public class ProductController {
     @FXML private TableColumn<ProductBomDto, String> colCreatedDate;
     @FXML private TableColumn<ProductBomDto, String> colUpdatedDate;
 
+    @FXML private TableView<Product> tblProducts;
+    @FXML private TableColumn<Product, String> colProductCodeList;
+    @FXML private TableColumn<Product, String> colModelTypeList;
+    @FXML private TableColumn<Product, String> colDescriptionList;
+
+
     @FXML private Button btnChooseFile;
     @FXML private Button btnImport;
     @FXML private Button btnUpdateProduct;
@@ -56,8 +64,11 @@ public class ProductController {
     @FXML private TextField txtFileName;
 
     @FXML private TextField txtNewProductCode;
+    @FXML private TextField txtNewProductName;
     @FXML private ComboBox<String> cbNewModelType;
     @FXML private Button btnCreateProduct;
+    @FXML private ComboBox<String> cbModelTypeFilter;
+
 
 
     private File selectedFile;
@@ -79,14 +90,21 @@ public class ProductController {
     public void initialize() {
         setupTable();
         setupActions();
-        cbNewModelType.setItems(FXCollections.observableArrayList("TOP", "BOT", "NONE"));
+        cbNewModelType.setItems(FXCollections.observableArrayList("TOP", "BOT", "SINGLE", "BOTTOP","NONE"));
+        cbModelTypeFilter.setItems(FXCollections.observableArrayList("TOP", "BOT", "SINGLE", "BOTTOP", "NONE"));
         btnCreateProduct.setOnAction(e -> onCreateProduct());
         tblProductBOM.getSelectionModel().setCellSelectionEnabled(true);
         tblProductBOM.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        tblProducts.getSelectionModel().setCellSelectionEnabled(true);
+        tblProducts.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+
         TableUtils.centerAlignAllColumns(tblProductBOM);
     }
 
     private void setupTable() {
+        colIndex.setCellValueFactory(cellData -> javafx.beans.binding.Bindings.createIntegerBinding(() ->
+                tblProductBOM.getItems().indexOf(cellData.getValue()) + 1));
+
         colProductCode.setCellValueFactory(new PropertyValueFactory<>("productCode"));
         colSappn.setCellValueFactory(new PropertyValueFactory<>("sappn"));
         colQuantity.setCellValueFactory(new PropertyValueFactory<>("quantity"));
@@ -94,24 +112,24 @@ public class ProductController {
         colCreatedDate.setCellValueFactory(new PropertyValueFactory<>("createdDate"));
         colUpdatedDate.setCellValueFactory(new PropertyValueFactory<>("updatedDate"));
 
+        colProductCodeList.setCellValueFactory(new PropertyValueFactory<>("productCode"));
+        colModelTypeList.setCellValueFactory(new PropertyValueFactory<>("modelType"));
+        colDescriptionList.setCellValueFactory(new PropertyValueFactory<>("description"));
+
+
         tblProductBOM.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         tblProductBOM.setOnKeyPressed(event -> {
             if (event.isControlDown() && event.getCode() == javafx.scene.input.KeyCode.C) {
                 FxClipboardUtils.copySelectionToClipboard(tblProductBOM);
             }
         });
-        colIndex.setCellFactory(col -> new TableCell<>() {
-            @Override
-            protected void updateItem(Number item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty) {
-                    setText(null);
-                } else {
-                    setText(String.valueOf(getIndex() + 1));
-                }
+
+        tblProducts.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        tblProducts.setOnKeyPressed(event -> {
+            if (event.isControlDown() && event.getCode() == javafx.scene.input.KeyCode.C) {
+                FxClipboardUtils.copySelectionToClipboard(tblProducts);
             }
         });
-
 
     }
 
@@ -121,19 +139,81 @@ public class ProductController {
         btnImport.setOnAction(e -> onImport());
         btnUpdateProduct.setOnAction(e -> onUpdateProduct());
         btnDeleteProduct.setOnAction(e -> onDeleteProduct());
+        tblProducts.setRowFactory(tv -> {
+            TableRow<Product> row = new TableRow<>();
+
+            // Context menu
+            ContextMenu contextMenu = new ContextMenu();
+
+            MenuItem updateItem = new MenuItem("Cập nhật");
+            MenuItem deleteItem = new MenuItem("Xoá");
+
+            // Xử lý khi chọn "Cập nhật"
+            updateItem.setOnAction(e -> {
+                Product selectedProduct = row.getItem();
+                if (selectedProduct != null) {
+                    txtProductCode.setText(selectedProduct.getProductCode());
+                    onUpdateProduct();  // Gọi hàm đã có
+                }
+            });
+
+            // Xử lý khi chọn "Xoá"
+            deleteItem.setOnAction(e -> {
+                Product selectedProduct = row.getItem();
+                if (selectedProduct != null) {
+                    txtProductCode.setText(selectedProduct.getProductCode());
+                    onDeleteProduct();  // Gọi hàm đã có
+                }
+            });
+
+            contextMenu.getItems().addAll(updateItem, deleteItem);
+
+            row.contextMenuProperty().bind(
+                    javafx.beans.binding.Bindings.when(row.emptyProperty())
+                            .then((ContextMenu) null)
+                            .otherwise(contextMenu)
+            );
+
+            return row;
+        });
+        tblProducts.setRowFactory(tv -> {
+            TableRow<Product> row = new TableRow<>();
+            row.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2 && (!row.isEmpty())) {
+                    Product selectedProduct = row.getItem();
+                    txtProductCode.setText(selectedProduct.getProductCode());
+                    cbModelTypeFilter.setValue(selectedProduct.getModelType().name());
+                    onLoadBOM();
+                }
+            });
+            return row;
+        });
     }
 
     private void onLoadBOM() {
+        // ✅ Luôn tải danh sách sản phẩm
+        loadAllProducts();
+
         String code = txtProductCode.getText().trim();
-        if (code.isEmpty()) {
-            showAlert("Vui lòng nhập mã sản phẩm.");
+        String modelType = cbModelTypeFilter.getValue();
+
+        if (code.isEmpty() || modelType == null) {
+            return; // Không cần báo lỗi nữa, vì đã load sản phẩm
+        }
+
+        List<ProductBomDto> dtos = productBOMService.getBomDtoByCodeAndModel(code, modelType);
+
+        if (dtos.isEmpty()) {
+            showAlert("⚠️ Không tìm thấy BOM tương ứng.");
             return;
         }
 
-
-        List<ProductBomDto> dtos = productBOMService.getBomDtoByProductCode(code);
         originalBomList = FXCollections.observableArrayList(dtos);
         tblProductBOM.setItems(originalBomList);
+
+        // ✅ Giữ nguyên danh sách sản phẩm
+        // tblProducts.getItems().clear();
+
         FxFilterUtils.setupFilterMenu(
                 colSappn,
                 originalBomList,
@@ -145,7 +225,11 @@ public class ProductController {
                     tblProductBOM.setItems(FXCollections.observableArrayList(filtered));
                 }
         );
+    }
 
+    private void loadAllProducts() {
+        List<Product> products = productService.getAllProducts(); // Bạn cần có hàm này trong service & repo
+        tblProducts.setItems(FXCollections.observableArrayList(products));
     }
 
     private void onChooseFile() {
@@ -174,7 +258,10 @@ public class ProductController {
                 String productCode = getCellString(row.getCell(0));
                 String sap = getCellString(row.getCell(1));
                 double qty = row.getCell(2).getNumericCellValue();
-                String modelType = getCellString(row.getCell(3)).toUpperCase();
+                String modelTypeRaw = getCellString(row.getCell(3));
+                String modelType = (modelTypeRaw == null || modelTypeRaw.isBlank())
+                        ? "NONE"
+                        : modelTypeRaw.trim().toUpperCase();
 
                 if (productCode.isBlank() || sap.isBlank()) continue;
 
@@ -198,7 +285,7 @@ public class ProductController {
                     jdbc.update("UPDATE Products SET modelType = ?, updatedDate = GETDATE() WHERE productId = ?", modelType, productId);
                 }
 
-                // Xử lý BOM
+                // Xử lý BOM (KHÔNG còn có modelType nữa)
                 List<Integer> exists = jdbc.query(
                         "SELECT 1 FROM ProductBOM WHERE productId = ? AND sappn = ?",
                         new Object[]{productId, sap},
@@ -229,6 +316,7 @@ public class ProductController {
         }
     }
 
+
     private String getCellString(Cell cell) {
         if (cell == null) return "";
         return switch (cell.getCellType()) {
@@ -241,9 +329,10 @@ public class ProductController {
     private void onCreateProduct() {
         String newCode = txtNewProductCode.getText().trim();
         String modelType = cbNewModelType.getValue();
+        String modelName = txtNewProductName.getText().trim();
 
-        if (newCode.isEmpty() || modelType == null) {
-            showAlert("Vui lòng nhập mã sản phẩm và chọn loại model.");
+        if (newCode.isEmpty() || modelType == null || modelName.isEmpty()) {
+            showAlert("Vui lòng nhập mã sản phẩm, tên model và chọn loại model.");
             return;
         }
 
@@ -261,13 +350,14 @@ public class ProductController {
                 return;
             }
 
-            jdbc.update(
-                    "INSERT INTO Products (productCode, modelType, createdDate, updatedDate) VALUES (?, ?, GETDATE(), GETDATE())",
-                    newCode, modelType
-            );
+            jdbc.update("""
+            INSERT INTO Products (productCode, modelType, description, createdDate, updatedDate)
+            VALUES (?, ?, ?, GETDATE(), GETDATE())
+        """, newCode, modelType, modelName);
 
-            showAlert("✅ Đã tạo sản phẩm mới: " + newCode + " | " + modelType);
+            showAlert("✅ Đã tạo sản phẩm mới: " + newCode + " | " + modelType + " | " + modelName);
             txtNewProductCode.clear();
+            txtNewProductName.clear();
             cbNewModelType.getSelectionModel().clearSelection();
 
         } catch (Exception ex) {
@@ -275,6 +365,7 @@ public class ProductController {
             showAlert("❌ Lỗi khi tạo sản phẩm: " + ex.getMessage());
         }
     }
+
 
     private void onUpdateProduct() {
         String code = txtProductCode.getText().trim();
@@ -297,7 +388,7 @@ public class ProductController {
         TextField txtCode = new TextField(selected.getProductCode());
         TextField txtDesc = new TextField(selected.getDescription() != null ? selected.getDescription() : "");
         ComboBox<String> cbModel = new ComboBox<>();
-        cbModel.setItems(FXCollections.observableArrayList("TOP", "BOT", "NONE"));
+        cbModel.setItems(FXCollections.observableArrayList("TOP", "BOT", "SINGLE", "BOTTOP","NONE"));
         cbModel.setValue(selected.getModelType() != null ? selected.getModelType().toString() : "NONE");
 
         GridPane grid = new GridPane();
@@ -341,6 +432,8 @@ public class ProductController {
                 }
             }
         });
+
+        loadAllProducts();
     }
 
     private void onDeleteProduct() {

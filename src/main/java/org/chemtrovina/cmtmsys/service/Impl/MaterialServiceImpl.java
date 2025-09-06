@@ -47,6 +47,20 @@ public class MaterialServiceImpl implements MaterialService {
     }
 
     @Override
+    public void updateMaterialDto(MaterialDto dto) {
+        Material material = materialRepository.findById(dto.getMaterialId());
+        if (material == null) {
+            throw new IllegalArgumentException("Không tìm thấy vật liệu với ID: " + dto.getMaterialId());
+        }
+
+        material.setQuantity(dto.getQuantity());
+        // Các field khác nếu bạn muốn cho cập nhật
+
+        materialRepository.update(material);
+    }
+
+
+    @Override
     public void deleteMaterialById(int id) {
         materialRepository.deleteById(id);
     }
@@ -130,14 +144,13 @@ public class MaterialServiceImpl implements MaterialService {
                     existing.setSapCode(sapCode);
                     existing.setSpec(spec);
                     existing.setQuantity(quantity);
-                    existing.setWarehouseId(warehouseId);
                     existing.setCreatedAt(LocalDateTime.now());
                     existing.setEmployeeId(employeeId);
-                    materialRepository.update(existing);
+                    materialRepository.updateIgnoreTreeId(existing);
                 } else {
                     Material material = new Material(
                             0, sapCode, rollCode, quantity,
-                            warehouseId, LocalDateTime.now(), spec, employeeId
+                            warehouseId, LocalDateTime.now(), spec, employeeId, null
                     );
                     materialRepository.add(material);
                 }
@@ -161,6 +174,7 @@ public class MaterialServiceImpl implements MaterialService {
 
 
         return materials.stream().map(m -> new MaterialDto(
+                m.getMaterialId(), // ✅ THÊM dòng này
                 m.getSapCode(),
                 m.getRollCode(),
                 m.getQuantity(),
@@ -170,7 +184,6 @@ public class MaterialServiceImpl implements MaterialService {
                 m.getEmployeeId()
         )).toList();
 
-
     }
 
     @Override
@@ -179,8 +192,15 @@ public class MaterialServiceImpl implements MaterialService {
         return materialRepository.findByIds(ids);
     }
 
+    @Override
+    public List<Material> findBySapCode(String sapCode) {
+        return materialRepository.findBySapCode(sapCode);
+    }
 
-
+    @Override
+    public List<Material> getByTreeId(int treeId) {
+        return materialRepository.getByTreeId(treeId);
+    }
 
 
     @Override
@@ -195,6 +215,7 @@ public class MaterialServiceImpl implements MaterialService {
 
         return materials.stream()
                 .map(m -> new MaterialDto(
+                        m.getMaterialId(), // ✅ THÊM dòng này
                         m.getSapCode(),
                         m.getRollCode(),
                         m.getQuantity(),
@@ -205,5 +226,18 @@ public class MaterialServiceImpl implements MaterialService {
                 ))
                 .toList();
     }
+
+    @Override
+    public Material addMaterialToTree(int treeId, String rollCode) {
+        Material material = materialRepository.findByRollCode(rollCode);
+        if (material == null) {
+            throw new IllegalArgumentException("Không tìm thấy cuộn với mã: " + rollCode);
+        }
+
+        material.setTreeId(treeId);
+        materialRepository.update(material);
+        return material;
+    }
+
 
 }

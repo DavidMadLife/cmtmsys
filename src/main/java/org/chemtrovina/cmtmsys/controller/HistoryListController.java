@@ -13,6 +13,7 @@ import org.chemtrovina.cmtmsys.service.base.HistoryService;
 import org.chemtrovina.cmtmsys.service.base.InvoiceService;
 import org.chemtrovina.cmtmsys.service.base.MOQService;
 import org.chemtrovina.cmtmsys.utils.AutoCompleteUtils;
+import org.chemtrovina.cmtmsys.utils.FxClipboardUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import javafx.collections.FXCollections;
@@ -39,6 +40,8 @@ public class HistoryListController {
     @FXML private TableColumn<History, String> invoicePNColumn;
     @FXML private TableColumn<History, String> mslColumn, specColumn;
     @FXML private TableColumn<History, String> timeColumn;
+    @FXML private TableColumn<History, String> employeeIdColumn; // thêm dòng này
+
 
     @FXML private TextField invoiceNoField, makerField, pnField, sapField, mslField, invoicePNField;
     @FXML private DatePicker dateTimePicker;
@@ -68,7 +71,59 @@ public class HistoryListController {
         searchBtn.setOnAction(e -> onSearch());
         clearBtn.setOnAction(e -> clearFields());
         importExcelBtn.setOnAction(e -> onExportExcel());
+        historyDateTableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        historyDateTableView.getSelectionModel().setCellSelectionEnabled(true);
+        historyDateTableView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         startAutoGC();
+
+        historyDateTableView.setOnKeyPressed(event -> {
+            if (event.isControlDown() && event.getCode() == KeyCode.C) {
+                FxClipboardUtils.copySelectionToClipboard(historyDateTableView);
+            }
+
+            if (event.isControlDown() && event.getCode() == KeyCode.F) {
+                openSearchDialog();
+            }
+        });
+
+        setupContextMenu();
+
+    }
+
+    private void setupContextMenu() {
+        ContextMenu contextMenu = new ContextMenu();
+        MenuItem deleteItem = new MenuItem("Xóa dòng này");
+
+        deleteItem.setOnAction(e -> {
+            History selected = historyDateTableView.getSelectionModel().getSelectedItem();
+            if (selected != null) {
+                Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+                alert.setTitle("Xác nhận");
+                alert.setHeaderText("Bạn có chắc muốn xoá dòng này không?");
+
+                alert.showAndWait().ifPresent(result -> {
+                    if (result == ButtonType.OK) {
+                        historyService.deleteById(selected.getId()); // Đảm bảo có id trong model
+                        historyObservableList.remove(selected);
+                        historyDateTableView.getItems().remove(selected);
+                    }
+                });
+            }
+        });
+
+        contextMenu.getItems().add(deleteItem);
+
+        historyDateTableView.setRowFactory(tv -> {
+            TableRow<History> row = new TableRow<>();
+            row.setOnContextMenuRequested(event -> {
+                if (!row.isEmpty()) {
+                    row.contextMenuProperty().set(contextMenu);
+                } else {
+                    row.contextMenuProperty().set(null);
+                }
+            });
+            return row;
+        });
     }
 
     private void setupTable() {
@@ -82,6 +137,8 @@ public class HistoryListController {
         invoicePNColumn.setCellValueFactory(new PropertyValueFactory<>("invoicePN"));
         mslColumn.setCellValueFactory(new PropertyValueFactory<>("MSL"));
         specColumn.setCellValueFactory(new PropertyValueFactory<>("spec"));
+        employeeIdColumn.setCellValueFactory(new PropertyValueFactory<>("employeeId"));
+
     }
 
     private void setupAutoCompleteFields() {

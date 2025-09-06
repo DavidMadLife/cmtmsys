@@ -19,5 +19,13 @@ public interface MaterialRepository {
 
     List<Material> findByIds(Set<Integer> ids);
 
+    List<Material> findBySapCode(String sapCode);
+
+    List<Material> getByTreeId(int treeId);
+    void updateIgnoreTreeId(Material material);
+
+    List<Material> findByRollCodes(List<String> rollCodes);
+
+
 
 }

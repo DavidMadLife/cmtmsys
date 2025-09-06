@@ -55,12 +55,24 @@ public class ModelLineRunServiceImpl implements ModelLineRunService {
     @Override
     public void endRun(int runId) {
         ModelLineRun run = repository.findById(runId);
-        if (run != null) {
+        if (run != null && !"Completed".equalsIgnoreCase(run.getStatus())) {
             run.setStatus("Completed");
             run.setEndedAt(LocalDateTime.now());
             repository.update(run);
         }
     }
+
+    @Override
+    public void reopenRun(int runId) {
+        ModelLineRun run = repository.findById(runId);
+        if (run != null && !"Running".equalsIgnoreCase(run.getStatus())) {
+            run.setStatus("Running");
+            run.setEndedAt(null); // <- mở lại thì bỏ mốc thời gian kết thúc
+            repository.update(run);
+        }
+    }
+
+
 
     @Override
     public List<ModelLineRun> getRunsByModelLineId(int modelLineId) {

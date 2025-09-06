@@ -46,7 +46,15 @@ public class WarehouseServiceImpl implements WarehouseService {
         return repository.getWarehouseNameByTransferId(transferId, isFrom);
     }
 
+    @Override
+    public Integer getIdByName(String name) {
+        return repository.getIdByName(name);
+    }
 
+    @Override
+    public Warehouse findByName(String name) {
+        return repository.findByName(name);
+    }
 
 
 }

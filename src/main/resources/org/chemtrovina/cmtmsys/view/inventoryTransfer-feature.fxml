@@ -36,7 +36,12 @@
             <Label text="Quét Barcode:" />
             <TextField fx:id="txtBarcode" prefWidth="200" />
             <Button fx:id="btnTransfer" text="Chuyển kho" />
+            <Label text="Xóa Barcode:" />
+            <TextField fx:id="txtDeleteBarcode" prefWidth="200" />
+            <Button fx:id="btnDeleteFromWO" text="Xóa khỏi W/O" />
+
         </HBox>
+
 
         <!-- Table: SAP Status Overview -->
         <VBox spacing="6" VBox.vgrow="ALWAYS">
@@ -53,8 +58,6 @@
         </VBox>
 
         <Button fx:id="btnImportFromExcel" text="Import từ Excel"/>
-
-
 
         <!-- Table: Transfer Log -->
         <VBox spacing="6" VBox.vgrow="ALWAYS">

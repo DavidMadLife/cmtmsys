@@ -7,4 +7,5 @@ public interface ModelLineRunService {
     ModelLineRun createRun(int modelLineId);
     void endRun(int runId);
     List<ModelLineRun> getRunsByModelLineId(int modelLineId);
+    void reopenRun(int runId);
 }

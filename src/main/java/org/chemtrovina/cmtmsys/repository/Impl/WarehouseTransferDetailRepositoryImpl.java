@@ -95,8 +95,11 @@ public class WarehouseTransferDetailRepositoryImpl implements WarehouseTransferD
         jdbcTemplate.update(sql, rollCode);
     }
 
-
-
+    @Override
+    public void deleteByTransferIdAndRollCode(int transferId, String rollCode) {
+        String sql = "DELETE FROM WarehouseTransferDetails WHERE TransferID = ? AND RollCode = ?";
+        jdbcTemplate.update(sql, transferId, rollCode);
+    }
 
 
 }

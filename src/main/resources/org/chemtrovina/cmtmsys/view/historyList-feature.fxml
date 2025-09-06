@@ -130,7 +130,8 @@
                     <TableColumn fx:id="sapPNColumn" prefWidth="126.0" text="SAP P/N" />
                     <TableColumn fx:id="quantityColumn" prefWidth="113.0" text="Quantity" />
                     <TableColumn fx:id="mslColumn" prefWidth="99.0" text="MSL" />
-               <TableColumn fx:id="specColumn" prefWidth="99.0" text="Spec" />
+                    <TableColumn fx:id="specColumn" prefWidth="99.0" text="Spec" />
+                    <TableColumn fx:id="employeeIdColumn" prefWidth="120" text="Employee ID" />
                 </columns>
             </TableView>
         </HBox>

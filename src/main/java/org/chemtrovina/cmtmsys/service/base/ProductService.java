@@ -15,6 +15,8 @@ public interface ProductService {
     boolean checkProductExists(String productCode, ModelType modelType);
     void deleteProductWithBOM(int productId);
     Product getProductByCodeAndType(String productCode, ModelType modelType);
+    List<Product> getProductsByCodeContainedInText(String text);
+
 
 
 
