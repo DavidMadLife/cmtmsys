@@ -6,6 +6,7 @@ import java.util.List;
 
 public interface ProductionPlanItemRepository {
     void add(ProductionPlanItem item);
+    ProductionPlanItem findById(int id);
     void update(ProductionPlanItem item);
     void deleteById(int itemId);
     List<ProductionPlanItem> findByPlanId(int planId);

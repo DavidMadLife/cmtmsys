@@ -192,7 +192,7 @@ public class PerformanceLogController {
                         );
 
                         if (log != null) {
-                            try {
+                            try { 
                                 logService.saveLog(log);
                                 Platform.runLater(() -> logList.add(log));
                                 appendLog("✅ Đã xử lý và lưu log: " + log.getLogFileName() +
@@ -210,7 +210,7 @@ public class PerformanceLogController {
                 }
 
                 appendLog("⛔ Đã dừng theo dõi thư mục.");
-            } catch (Exception ex) {
+            } catch (Exception ex) { 
                 appendLog("❌ Lỗi theo dõi thư mục: " + ex.getMessage());
             } finally {
                 watching = false;

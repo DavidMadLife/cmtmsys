@@ -17,4 +17,7 @@ public interface EmployeeRepository {
 
     List<EmployeeDto> findAllEmployeeDtos();
     List<EmployeeDto> findFilteredEmployeeDtos(EmployeeStatus status, LocalDate entryDateFrom, LocalDate entryDateTo);
+
+    Employee findByMscnId1(String mscnId1);
+    Employee findByMscnId2(String mscnId2);
 }

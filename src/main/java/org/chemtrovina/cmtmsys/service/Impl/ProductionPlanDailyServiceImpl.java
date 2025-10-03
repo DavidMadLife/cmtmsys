@@ -3,10 +3,7 @@ package org.chemtrovina.cmtmsys.service.Impl;
 import org.chemtrovina.cmtmsys.dto.DailyPlanRowDto;
 import org.chemtrovina.cmtmsys.model.ProductionPlanDaily;
 import org.chemtrovina.cmtmsys.model.ProductionPlanHourly;
-import org.chemtrovina.cmtmsys.repository.base.MaterialConsumeLogRepository;
-import org.chemtrovina.cmtmsys.repository.base.MaterialRepository;
-import org.chemtrovina.cmtmsys.repository.base.ProductionPlanDailyRepository;
-import org.chemtrovina.cmtmsys.repository.base.ProductionPlanHourlyRepository;
+import org.chemtrovina.cmtmsys.repository.base.*;
 import org.chemtrovina.cmtmsys.service.base.ProductionPlanDailyService;
 import org.chemtrovina.cmtmsys.service.base.WarehouseService;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -28,19 +25,25 @@ public class ProductionPlanDailyServiceImpl implements ProductionPlanDailyServic
     private final MaterialRepository materialRepo;
     private final JdbcTemplate jdbcTemplate;
     private final WarehouseService warehouseService;
+    private final ProductionPlanItemRepository planItemRepository;
+    private final ProductRepository productRepository;
 
     public ProductionPlanDailyServiceImpl(ProductionPlanDailyRepository repository,
                                           ProductionPlanHourlyRepository hourlyRepository,
                                           MaterialConsumeLogRepository logRepo,
                                           MaterialRepository materialRepo,
                                           JdbcTemplate jdbcTemplate,
-                                          WarehouseService warehouseService) {
+                                          WarehouseService warehouseService,
+                                          ProductionPlanItemRepository planItemRepository,
+                                          ProductRepository productRepository) {
         this.repository = repository;
         this.hourlyRepository = hourlyRepository;
         this.logRepo = logRepo;
         this.materialRepo = materialRepo;
         this.jdbcTemplate = jdbcTemplate;
         this.warehouseService = warehouseService;
+        this.planItemRepository = planItemRepository;
+        this.productRepository = productRepository;
     }
 
     @Override
@@ -155,8 +158,25 @@ public class ProductionPlanDailyServiceImpl implements ProductionPlanDailyServic
 
     @Override
     public Map<String, ProductionPlanDaily> findByModelLineAndDates(Set<String> keys) {
-        return repository.findByModelLineAndDates(keys);
+        Map<String, ProductionPlanDaily> result = repository.findByModelLineAndDates(keys);
+
+        for (ProductionPlanDaily daily : result.values()) {
+            if (daily == null) continue;
+
+            // Lấy PlanItem theo planItemID
+            var item = planItemRepository.findById(daily.getPlanItemID());
+            if (item != null) {
+                // Lấy Product theo productID
+                var product = productRepository.findById(item.getProductID());
+                if (product != null) {
+                    daily.setModelType(product.getModelType().name()); // gán cho Daily
+                }
+            }
+        }
+
+        return result;
     }
+
 
     @Override
     public boolean updateHourlyPlanWithValidation(int planItemId, int slotIndex, int newSlotQty, LocalDate runDate) {
@@ -216,9 +236,18 @@ public class ProductionPlanDailyServiceImpl implements ProductionPlanDailyServic
         return hourlyRepository.findByDailyId(dailyId);
     }
 
+    @Override
+    public List<ProductionPlanDaily> getDailyByLineAndDate(String lineName, LocalDate runDate) {
+        return repository.findByLineAndDate(lineName, runDate);
+    }
+
+
     private LocalDateTime calculateSlotStartTime(int slotIndex, LocalDate date) {
         int hour = (8 + slotIndex * 2) % 24;
         if (hour < 8) date = date.plusDays(1);
         return date.atTime(hour, 0);
     }
+
+
+
 }

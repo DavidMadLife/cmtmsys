@@ -14,4 +14,5 @@ public interface WarehouseService {
     String getWarehouseNameByTransferId(int transferId, boolean isFrom);
     Integer getIdByName(String name);
     Warehouse findByName(String name);
+    String getWarehouseNameById(int id);
 }

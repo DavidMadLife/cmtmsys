@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns="http://javafx.com/javafx/23"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="org.chemtrovina.cmtmsys.controller.StencilTransferController"
+            prefWidth="1000" prefHeight="600">
+
+    <!-- TOP: Toolbar -->
+    <top>
+        <ToolBar>
+            <items>
+                <Button fx:id="btnRefresh" text="Làm mới"/>
+                <Button fx:id="btnClear" text="Xoá chọn"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label text="Tổng:"/>
+                <Label fx:id="lblTotal"/>
+            </items>
+        </ToolBar>
+    </top>
+
+    <!-- CENTER: Table -->
+    <center>
+        <TableView fx:id="tblTransfers">
+            <columns>
+                <TableColumn fx:id="colSTT" text="STT" prefWidth="50"/>
+                <TableColumn fx:id="colBarcode" text="Barcode" prefWidth="150"/>
+                <TableColumn fx:id="colFrom" text="From Warehouse" prefWidth="160"/>
+                <TableColumn fx:id="colTo" text="To Warehouse" prefWidth="160"/>
+                <TableColumn fx:id="colPerformedBy" text="User" prefWidth="120"/>
+                <TableColumn fx:id="colDate" text="Transfer Date" prefWidth="150"/>
+                <TableColumn fx:id="colNote" text="Note" prefWidth="220"/>
+            </columns>
+        </TableView>
+    </center>
+
+    <padding>
+        <Insets top="10" right="10" bottom="10" left="10"/>
+    </padding>
+</BorderPane>

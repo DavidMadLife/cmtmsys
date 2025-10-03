@@ -188,4 +188,22 @@ public class EmployeeRepositoryImpl extends GenericRepositoryImpl<Employee> impl
         dto.setManagerName(rs.getString("ManagerName"));
         return dto;
     };
+
+
+    @Override
+    public Employee findByMscnId1(String mscnId1) {
+        if (mscnId1 == null || mscnId1.isBlank()) return null;
+        String sql = "SELECT TOP 1 * FROM Employee WHERE MSCNID1 = ?";
+        var list = jdbcTemplate.query(sql, new EmployeeRowMapper(), mscnId1.trim());
+        return list.isEmpty() ? null : list.get(0);
+    }
+
+    @Override
+    public Employee findByMscnId2(String mscnId2) {
+        if (mscnId2 == null || mscnId2.isBlank()) return null;
+        String sql = "SELECT TOP 1 * FROM Employee WHERE MSCNID2 = ?";
+        var list = jdbcTemplate.query(sql, new EmployeeRowMapper(), mscnId2.trim());
+        return list.isEmpty() ? null : list.get(0);
+    }
+
 }

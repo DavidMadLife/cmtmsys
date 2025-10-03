@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/23"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="org.chemtrovina.cmtmsys.controller.SolderManagerController"
+            prefWidth="1200" prefHeight="720">
+
+    <!-- TOP: Filters -->
+    <top>
+        <VBox spacing="8">
+            <children>
+                <ToolBar>
+                    <items>
+                        <Label text="Tìm:"/>
+                        <TextField fx:id="tfSearch" promptText="Code / Lot / Maker" prefWidth="320"/>
+                        <Label text="Maker:"/>
+                        <ComboBox fx:id="cbMaker" promptText="Tất cả"/>
+                        <Label text="Lot:"/>
+                        <TextField fx:id="tfLot" promptText="Nhập lot"/>
+                        <Label text="Nhập từ:"/>
+                        <DatePicker fx:id="dpRecvFrom"/>
+                        <Label text="đến:"/>
+                        <DatePicker fx:id="dpRecvTo"/>
+                        <Separator orientation="VERTICAL"/>
+                        <Label text="HSD từ:"/>
+                        <DatePicker fx:id="dpExpFrom"/>
+                        <Label text="đến:"/>
+                        <DatePicker fx:id="dpExpTo"/>
+                        <Region VBox.vgrow="ALWAYS"/>
+                        <Button fx:id="btnRefresh" text="Làm mới"/>
+                        <Button fx:id="btnClear" text="Xoá lọc"/>
+                    </items>
+                </ToolBar>
+
+                <ToolBar>
+                    <items>
+                        <CheckBox fx:id="chkExpSoon" text="Sắp hết hạn trong"/>
+                        <Spinner fx:id="spExpDays" prefWidth="80"/>
+                        <Label text="ngày"/>
+                        <Region VBox.vgrow="ALWAYS"/>
+                        <Button fx:id="btnImport" text="Import Excel..."/>
+                        <Button fx:id="btnExport" text="Export..."/>
+                    </items>
+                </ToolBar>
+            </children>
+            <padding><Insets top="0" right="0" bottom="0" left="0"/></padding>
+        </VBox>
+    </top>
+
+    <!-- CENTER: Table -->
+    <center>
+        <TableView fx:id="tblSolders">
+            <columns>
+                <TableColumn fx:id="colSTT" text="STT" prefWidth="60"/>
+                <TableColumn fx:id="colCode" text="Code" prefWidth="180"/>
+                <TableColumn fx:id="colMaker" text="Maker" prefWidth="160"/>
+                <TableColumn fx:id="colLot" text="Lot" prefWidth="160"/>
+                <TableColumn fx:id="colReceived" text="Ngày nhập" prefWidth="120"/>
+                <TableColumn fx:id="colMfg" text="Ngày SX" prefWidth="120"/>
+                <TableColumn fx:id="colExpiry" text="Hạn sử dụng" prefWidth="120"/>
+                <TableColumn fx:id="colDaysLeft" text="Còn (ngày)" prefWidth="100"/>
+                <TableColumn fx:id="colViscotester" text="VISCOTESTER (Độ nhớt)" />
+                <TableColumn fx:id="colRemark" text="REMARK"/>
+
+            </columns>
+        </TableView>
+    </center>
+
+    <!-- BOTTOM: Status -->
+    <bottom>
+        <HBox spacing="10">
+            <children>
+                <Label text="Tổng:"/>
+                <Label fx:id="lblTotal"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label text="HINT: Double-click một dòng để xem chi tiết."/>
+            </children>
+            <padding><Insets top="10" right="10" bottom="10" left="10"/></padding>
+        </HBox>
+    </bottom>
+</BorderPane>

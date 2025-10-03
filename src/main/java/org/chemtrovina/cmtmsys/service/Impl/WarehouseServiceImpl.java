@@ -56,5 +56,11 @@ public class WarehouseServiceImpl implements WarehouseService {
         return repository.findByName(name);
     }
 
+    @Override
+    public String getWarehouseNameById(int id) {
+        Warehouse wh = repository.findById(id);
+        return (wh != null) ? wh.getName() : "N/A";
+    }
+
 
 }

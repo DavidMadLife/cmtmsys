@@ -35,7 +35,7 @@ public interface ProductionPlanDailyRepository {
 
 
     Map<String, ProductionPlanDaily> findByModelLineAndDates(Set<String> keys);
-
+    List<ProductionPlanDaily> findByLineAndDate(String lineName, LocalDate runDate);
 
 
 }

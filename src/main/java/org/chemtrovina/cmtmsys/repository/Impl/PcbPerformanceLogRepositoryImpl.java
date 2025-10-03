@@ -25,13 +25,15 @@ public class PcbPerformanceLogRepositoryImpl implements PcbPerformanceLogReposit
     }
 
     @Override
-    public void add(PcbPerformanceLog log) {
+    public int add(PcbPerformanceLog log) {
         String sql = """
-            INSERT INTO PcbPerformanceLog
-            (ProductId, WarehouseId, CarrierId, AoiMachineCode, TotalModules, NgModules, Performance, LogFileName, CreatedAt)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """;
-        jdbcTemplate.update(sql,
+        INSERT INTO PcbPerformanceLog
+        (ProductId, WarehouseId, CarrierId, AoiMachineCode, TotalModules, NgModules, Performance, LogFileName, CreatedAt)
+        OUTPUT INSERTED.LogId
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """;
+
+        Integer id = jdbcTemplate.queryForObject(sql, Integer.class,
                 log.getProductId(),
                 log.getWarehouseId(),
                 log.getCarrierId(),
@@ -42,7 +44,11 @@ public class PcbPerformanceLogRepositoryImpl implements PcbPerformanceLogReposit
                 log.getLogFileName(),
                 Timestamp.valueOf(log.getCreatedAt())
         );
+
+        log.setLogId(id); // ✅ gán lại cho object luôn
+        return id;
     }
+
 
     @Override
     public List<PcbPerformanceLog> findAll() {
@@ -191,6 +197,27 @@ public class PcbPerformanceLogRepositoryImpl implements PcbPerformanceLogReposit
             return dto;
         }
     }
+
+    @Override
+    public PcbPerformanceLog findPrevLog(int warehouseId, int productId, LocalDateTime beforeTime) {
+        String sql = """
+        SELECT TOP 1 *
+        FROM PcbPerformanceLog
+        WHERE WarehouseId = ?
+          AND ProductId = ?
+          AND CreatedAt < ?
+        ORDER BY CreatedAt DESC
+    """;
+
+        List<PcbPerformanceLog> results = jdbcTemplate.query(
+                sql,
+                new PcbPerformanceLogRowMapper(),
+                warehouseId, productId, Timestamp.valueOf(beforeTime)
+        );
+
+        return results.isEmpty() ? null : results.get(0);
+    }
+
 
 
 }

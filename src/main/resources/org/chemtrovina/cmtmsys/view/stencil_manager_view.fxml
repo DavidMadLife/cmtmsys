@@ -81,24 +81,25 @@
                             <content>
                                 <VBox spacing="8">
                                     <children>
-                                        <TextField fx:id="tfNewBarcode" promptText="Barcode *"/>
-                                        <TextField fx:id="tfNewStencilNo" promptText="Stencil No * (ví dụ C-05)"/>
-                                        <ComboBox fx:id="cbNewProduct" promptText="Model *"/>
-                                        <ComboBox fx:id="cbNewWarehouse" promptText="Warehouse (tùy chọn)"/>
-                                        <TextField fx:id="tfNewVersion" promptText="Version (ví dụ V2.0)"/>
-                                        <TextField fx:id="tfNewSize" promptText="Size (ví dụ 650x550)"/>
-                                        <Spinner fx:id="spNewArray"/>
+                                        <TextField fx:id="tfNewBarcode"    promptText="Barcode *"/>
+                                        <TextField fx:id="tfNewStencilNo"  promptText="Stencil No * (ví dụ C-05)"/>
+
+                                        <!-- MỚI: nhập Model Code + chọn Model Type -->
+                                        <TextField fx:id="tfNewProductCode" promptText="Model Code * (ví dụ ABC123)"/>
+                                        <ComboBox fx:id="cbNewModelType"    promptText="Model Type *"/>
+                                        <TextField fx:id="tfNewVersion"   promptText="Version (ví dụ V2.0)"/>
+                                        <TextField fx:id="tfNewSize"      promptText="Size (ví dụ 650x550)"/>
+                                        <Spinner  fx:id="spNewArray"/>
                                         <DatePicker fx:id="dpNewReceived" promptText="Received date *"/>
-                                        <ComboBox fx:id="cbNewStatus" promptText="Status *"/>
-                                        <TextArea fx:id="taNewNote" promptText="Ghi chú" prefRowCount="3"/>
-                                        <Button fx:id="btnAddNew" text="Thêm mới"/>
+                                        <ComboBox fx:id="cbNewStatus"     promptText="Status *"/>
+                                        <TextArea fx:id="taNewNote"       promptText="Ghi chú" prefRowCount="3"/>
+                                        <Button fx:id="btnAddNew"         text="Thêm mới"/>
                                     </children>
-                                    <padding>
-                                        <Insets top="10" right="10" bottom="10" left="10"/>
-                                    </padding>
+                                    <padding><Insets top="10" right="10" bottom="10" left="10"/></padding>
                                 </VBox>
                             </content>
                         </TitledPane>
+
 
                         <TitledPane text="Hành động" expanded="true">
                             <content>

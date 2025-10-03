@@ -67,5 +67,10 @@ public class ProductServiceImpl implements ProductService {
         return repository.findAllByCodeContainedInText(text);
     }
 
+    @Override
+    public String getProductCodeByPlanItemId(int planItemId) {
+        return repository.findProductCodeByPlanItemId(planItemId);
+    }
+
 
 }

@@ -27,4 +27,8 @@ public interface StencilService {
 
     List<StencilViewDto> searchViews(String keyword, String productCode, String status, String warehouse);
 
+    // StencilRepository.java
+   // void updateStatusMany(List<Integer> stencilIds, String status);
+
+
 }

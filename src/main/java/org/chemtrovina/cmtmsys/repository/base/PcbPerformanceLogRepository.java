@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface PcbPerformanceLogRepository {
-    void add(PcbPerformanceLog log);
+    int add(PcbPerformanceLog log);
     List<PcbPerformanceLog> findAll();
     List<PcbPerformanceLog> findByProductId(int productId);
     List<PcbPerformanceLog> findByWarehouseId(int warehouseId);
@@ -19,5 +19,6 @@ public interface PcbPerformanceLogRepository {
 
     List<PcbPerformanceLogHistoryDTO> getLogsByWarehouseAndDateRange(int warehouseId, LocalDateTime start, LocalDateTime end);
 
+    PcbPerformanceLog findPrevLog(int warehouseId, int productId, LocalDateTime beforeTime);
 
 }

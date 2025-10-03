@@ -57,9 +57,16 @@ public class NavbarController {
     @FXML private MenuItem menuPcbPerformanceLog;
     @FXML private MenuItem menuPcbPerformanceHistory;
     @FXML private MenuItem menuImportCycleTime;
+    @FXML private MenuItem menuShiftScheduleSMT;
 
     @FXML private MenuItem menuStencilManager;
+    @FXML private MenuItem menuStencilTransferLog, menuShiftSummary;
 
+
+    // ==== Solder Menu ====
+    @FXML private MenuButton menuSolder;
+    @FXML private MenuItem menuSolderList;   // có thể thêm item khác sau, ví dụ Import...
+    @FXML private MenuItem menuSolderOut;
 
 
 
@@ -96,6 +103,15 @@ public class NavbarController {
         // === Warehouse Menu Items phân quyền ===
         boolean isAdminOrWarehouse = role == UserRole.ADMIN || role == UserRole.GENERALWAREHOUSE;
         boolean isLimitedRole = role == UserRole.INVENTORY || role == UserRole.SUBLEEDER;
+
+        // === Solder permission ===
+        boolean allowSolderAccess = role == UserRole.ADMIN || role == UserRole.INVENTORY || role == UserRole.SUBLEEDER;
+        if (menuSolder != null) {
+            menuSolder.setVisible(allowSolderAccess);
+            menuSolder.setManaged(allowSolderAccess);
+            if (menuSolderList != null) menuSolderList.setVisible(allowSolderAccess);
+        }
+
 
         btnInvoice.setVisible(isAdminOrWarehouse);
         btnScan.setVisible(isAdminOrWarehouse);
@@ -157,8 +173,23 @@ public class NavbarController {
         menuPcbPerformanceLog.setOnAction(e -> openTab("Hiệu suất PCB", "/org/chemtrovina/cmtmsys/view/performance_log_view.fxml"));
         menuPcbPerformanceHistory.setOnAction(e -> openTab("Lịch sử hiệu suất", "/org/chemtrovina/cmtmsys/view/performance_log_history_view.fxml"));
         menuImportCycleTime.setOnAction(e -> openTab("Import Cycle Time", "/org/chemtrovina/cmtmsys/view/import_cycle_time.fxml"));
+        menuShiftScheduleSMT.setOnAction(e -> openTab("Create Shift", "/org/chemtrovina/cmtmsys/view/shiftScheduleView.fxml"));
+        menuShiftSummary.setOnAction(e -> openTab("Shift summary", "/org/chemtrovina/cmtmsys/view/ShiftSummaryView.fxml"));
+
 
         menuStencilManager.setOnAction(e -> openTab("Stencil Manager", "/org/chemtrovina/cmtmsys/view/stencil_manager_view.fxml"));
+        menuStencilTransferLog.setOnAction(
+                e -> openTab("Stencil Transfer Log", "/org/chemtrovina/cmtmsys/view/stencil_transfer.fxml")
+        );
+
+
+        // Solder
+        menuSolderList.setOnAction(e ->
+                openTab("Solder", "/org/chemtrovina/cmtmsys/view/solder_manager_view.fxml"));
+        menuSolderOut.setOnAction(
+                e -> openTab("Solder OUT (Aging)", "/org/chemtrovina/cmtmsys/view/solder-out-view.fxml")
+        );
+
 
 
         menuChangePassword.setOnAction(e -> openChangePasswordDialog());

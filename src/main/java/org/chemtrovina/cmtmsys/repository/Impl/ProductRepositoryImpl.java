@@ -124,6 +124,18 @@ public class ProductRepositoryImpl implements ProductRepository {
         return jdbcTemplate.query(sql, new ProductRowMapper(), text);
     }
 
+    @Override
+    public String findProductCodeByPlanItemId(int planItemId) {
+        String sql = """
+            SELECT p.productCode
+            FROM ProductionPlanItems i
+            JOIN Products p ON i.productID = p.productId
+            WHERE i.planItemID = ?
+        """;
+
+        return jdbcTemplate.queryForObject(sql, new Object[]{planItemId}, String.class);
+    }
+
 
 
 

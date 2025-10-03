@@ -74,6 +74,8 @@
                 <MenuItem fx:id="menuPcbPerformanceLog" text="Xử lý log hiệu suất" />
                 <MenuItem fx:id="menuPcbPerformanceHistory" text="Lịch sử hiệu suất" />
                 <MenuItem fx:id="menuImportCycleTime" text="Import Cycle Time" />
+                <MenuItem fx:id="menuShiftScheduleSMT" text="Tạo ca làm việc (Create Shift)" />
+                <MenuItem fx:id="menuShiftSummary" text="Chi tiết ca làm (Shift summary)" />
             </items>
         </MenuButton>
 
@@ -81,8 +83,18 @@
         <MenuButton fx:id="menuStencil" text="Stencil" style="-fx-font-weight: bold;" prefWidth="140">
             <items>
                 <MenuItem fx:id="menuStencilManager" text="Quản lý Stencil"/>
+                <MenuItem fx:id="menuStencilTransferLog" text="Lịch sử chuyển Stencil"/>
             </items>
         </MenuButton>
+
+        <!-- Menu: Solder -->
+        <MenuButton fx:id="menuSolder" text="Solder" style="-fx-font-weight: bold;" prefWidth="140">
+            <items>
+                <MenuItem fx:id="menuSolderList" text="Danh sách Solder"/>
+                <MenuItem fx:id="menuSolderOut" text="Scan OUT (Aging)"/>
+            </items>
+        </MenuButton>
+
 
 
     </items>

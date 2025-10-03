@@ -15,4 +15,7 @@ public interface EmployeeService {
     List<Employee> getAllEmployees();
     List<EmployeeDto> getAllEmployeeDtos();
     List<EmployeeDto> filterEmployeeDtos(EmployeeStatus status, LocalDate from, LocalDate to);
+
+    Employee getByMscnId1(String mscnId1);
+    Employee getByMscnId2(String mscnId2);
 }

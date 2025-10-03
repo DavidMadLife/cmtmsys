@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/23"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="org.chemtrovina.cmtmsys.controller.SolderOutController"
+            prefWidth="1200" prefHeight="760">
+
+    <!-- TOP: Scan + Search bar -->
+    <top>
+        <VBox spacing="4" style="-fx-padding:6 6 0 6;">
+            <!-- Hàng 1: Scan OUT -->
+            <ToolBar>
+                <items>
+                    <Label text="Scan OUT" style="-fx-font-weight: bold;"/>
+                    <Label text="Code:"/>
+                    <TextField fx:id="tfCode" promptText="Quét/nhập code hũ" prefWidth="260"/>
+
+                    <Label text="Aging (phút):"/>
+                    <Spinner fx:id="spAgingMin" prefWidth="90"/>
+
+                    <Label text="Ngày xuất:"/>
+                    <DatePicker fx:id="dpOutDate"/>
+
+                    <Button fx:id="btnScan" text="Thêm vào bảng (Enter)"/>
+
+                    <Separator orientation="VERTICAL"/>
+                    <Button fx:id="btnReload" text="Tải lại hôm nay"/>
+                </items>
+            </ToolBar>
+
+            <!-- Hàng 2: Search code -->
+            <ToolBar>
+                <items>
+                    <Label text="Tìm code:"/>
+                    <TextField fx:id="tfSearch" promptText="Nhập code cần tìm" prefWidth="300"/>
+                    <Button fx:id="btnSearch" text="Tìm"/>
+                    <Button fx:id="btnClearSearch" text="Xóa lọc"/>
+                </items>
+            </ToolBar>
+        </VBox>
+    </top>
+
+
+    <!-- CENTER: Excel-like table -->
+    <center>
+        <TableView fx:id="tbl" editable="true" tableMenuButtonVisible="true">
+            <columns>
+                <TableColumn fx:id="colSTT" text="#"/>
+                <TableColumn fx:id="colCode" text="CODE"/>
+                <TableColumn fx:id="colMaker" text="MAKER" />
+                <TableColumn fx:id="colLot" text="LOT" />
+                <TableColumn fx:id="colViscotester" text="VISCOTESTER (Độ nhớt)" />
+                <TableColumn fx:id="colOut" text="NGÀY XUẤT" />
+                <TableColumn fx:id="colStart" text="BẮT ĐẦU RÃ ĐÔNG" />
+                <TableColumn fx:id="colEnd" text="KẾT THÚC RÃ ĐÔNG" />
+
+                <!-- Nhận -->
+                <TableColumn fx:id="colWarehouse" text="WAREHOUSE/LINE" />
+                <TableColumn fx:id="colEmpRecvId" text="MÃ NV NHẬN" />
+                <TableColumn fx:id="colEmpRecvName" text="NGƯỜI NHẬN" />
+                <TableColumn fx:id="colOpenTime" text="GIỜ MỞ NẮP" />
+
+                <!-- Trả / Phế -->
+                <TableColumn fx:id="colScrapTime" text="THỜI GIAN PHẾ" />
+                <TableColumn fx:id="colReturnTime" text="THỜI GIAN TRẢ" />
+                <TableColumn fx:id="colEmpRetId" text="MÃ NV TRẢ" />
+                <TableColumn fx:id="colEmpRetName" text="NGƯỜI TRẢ" />
+
+                <TableColumn fx:id="colStatus" text="TRẠNG THÁI" />
+                <TableColumn fx:id="colNote" text="REMARK" />
+            </columns>
+        </TableView>
+    </center>
+
+    <!-- BOTTOM -->
+    <bottom>
+        <HBox spacing="12" style="-fx-padding:10;">
+            <children>
+                <Label text="Tổng:"/><Label fx:id="lblTotal"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label text="Tip: Double-click để sửa ô; Ctrl+C copy; Enter để scan nhanh."/>
+            </children>
+        </HBox>
+    </bottom>
+</BorderPane>

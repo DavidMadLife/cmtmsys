@@ -211,4 +211,17 @@ public class ProductCycleTimeRepositoryImpl implements ProductCycleTimeRepositor
             return d;
         });
     }
+
+    @Override
+    public ProductCycleTime findActive(int productId, int warehouseId) {
+        String sql = """
+        SELECT TOP 1 *
+        FROM ProductCycleTime
+        WHERE ProductId = ? AND WarehouseId = ? AND Active = 1
+        ORDER BY CreatedAt DESC, CtId DESC
+    """;
+        List<ProductCycleTime> list = jdbc.query(sql, new ProductCycleTimeRowMapper(), productId, warehouseId);
+        return list.isEmpty() ? null : list.get(0);
+    }
+
 }

@@ -55,5 +55,14 @@ public class EmployeeServiceImpl implements EmployeeService {
         return employeeRepository.findFilteredEmployeeDtos(status, from, to);
     }
 
+    @Override
+    public Employee getByMscnId1(String mscnId1) {
+        return employeeRepository.findByMscnId1(mscnId1);
+    }
+
+    @Override
+    public Employee getByMscnId2(String mscnId2) {
+        return employeeRepository.findByMscnId2(mscnId2);
+    }
 
 }

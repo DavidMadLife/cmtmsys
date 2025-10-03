@@ -45,4 +45,7 @@ public interface ProductCycleTimeRepository {
     List<ProductCycleTimeViewDto> searchView(String productCodeLike,
                                              ModelType modelTypeOrNull,
                                              String lineNameLike);
+
+    ProductCycleTime findActive(int productId, int warehouseId);
+
 }

@@ -699,7 +699,7 @@ public class ProductionPlanController {
         LocalDateTime start = day.atStartOfDay();
         LocalDateTime end = start.plusDays(1);
 
-        // Lines
+        // Lines cần load
         List<String> lines;
         if (line == null || line.equalsIgnoreCase("Tất cả")) {
             lines = warehouseService.getAllWarehouses().stream().map(Warehouse::getName).toList();
@@ -707,85 +707,71 @@ public class ProductionPlanController {
             lines = List.of(line);
         }
 
-        // Load Actual logs (GIỮ NGUYÊN)
+        // Actual logs từ AOI
         List<PcbPerformanceLogHistoryDTO> logs = new ArrayList<>();
         for (String ln : lines) {
             logs.addAll(pcbPerformanceLogService.fetchPerformanceGoodModules(ln, start, end));
         }
-        System.out.println("Found logs: " + logs.size());
 
-        // dailyMap để lookup DailyID (GIỮ)
+        // Daily map (model|line|date -> ProductionPlanDaily)
         Set<String> keysToFetch = logs.stream()
                 .map(log -> log.getModelCode() + "|" + log.getWarehouseName() + "|" + log.getCreatedAt().toLocalDate())
                 .collect(Collectors.toSet());
         Map<String, ProductionPlanDaily> dailyMap = dailyService.findByModelLineAndDates(keysToFetch);
 
-        // Map hiển thị
-        Map<String, HourlyActualRow> map = new LinkedHashMap<>();
+        Map<String, HourlyActualRow> resultMap = new LinkedHashMap<>();
 
-        // (NEW) ---------- LOAD PLAN FROM ProductionPlanHourly ----------
-        // Tạo hàng "Plan" theo từng DailyID (nếu có kế hoạch giờ)
-        for (var e : dailyMap.entrySet()) {
-            String dateKey = e.getKey(); // model|line|date
-            ProductionPlanDaily d = e.getValue();
-            if (d == null) continue;
+        // --- PLAN luôn hiển thị ---
+        for (var entry : dailyMap.entrySet()) {
+            ProductionPlanDaily daily = entry.getValue();
+            if (daily == null) continue;
 
-            // Tìm 1 log bất kỳ tương ứng để lấy model/line/modelType/runDate cho dễ
-            Optional<PcbPerformanceLogHistoryDTO> anyLog = logs.stream().filter(l ->
-                    (l.getModelCode() + "|" + l.getWarehouseName() + "|" + l.getCreatedAt().toLocalDate()).equals(dateKey)
-            ).findFirst();
+            String[] parts = entry.getKey().split("\\|");
+            String modelCode = parts[0];
+            String warehouseNm = parts[1];
+            LocalDate runDate = LocalDate.parse(parts[2]);
 
-            // Nếu ngày đó chưa có Actual log nào, vẫn có thể hiển thị Plan,
-            // nhưng cần biết line/model/modelType. Có thể lấy từ ProductService/WarehouseService nếu muốn.
-            String modelCode   = anyLog.map(PcbPerformanceLogHistoryDTO::getModelCode).orElse("N/A");
-            String warehouseNm = anyLog.map(PcbPerformanceLogHistoryDTO::getWarehouseName).orElse(line != null ? line : "N/A");
-            String modelType   = anyLog.map(l -> l.getModelType().name()).orElse("NONE");
-            LocalDate runDate  = anyLog.map(l -> l.getCreatedAt().toLocalDate()).orElse(day);
-
-            // Plan không theo AOI cụ thể → đặt "AOI" để hiển thị tổng
-            String aoi = anyLog.map(PcbPerformanceLogHistoryDTO::getAoi).orElse("AOI");
-
-
-
-            String baseKey = modelCode + "|" + aoi;
+            String baseKey = modelCode + "|" + warehouseNm;
             String fullKey = baseKey + "|Plan";
 
-            HourlyActualRow planRow = map.computeIfAbsent(fullKey, k -> new HourlyActualRow(
-                    d.getPlanItemID(),
+            HourlyActualRow planRow = new HourlyActualRow(
+                    daily.getPlanItemID(),
                     warehouseNm,
                     modelCode,
                     modelCode,
-                    modelType,
+                    daily.getModelType(),   // <-- dùng luôn từ Daily
                     new int[12],
                     "Plan",
-                    aoi,
+                    "AOI",
                     runDate
-            ));
+            );
 
-            // Lấy các slot & PlanQuantity
-            List<ProductionPlanHourly> slots = dailyService.getHourlyPlansByDailyId(d.getDailyID());
+            // Load kế hoạch giờ nếu đã có trong DB
+            List<ProductionPlanHourly> slots = dailyService.getHourlyPlansByDailyId(daily.getDailyID());
             for (ProductionPlanHourly slot : slots) {
                 int idx = Math.max(0, Math.min(11, slot.getSlotIndex()));
-                int q   = Math.max(0, slot.getPlanQuantity());
-                planRow.slotProperty(idx).set(planRow.slotProperty(idx).get() + q);
-                //planRow.totalProperty().set(planRow.totalProperty().get() + q);
+                int q = Math.max(0, slot.getPlanQuantity());
+                planRow.slotProperty(idx).set(q);
+                planRow.totalProperty().set(planRow.totalProperty().get() + q);
             }
-        }
-        // --------------------------------------------------------------
 
-        // Load Actual như bạn (GIỮ)
+            resultMap.put(fullKey, planRow);
+        }
+
+        // --- ACTUAL từ log ---
         for (var log : logs) {
             int actual = log.getTotalModules() - log.getNgModules();
             int idx = slotIndexTwoHours(log.getCreatedAt().toLocalTime());
 
-            String baseKey = log.getModelCode() + "|" + log.getAoi();
-            String dateKey = log.getModelCode() + "|" + log.getWarehouseName() + "|" + log.getCreatedAt().toLocalDate();
+            String baseKey = log.getModelCode() + "|" + log.getWarehouseName();
             String fullKey = baseKey + "|Actual";
 
-            ProductionPlanDaily daily = dailyMap.get(dateKey);
+            ProductionPlanDaily daily = dailyMap.get(
+                    log.getModelCode() + "|" + log.getWarehouseName() + "|" + log.getCreatedAt().toLocalDate()
+            );
             int planItemId = (daily != null) ? daily.getPlanItemID() : 0;
 
-            HourlyActualRow row = map.computeIfAbsent(fullKey, k -> new HourlyActualRow(
+            HourlyActualRow row = resultMap.computeIfAbsent(fullKey, k -> new HourlyActualRow(
                     planItemId,
                     log.getWarehouseName(),
                     log.getModelCode(),
@@ -801,66 +787,77 @@ public class ProductionPlanController {
             row.totalProperty().set(row.totalProperty().get() + Math.max(0, actual));
         }
 
-        // (NEW) Tính toán Diff giữa Plan và Actual
-        Map<String, HourlyActualRow> finalMap = new LinkedHashMap<>(map); // giữ nguyên thứ tự
+        // --- DIFF & COMPLETION ---
+        Map<String, HourlyActualRow> finalMap = new LinkedHashMap<>(resultMap);
 
-        for (var entry : map.entrySet()) {
+        for (var entry : resultMap.entrySet()) {
             String key = entry.getKey();
             if (!key.endsWith("|Plan")) continue;
 
-            String baseKey = key.substring(0, key.length() - "|Plan".length()); // model|AOI
-            String actualKey = baseKey + "|Actual";
-            String diffKey = baseKey + "|Diff";
+            String baseKey = key.substring(0, key.length() - "|Plan".length());
+            HourlyActualRow planRow = resultMap.get(key);
+            HourlyActualRow actualRow = resultMap.get(baseKey + "|Actual");
 
-            HourlyActualRow planRow = map.get(key);
-            HourlyActualRow actualRow = map.get(actualKey);
-            if (actualRow == null) continue;
+            if (planRow != null && actualRow != null) {
+                // Diff
+                int[] diffSlots = new int[12];
+                for (int i = 0; i < 12; i++) {
+                    diffSlots[i] = planRow.slotProperty(i).get() - actualRow.slotProperty(i).get();
+                }
+                HourlyActualRow diffRow = new HourlyActualRow(
+                        planRow.getPlanItemId(),
+                        planRow.getLine(),
+                        planRow.getModel(),
+                        planRow.getProductCode(),
+                        planRow.getModelType(),
+                        diffSlots,
+                        "Diff",
+                        planRow.getStage(),
+                        planRow.getRunDate()
+                );
+                finalMap.put(baseKey + "|Diff", diffRow);
 
-            int[] diffSlots = new int[12];
-            for (int i = 0; i < 12; i++) {
-                diffSlots[i] = planRow.slotProperty(i).get() - actualRow.slotProperty(i).get();
+                // Completion
+                int totalPlan = planRow.totalProperty().get();
+                int totalActual = actualRow.totalProperty().get();
+                double rate = (totalPlan == 0) ? 0 : (totalActual * 100.0 / totalPlan);
+
+                HourlyActualRow compRow = new HourlyActualRow(
+                        planRow.getPlanItemId(),
+                        planRow.getLine(),
+                        planRow.getModel(),
+                        planRow.getProductCode(),
+                        planRow.getModelType(),
+                        new int[12],
+                        "Completion",
+                        planRow.getStage(),
+                        planRow.getRunDate()
+                );
+                //compRow.setCompletionRate(rate);
+                finalMap.put(baseKey + "|Completion", compRow);
             }
-
-            HourlyActualRow diffRow = new HourlyActualRow(
-                    planRow.getPlanItemId(),
-                    planRow.getLine(),
-                    planRow.getModel(),
-                    planRow.getProductCode(),
-                    planRow.getModelType(),
-                    diffSlots,
-                    "Diff",
-                    planRow.getStage(), // AOI
-                    planRow.getRunDate()
-            );
-            finalMap.put(diffKey, diffRow);
         }
 
-
-        // Đẩy ra bảng (Plan & Actual sẽ hiển thị song song)
+        // Sort để Plan → Actual → Diff → Completion
         List<HourlyActualRow> rows = new ArrayList<>(finalMap.values());
-
         rows.sort(
                 Comparator
                         .comparing(HourlyActualRow::getLine, Comparator.nullsLast(String::compareTo))
                         .thenComparing(HourlyActualRow::getModel, Comparator.nullsLast(String::compareTo))
-                        .thenComparingInt(row -> {
-                            // Giúp đảm bảo thứ tự: Plan (0) → Actual (1) → Diff (2) → Completion (3)
-                            return switch (row.getStage()) {
-                                case "Plan" -> 0;
-                                case "Actual" -> 1;
-                                case "Diff" -> 2;
-                                case "Completion" -> 3;
-                                default -> 9;
-                            };
+                        .thenComparingInt(row -> switch (row.getStage()) {
+                            case "Plan" -> 0;
+                            case "Actual" -> 1;
+                            case "Diff" -> 2;
+                            case "Completion" -> 3;
+                            default -> 9;
                         })
-                        .thenComparing(HourlyActualRow::getAoi, Comparator.nullsLast(String::compareTo)) // nếu có nhiều AOI
-                        .thenComparing(HourlyActualRow::getProductCode, Comparator.nullsLast(String::compareTo))
         );
 
         tblHourly.setItems(FXCollections.observableArrayList(rows));
         tblHourly.setEditable(true);
-
     }
+
+
 
     // 08:00..09:59 -> 0, 10:00..11:59 -> 1, ..., 06:00..07:59 -> 11
     private int slotIndexTwoHours(LocalTime time) {

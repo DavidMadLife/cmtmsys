@@ -355,7 +355,30 @@ public class ProductionPlanDailyRepositoryImpl implements ProductionPlanDailyRep
         });
     }
 
+    @Override
+    public List<ProductionPlanDaily> findByLineAndDate(String lineName, LocalDate runDate) {
+        String sql = """
+            SELECT d.*
+            FROM ProductionPlanDaily d
+            JOIN ProductionPlanItems i ON d.planItemID = i.planItemID
+            JOIN ProductionPlans p ON i.planID = p.planID
+            JOIN Warehouses w ON p.lineWarehouseID = w.WarehouseID
+            WHERE w.name = ? AND d.runDate = ?
+        """;
 
+        return jdbcTemplate.query(sql,
+                new Object[]{lineName, java.sql.Date.valueOf(runDate)},
+                (rs, rowNum) -> {
+                    ProductionPlanDaily daily = new ProductionPlanDaily();
+                    daily.setDailyID(rs.getInt("dailyID"));
+                    daily.setPlanItemID(rs.getInt("planItemID"));
+                    daily.setRunDate(rs.getDate("runDate").toLocalDate());
+                    daily.setQuantity(rs.getInt("quantity"));
+                    daily.setActualQuantity(rs.getInt("actualQuantity"));
+                    daily.setCreatedAt(rs.getTimestamp("createdAt").toLocalDateTime());
+                    return daily;
+                });
+    }
 
 
     private static class DailyPlanRowDtoMapper implements RowMapper<DailyPlanRowDto> {
@@ -375,4 +398,6 @@ public class ProductionPlanDailyRepositoryImpl implements ProductionPlanDailyRep
 
         }
     }
+
+
 }

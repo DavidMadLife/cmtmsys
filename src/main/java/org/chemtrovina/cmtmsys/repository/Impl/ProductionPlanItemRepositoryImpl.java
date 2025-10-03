@@ -24,6 +24,12 @@ public class ProductionPlanItemRepositoryImpl implements ProductionPlanItemRepos
     }
 
     @Override
+    public ProductionPlanItem findById(int id) {
+        String sql = "SELECT * FROM ProductionPlanItems WHERE PlanItemID = ?";
+        return jdbcTemplate.queryForObject(sql, new ProductionPlanItemRowMapper(), id);
+    }
+
+    @Override
     public void update(ProductionPlanItem item) {
         String sql = "UPDATE ProductionPlanItems SET ProductID = ?, PlannedQuantity = ? WHERE PlanItemID = ?";
         jdbcTemplate.update(sql, item.getProductID(), item.getPlannedQuantity(), item.getPlanItemID());
@@ -39,4 +45,6 @@ public class ProductionPlanItemRepositoryImpl implements ProductionPlanItemRepos
         String sql = "SELECT * FROM ProductionPlanItems WHERE PlanID = ?";
         return jdbcTemplate.query(sql, new ProductionPlanItemRowMapper(), planId);
     }
+
+
 }

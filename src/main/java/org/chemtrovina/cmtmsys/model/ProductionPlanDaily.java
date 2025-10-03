@@ -11,6 +11,8 @@ public class ProductionPlanDaily {
     private LocalDateTime createdAt;
     private int actualQuantity;
 
+    private String modelType;
+
     public ProductionPlanDaily() {}
 
     public ProductionPlanDaily(int dailyID, int planItemID, LocalDate runDate, int quantity, LocalDateTime createdAt, int actualQuantity) {
@@ -41,4 +43,12 @@ public class ProductionPlanDaily {
 
     public int getActualQuantity() { return actualQuantity; }
     public void setActualQuantity(int actualQuantity) { this.actualQuantity = actualQuantity; }
+
+    public String getModelType() {
+        return modelType;
+    }
+
+    public void setModelType(String modelType) {
+        this.modelType = modelType;
+    }
 }

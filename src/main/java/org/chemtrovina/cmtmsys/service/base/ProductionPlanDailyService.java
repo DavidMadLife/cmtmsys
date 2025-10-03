@@ -1,6 +1,7 @@
 package org.chemtrovina.cmtmsys.service.base;
 
 import org.chemtrovina.cmtmsys.dto.DailyPlanRowDto;
+import org.chemtrovina.cmtmsys.dto.ProductionPlanDailyDto;
 import org.chemtrovina.cmtmsys.model.ProductionPlanDaily;
 import org.chemtrovina.cmtmsys.model.ProductionPlanHourly;
 
@@ -42,4 +43,6 @@ public interface ProductionPlanDailyService {
 
 
     List<ProductionPlanHourly> getHourlyPlansByDailyId(int dailyId);
+
+    List<ProductionPlanDaily> getDailyByLineAndDate(String lineName, LocalDate runDate);
 }

@@ -1,0 +1,9 @@
+.table-view .column-header-background { -fx-background-color: linear-gradient(#f7f7f7, #e6e6e6); }
+.table-row-cell { -fx-background-insets: 0; -fx-padding: 0.0em; }
+.table-cell {
+    -fx-border-color: rgba(0,0,0,0.08);
+    -fx-border-width: 0 0 1 1;           /* grid lines */
+    -fx-padding: 4px 6px;
+}
+.table-row-cell:odd { -fx-background-color: #fcfcfc; }
+.table-row-cell:selected { -fx-background-color: -fx-accent; -fx-text-fill: white; }
