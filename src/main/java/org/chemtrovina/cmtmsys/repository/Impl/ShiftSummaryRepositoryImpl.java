@@ -23,18 +23,21 @@ public class ShiftSummaryRepositoryImpl implements ShiftSummaryRepository {
         this.jdbcTemplate = jdbcTemplate;
     }
 
+    // ===========================================================
+    // CRUD CƠ BẢN
+    // ===========================================================
     @Override
     public void add(ShiftSummary summary) {
         String sql = """
-    INSERT INTO ShiftSummary (
-        ShiftId, WarehouseId, TotalTimeSec,
-        TorTimeSec, TorQty, TorPercent,
-        PorTimeSec, PorQty, PorPercent,
-        IdleTimeSec, IdleQty, IdlePercent,
-        McTimeSec, McQty, McPercent
-    )
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-""";
+            INSERT INTO ShiftSummary (
+                ShiftId, WarehouseId, TotalTimeSec,
+                TorTimeSec, TorQty, TorPercent,
+                PorTimeSec, PorQty, PorPercent,
+                IdleTimeSec, IdleQty, IdlePercent,
+                McTimeSec, McQty, McPercent
+            )
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+        """;
 
         jdbcTemplate.update(sql,
                 summary.getShiftId(),
@@ -57,20 +60,19 @@ public class ShiftSummaryRepositoryImpl implements ShiftSummaryRepository {
                 summary.getMcQty(),
                 summary.getMcPercent()
         );
-
     }
 
     @Override
     public void update(ShiftSummary summary) {
         String sql = """
-    UPDATE ShiftSummary
-    SET WarehouseId=?, TotalTimeSec=?,
-        TorTimeSec=?, TorQty=?, TorPercent=?,
-        PorTimeSec=?, PorQty=?, PorPercent=?,
-        IdleTimeSec=?, IdleQty=?, IdlePercent=?,
-        McTimeSec=?, McQty=?, McPercent=?
-    WHERE SummaryId=?
-""";
+            UPDATE ShiftSummary
+            SET WarehouseId=?, TotalTimeSec=?,
+                TorTimeSec=?, TorQty=?, TorPercent=?,
+                PorTimeSec=?, PorQty=?, PorPercent=?,
+                IdleTimeSec=?, IdleQty=?, IdlePercent=?,
+                McTimeSec=?, McQty=?, McPercent=?
+            WHERE SummaryId=?
+        """;
 
         jdbcTemplate.update(sql,
                 summary.getWarehouseId(),
@@ -94,7 +96,6 @@ public class ShiftSummaryRepositoryImpl implements ShiftSummaryRepository {
 
                 summary.getSummaryId()
         );
-
     }
 
     @Override
@@ -120,6 +121,9 @@ public class ShiftSummaryRepositoryImpl implements ShiftSummaryRepository {
         return jdbcTemplate.query(sql, new ShiftSummaryRowMapper(), shiftId);
     }
 
+    // ===========================================================
+    // MAPPING DTO
+    // ===========================================================
     private ShiftSummaryDTO mapRow(ResultSet rs, int rowNum) throws SQLException {
         ShiftSummaryDTO dto = new ShiftSummaryDTO();
         dto.setWarehouseName(rs.getString("WarehouseName"));
@@ -134,112 +138,72 @@ public class ShiftSummaryRepositoryImpl implements ShiftSummaryRepository {
         dto.setTorQty(rs.getInt("TorQty"));
         dto.setTorPercent(rs.getDouble("TorPercent"));
 
-        dto.setIdleStart(rs.getString("IdleStart"));
-        dto.setIdleQty(rs.getInt("IdleQty"));
         dto.setIdleTimeSec(rs.getInt("IdleTimeSec"));
+        dto.setIdleQty(rs.getInt("IdleQty"));
+        dto.setIdlePercent(rs.getDouble("IdlePercent"));
 
-        dto.setMcStart(rs.getString("McStart"));
+        dto.setMcTimeSec(rs.getInt("McTimeSec"));
         dto.setMcQty(rs.getInt("McQty"));
+        dto.setMcPercent(rs.getDouble("McPercent"));
         return dto;
     }
 
+    // ===========================================================
+    // CÁC HÀM LẤY DỮ LIỆU DTO
+    // ===========================================================
+    private static final String BASE_SELECT = """
+        SELECT w.Name AS WarehouseName,
+               s.StartTime, s.EndTime,
+               sum.PorTimeSec, sum.PorQty, sum.PorPercent,
+               sum.TorTimeSec, sum.TorQty, sum.TorPercent,
+               sum.IdleTimeSec, sum.IdleQty, sum.IdlePercent,
+               sum.McTimeSec, sum.McQty, sum.McPercent
+        FROM ShiftSummary sum
+        JOIN ShiftScheduleSMT s ON sum.ShiftId = s.ShiftId
+        JOIN Warehouses w ON sum.WarehouseId = w.WarehouseId
+    """;
+
     @Override
     public List<ShiftSummaryDTO> findByDateAndShiftType(LocalDate date, String shiftType) {
-        String sql = """
-            SELECT w.Name AS WarehouseName,
-                   s.StartTime, s.EndTime,
-                   sum.TorTimeSec, sum.TorQty, sum.TorPercent,
-                   sum.PorTimeSec, sum.PorQty, sum.PorPercent,
-                   sum.IdleTimeSec, sum.IdleQty, sum.IdlePercent,
-                   '' as IdleStart,
-                   '' as McStart,
-                   0 as McQty
-            FROM ShiftSummary sum
-            JOIN ShiftScheduleSMT s ON sum.ShiftId = s.ShiftId
-            JOIN Warehouses w ON sum.WarehouseId = w.WarehouseId
+        String sql = BASE_SELECT + """
             WHERE CAST(s.ShiftDate AS DATE) = ? AND s.ShiftType = ?
+            ORDER BY w.Name
         """;
         return jdbcTemplate.query(sql, this::mapRow, date, shiftType);
     }
 
     @Override
     public List<ShiftSummaryDTO> findByDate(LocalDate date) {
-        String sql = """
-            SELECT w.Name AS WarehouseName,
-                   s.StartTime, s.EndTime,
-                   sum.TorTimeSec, sum.TorQty, sum.TorPercent,
-                   sum.PorTimeSec, sum.PorQty, sum.PorPercent,
-                   sum.IdleTimeSec, sum.IdleQty, sum.IdlePercent,
-                   '' as IdleStart,
-                   '' as McStart,
-                   0 as McQty
-            FROM ShiftSummary sum
-            JOIN ShiftScheduleSMT s ON sum.ShiftId = s.ShiftId
-            JOIN Warehouses w ON sum.WarehouseId = w.WarehouseId
+        String sql = BASE_SELECT + """
             WHERE CAST(s.ShiftDate AS DATE) = ?
+            ORDER BY w.Name
         """;
         return jdbcTemplate.query(sql, this::mapRow, date);
     }
 
     @Override
     public List<ShiftSummaryDTO> findByShiftType(String shiftType) {
-        String sql = """
-            SELECT w.Name AS WarehouseName,
-                   s.StartTime, s.EndTime,
-                   sum.TorTimeSec, sum.TorQty, sum.TorPercent,
-                   sum.PorTimeSec, sum.PorQty, sum.PorPercent,
-                   sum.IdleTimeSec, sum.IdleQty, sum.IdlePercent,
-                   '' as IdleStart,
-                   '' as McStart,
-                   0 as McQty
-            FROM ShiftSummary sum
-            JOIN ShiftScheduleSMT s ON sum.ShiftId = s.ShiftId
-            JOIN Warehouses w ON sum.WarehouseId = w.WarehouseId
+        String sql = BASE_SELECT + """
             WHERE s.ShiftType = ?
+            ORDER BY w.Name
         """;
         return jdbcTemplate.query(sql, this::mapRow, shiftType);
     }
 
     @Override
     public List<ShiftSummaryDTO> findAllDTO() {
-        String sql = """
-            SELECT w.Name AS WarehouseName,
-                   s.StartTime, s.EndTime,
-                   sum.TorTimeSec, sum.TorQty, sum.TorPercent,
-                   sum.PorTimeSec, sum.PorQty, sum.PorPercent,
-                   sum.IdleTimeSec, sum.IdleQty, sum.IdlePercent,
-                   '' as IdleStart,
-                   '' as McStart,
-                   0 as McQty
-            FROM ShiftSummary sum
-            JOIN ShiftScheduleSMT s ON sum.ShiftId = s.ShiftId
-            JOIN Warehouses w ON sum.WarehouseId = w.WarehouseId
-        """;
+        String sql = BASE_SELECT + " ORDER BY s.StartTime DESC";
         return jdbcTemplate.query(sql, this::mapRow);
     }
 
     @Override
     public List<ShiftSummaryDTO> findByDateShiftAndLines(LocalDate date, String shiftType, List<String> lineNames) {
-        // Tạo placeholder ?, ?, ? theo số line
         String inSql = lineNames.stream().map(x -> "?").collect(Collectors.joining(","));
+        String sql = BASE_SELECT + """
+            WHERE CAST(s.ShiftDate AS DATE) = ?
+              AND s.ShiftType = ?
+              AND w.Name IN (""" + inSql + ") ORDER BY w.Name";
 
-        String sql = """
-        SELECT w.Name AS WarehouseName,
-               s.StartTime, s.EndTime,
-               sum.TorTimeSec, sum.TorQty, sum.TorPercent,
-               sum.PorTimeSec, sum.PorQty, sum.PorPercent,
-               sum.IdleTimeSec, sum.IdleQty, sum.IdlePercent,
-               '' as IdleStart,
-               '' as McStart,
-               0 as McQty
-        FROM ShiftSummary sum
-        JOIN ShiftScheduleSMT s ON sum.ShiftId = s.ShiftId
-        JOIN Warehouses w ON sum.WarehouseId = w.WarehouseId
-        WHERE CAST(s.ShiftDate AS DATE) = ?
-          AND s.ShiftType = ?
-          AND w.Name IN (""" + inSql + ")";
-
-        // build params (date, shiftType, + list lineNames)
         List<Object> params = new ArrayList<>();
         params.add(date);
         params.add(shiftType);
@@ -247,8 +211,4 @@ public class ShiftSummaryRepositoryImpl implements ShiftSummaryRepository {
 
         return jdbcTemplate.query(sql, this::mapRow, params.toArray());
     }
-
-
-
-
 }

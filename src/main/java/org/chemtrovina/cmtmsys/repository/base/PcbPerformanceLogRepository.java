@@ -19,6 +19,6 @@ public interface PcbPerformanceLogRepository {
 
     List<PcbPerformanceLogHistoryDTO> getLogsByWarehouseAndDateRange(int warehouseId, LocalDateTime start, LocalDateTime end);
 
-    PcbPerformanceLog findPrevLog(int warehouseId, int productId, LocalDateTime beforeTime);
+    PcbPerformanceLog findPrevLog(int warehouseId, LocalDateTime beforeTime);
 
 }

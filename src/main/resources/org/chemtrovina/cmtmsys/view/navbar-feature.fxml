@@ -78,6 +78,13 @@
                 <MenuItem fx:id="menuShiftSummary" text="Chi tiết ca làm (Shift summary)" />
             </items>
         </MenuButton>
+        <!-- Menu: AOI E-Board -->
+        <MenuButton fx:id="menuEBoard" text="E-Board (AOI)" style="-fx-font-weight: bold;" prefWidth="180">
+            <items>
+                <MenuItem fx:id="menuEBoardLog" text="Xử lý log E-Board"/>
+                <MenuItem fx:id="menuEBoardHistory" text="Lịch sử E-Board"/>
+            </items>
+        </MenuButton>
 
         <!-- Menu: Quản lý Stencil -->
         <MenuButton fx:id="menuStencil" text="Stencil" style="-fx-font-weight: bold;" prefWidth="140">
@@ -94,6 +101,7 @@
                 <MenuItem fx:id="menuSolderOut" text="Scan OUT (Aging)"/>
             </items>
         </MenuButton>
+
 
 
 

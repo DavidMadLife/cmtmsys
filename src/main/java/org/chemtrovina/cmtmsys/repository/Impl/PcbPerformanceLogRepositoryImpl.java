@@ -199,12 +199,11 @@ public class PcbPerformanceLogRepositoryImpl implements PcbPerformanceLogReposit
     }
 
     @Override
-    public PcbPerformanceLog findPrevLog(int warehouseId, int productId, LocalDateTime beforeTime) {
+    public PcbPerformanceLog findPrevLog(int warehouseId, LocalDateTime beforeTime) {
         String sql = """
         SELECT TOP 1 *
         FROM PcbPerformanceLog
         WHERE WarehouseId = ?
-          AND ProductId = ?
           AND CreatedAt < ?
         ORDER BY CreatedAt DESC
     """;
@@ -212,7 +211,7 @@ public class PcbPerformanceLogRepositoryImpl implements PcbPerformanceLogReposit
         List<PcbPerformanceLog> results = jdbcTemplate.query(
                 sql,
                 new PcbPerformanceLogRowMapper(),
-                warehouseId, productId, Timestamp.valueOf(beforeTime)
+                warehouseId, Timestamp.valueOf(beforeTime)
         );
 
         return results.isEmpty() ? null : results.get(0);

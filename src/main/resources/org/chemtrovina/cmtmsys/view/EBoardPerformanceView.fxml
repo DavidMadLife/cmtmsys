@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="org.chemtrovina.cmtmsys.controller.EBoardPerformanceController"
+            prefWidth="1200" prefHeight="700">
+
+    <VBox spacing="10" AnchorPane.topAnchor="10" AnchorPane.leftAnchor="10" AnchorPane.rightAnchor="10" AnchorPane.bottomAnchor="10">
+        <!-- Header -->
+        <HBox spacing="10" alignment="CENTER_LEFT">
+            <Label text="📁 AOI E-Board Folder:"/>
+            <TextField fx:id="txtFolderPath" prefWidth="400" promptText="Chọn thư mục log AOI..."/>
+            <Button fx:id="btnChooseFolder" text="Browse"/>
+            <Label text="🏭 Line:"/>
+            <ComboBox fx:id="cbWarehouse" prefWidth="150"/>
+            <Button fx:id="btnStartWatch" text="▶ Start Watching" style="-fx-background-color: #4CAF50; -fx-text-fill: white;"/>
+            <Button fx:id="btnStopWatch" text="⏹ Stop" style="-fx-background-color: #F44336; -fx-text-fill: white;"/>
+        </HBox>
+
+        <!-- Table -->
+        <TableView fx:id="tblLogs" prefHeight="400">
+            <columns>
+                <TableColumn fx:id="colSet" text="Set" prefWidth="100"/>
+                <TableColumn fx:id="colCircuit" text="Circuit" prefWidth="80"/>
+                <TableColumn fx:id="colModel" text="ModelType" prefWidth="100"/>
+                <TableColumn fx:id="colAOI" text="AOI Machine" prefWidth="150"/>
+                <TableColumn fx:id="colFile" text="File Name" prefWidth="250"/>
+                <TableColumn fx:id="colTotal" text="Total" prefWidth="80"/>
+                <TableColumn fx:id="colNg" text="NG" prefWidth="80"/>
+                <TableColumn fx:id="colPerf" text="Performance (%)" prefWidth="150"/>
+            </columns>
+        </TableView>
+
+        <!-- Log console -->
+        <Label text="📜 Log Console:"/>
+        <TextArea fx:id="txtLog" prefHeight="180" wrapText="true" editable="false"
+                  style="-fx-control-inner-background: #1E1E1E; -fx-text-fill: #00FF00; -fx-font-family: 'Consolas';"/>
+
+        <!-- Footer -->
+        <HBox alignment="CENTER_RIGHT">
+            <Label text="Chemtrovina AOI E-Board Monitor"
+                   style="-fx-text-fill: gray; -fx-font-style: italic;"/>
+        </HBox>
+    </VBox>
+</AnchorPane>

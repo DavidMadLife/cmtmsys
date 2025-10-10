@@ -5,23 +5,27 @@ public class ShiftSummaryDTO {
     private String startTime;
     private String endTime;
 
+    // --- POR ---
     private int porTimeSec;
     private int porQty;
     private double porPercent;
 
+    // --- TOR ---
     private int torTimeSec;
     private int torQty;
     private double torPercent;
 
-    private String idleStart;
-    private int idleQty;
+    // --- IDLE ---
     private int idleTimeSec;
+    private int idleQty;
+    private double idlePercent;
 
-    private String mcStart;
+    // --- M/C ---
+    private int mcTimeSec;
     private int mcQty;
+    private double mcPercent;
 
-    // === GETTER & SETTER ===
-
+    // === GETTERS & SETTERS ===
     public String getWarehouseName() {
         return warehouseName;
     }
@@ -94,12 +98,12 @@ public class ShiftSummaryDTO {
         this.torPercent = torPercent;
     }
 
-    public String getIdleStart() {
-        return idleStart;
+    public int getIdleTimeSec() {
+        return idleTimeSec;
     }
 
-    public void setIdleStart(String idleStart) {
-        this.idleStart = idleStart;
+    public void setIdleTimeSec(int idleTimeSec) {
+        this.idleTimeSec = idleTimeSec;
     }
 
     public int getIdleQty() {
@@ -110,20 +114,20 @@ public class ShiftSummaryDTO {
         this.idleQty = idleQty;
     }
 
-    public int getIdleTimeSec() {
-        return idleTimeSec;
+    public double getIdlePercent() {
+        return idlePercent;
     }
 
-    public void setIdleTimeSec(int idleTimeSec) {
-        this.idleTimeSec = idleTimeSec;
+    public void setIdlePercent(double idlePercent) {
+        this.idlePercent = idlePercent;
     }
 
-    public String getMcStart() {
-        return mcStart;
+    public int getMcTimeSec() {
+        return mcTimeSec;
     }
 
-    public void setMcStart(String mcStart) {
-        this.mcStart = mcStart;
+    public void setMcTimeSec(int mcTimeSec) {
+        this.mcTimeSec = mcTimeSec;
     }
 
     public int getMcQty() {
@@ -132,5 +136,13 @@ public class ShiftSummaryDTO {
 
     public void setMcQty(int mcQty) {
         this.mcQty = mcQty;
+    }
+
+    public double getMcPercent() {
+        return mcPercent;
+    }
+
+    public void setMcPercent(double mcPercent) {
+        this.mcPercent = mcPercent;
     }
 }

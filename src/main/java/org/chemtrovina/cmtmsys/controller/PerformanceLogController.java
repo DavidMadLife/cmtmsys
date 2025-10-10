@@ -177,7 +177,7 @@ public class PerformanceLogController {
                             }
                         }
 
-                        Product product = productResolver.resolveFromCarrier(carrierId, this::appendLog);
+                        Product product = productResolver.resolveFromCarrierAndFileName(carrierId, fileName.toString(), this::appendLog);
                         if (product == null) {
                             appendLog("❌ Không tìm thấy sản phẩm cho Carrier: " + carrierId);
                             continue;
@@ -351,6 +351,7 @@ public class PerformanceLogController {
         } catch (IOException ignored) {
         }
         return null;
+
     }
 
     private void appendLog(String message) {

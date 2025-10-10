@@ -62,6 +62,12 @@ public class NavbarController {
     @FXML private MenuItem menuStencilManager;
     @FXML private MenuItem menuStencilTransferLog, menuShiftSummary;
 
+    // ==== E-Board Menu ====
+    @FXML private MenuButton menuEBoard;
+    @FXML private MenuItem menuEBoardLog;
+    @FXML private MenuItem menuEBoardHistory;
+
+
 
     // ==== Solder Menu ====
     @FXML private MenuButton menuSolder;
@@ -175,6 +181,12 @@ public class NavbarController {
         menuImportCycleTime.setOnAction(e -> openTab("Import Cycle Time", "/org/chemtrovina/cmtmsys/view/import_cycle_time.fxml"));
         menuShiftScheduleSMT.setOnAction(e -> openTab("Create Shift", "/org/chemtrovina/cmtmsys/view/shiftScheduleView.fxml"));
         menuShiftSummary.setOnAction(e -> openTab("Shift summary", "/org/chemtrovina/cmtmsys/view/ShiftSummaryView.fxml"));
+
+        menuEBoardLog.setOnAction(e ->
+                openTab("AOI E-Board Log", "/org/chemtrovina/cmtmsys/view/EBoardPerformanceView.fxml"));
+
+        menuEBoardHistory.setOnAction(e ->
+                openTab("Lịch sử E-Board", "/org/chemtrovina/cmtmsys/view/EBoardPerformanceHistoryView.fxml"));
 
 
         menuStencilManager.setOnAction(e -> openTab("Stencil Manager", "/org/chemtrovina/cmtmsys/view/stencil_manager_view.fxml"));

@@ -40,8 +40,7 @@ public class PcbPerformanceLogServiceImpl implements PcbPerformanceLogService {
         this.shiftScheduleSMTRepository = shiftScheduleSMTRepository;
     }
 
-    @Override
-
+   /* @Override
     public void saveLog(PcbPerformanceLog log) {
         // 1. Lưu log mới
         repository.add(log);
@@ -147,8 +146,125 @@ public class PcbPerformanceLogServiceImpl implements PcbPerformanceLogService {
 
             shiftSummaryRepository.update(summary);
         }
-    }
+    }*/
+   @Override
+   public void saveLog(PcbPerformanceLog log) {
+       // 1. Lưu log mới
+       repository.add(log);
 
+       // 2. Luôn cập nhật POR trước tiên (Production Output)
+       int porQty = log.getTotalModules() - log.getNgModules();
+       int porTimeSec = 0; // nếu chưa có prev thì chưa có khoảng thời gian
+       if (porQty > 0) {
+           var currentShift = shiftScheduleSMTRepository.findCurrentShift(
+                   log.getWarehouseId(),
+                   log.getCreatedAt()
+           );
+           if (currentShift != null) {
+               var summaries = shiftSummaryRepository.findByShift(currentShift.getShiftId());
+               ShiftSummary summary = summaries.isEmpty() ? new ShiftSummary() : summaries.get(0);
+
+               if (summaries.isEmpty()) {
+                   summary.setShiftId(currentShift.getShiftId());
+                   summary.setWarehouseId(log.getWarehouseId());
+                   summary.setCreatedAt(LocalDateTime.now());
+                   shiftSummaryRepository.add(summary);
+               }
+
+               summary.setPorQty(summary.getPorQty() + porQty);
+               summary.setPorTimeSec(summary.getPorTimeSec() + porTimeSec);
+               shiftSummaryRepository.update(summary);
+           }
+       }
+
+       // 3. Lấy log trước đó (nếu có)
+       PcbPerformanceLog prev = repository.findPrevLog(
+               log.getWarehouseId(),
+               log.getCreatedAt()
+       );
+       if (prev == null) return; // chỉ bỏ qua phần gap nếu không có log trước
+
+       // 4. Tính PID distance
+       int pidDistanceSec = (int) Duration
+               .between(prev.getCreatedAt(), log.getCreatedAt())
+               .getSeconds();
+
+       // 5. Tạo gap log
+       var gap = new ProductionGapLog();
+       gap.setProductId(log.getProductId());
+       gap.setWarehouseId(log.getWarehouseId());
+       gap.setPrevLogId(prev.getLogId());
+       gap.setCurrLogId(log.getLogId());
+       gap.setPidDistanceSec(pidDistanceSec);
+       gap.setCreatedAt(LocalDateTime.now());
+
+       var ct = productCycleTimeRepository.findActive(log.getProductId(), log.getWarehouseId());
+       if (ct != null) {
+           int ctSec = ct.getCtSeconds().intValue();
+
+           if (prev.getProductId() != log.getProductId()) {
+               gap.setStatus("M/C");
+               gap.setReason("Model Change - Different Product");
+           } else if (pidDistanceSec <= ctSec * 2) {
+               gap.setStatus("TOR");
+           } else if (pidDistanceSec > ctSec * 2 && pidDistanceSec <= 900) {
+               gap.setStatus("IDLE");
+           } else {
+               gap.setStatus("IDLE");
+               gap.setReason("Problem");
+           }
+       } else {
+           gap.setStatus("IDLE");
+       }
+       productionGapLogRepository.add(gap);
+
+       // 6. Cập nhật các trạng thái khác
+       var currentShift = shiftScheduleSMTRepository.findCurrentShift(
+               log.getWarehouseId(),
+               log.getCreatedAt()
+       );
+       if (currentShift == null) return;
+
+       var summaries = shiftSummaryRepository.findByShift(currentShift.getShiftId());
+       ShiftSummary summary = summaries.isEmpty() ? new ShiftSummary() : summaries.get(0);
+       if (summaries.isEmpty()) {
+           summary.setShiftId(currentShift.getShiftId());
+           summary.setWarehouseId(log.getWarehouseId());
+           summary.setCreatedAt(LocalDateTime.now());
+           shiftSummaryRepository.add(summary);
+       }
+
+       switch (gap.getStatus()) {
+           case "TOR" -> {
+               summary.setTorQty(summary.getTorQty() + 1);
+               summary.setTorTimeSec(summary.getTorTimeSec() + pidDistanceSec);
+           }
+           case "IDLE" -> {
+               summary.setIdleQty(summary.getIdleQty() + 1);
+               summary.setIdleTimeSec(summary.getIdleTimeSec() + pidDistanceSec);
+           }
+           case "M/C" -> {
+               summary.setMcQty(summary.getMcQty() + 1);
+               summary.setMcTimeSec(summary.getMcTimeSec() + pidDistanceSec);
+           }
+       }
+
+       // POR tổng hợp lại từ tất cả các loại
+       int totalTime = summary.getTorTimeSec() + summary.getIdleTimeSec() + summary.getMcTimeSec();
+       int totalQty = summary.getTorQty() + summary.getIdleQty() + summary.getMcQty();
+       summary.setPorTimeSec(summary.getTorTimeSec() + summary.getIdleTimeSec());
+       summary.setPorQty(totalQty);
+
+       // % phân bổ
+       if (totalTime > 0) {
+           summary.setPorPercent(100.0 * summary.getPorTimeSec() / summary.getTotalTimeSec());
+           summary.setTorPercent(100.0 * summary.getTorTimeSec() / summary.getTotalTimeSec());
+           summary.setIdlePercent(100.0 * summary.getIdleTimeSec() / summary.getTotalTimeSec());
+           summary.setMcPercent(100.0 * summary.getMcTimeSec() / summary.getTotalTimeSec());
+       }
+
+       shiftSummaryRepository.update(summary);
+   }
 
 
 
