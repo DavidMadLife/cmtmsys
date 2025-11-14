@@ -14,6 +14,9 @@ public interface WorkOrderRepository {
     List<WorkOrder> findAll();
     String findMaxCodeByDate(LocalDate date);
     int findIdByCode(String workOrderCode);
-
+    void insertWorkOrder(String workOrderCode, String description);
+    int getWorkOrderIdByCode(String workOrderCode);
+    void insertWorkOrderItem(int workOrderId, int productId, int quantity);
+    List<Integer> findProductIdsByCode(String productCode);
 
 }

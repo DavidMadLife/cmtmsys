@@ -42,13 +42,20 @@ import java.util.stream.Collectors;
 @Component
 public class InventoryTransferController {
 
-    // ComboBox hiển thị tên kho
+    /* ============================================================
+     * 1. FXML FIELDS
+     * ============================================================ */
     @FXML private ComboBox<String> cbSourceWarehouse;
     @FXML private ComboBox<String> cbTargetWarehouse;
+    @FXML private ComboBox<String> cbWorkOrder;
 
-    // Các field khác (đã có sẵn trong FXML)
     @FXML private TextField txtEmployeeID;
     @FXML private TextField txtBarcode;
+    @FXML private TextField txtDeleteBarcode;
+
+    @FXML private Button btnImportFromExcel;
+    @FXML private Button btnDeleteFromWO;
+
     @FXML private TableView<TransferredDto> tblTransferred;
     @FXML private TableColumn<TransferredDto, String> colBarcode;
     @FXML private TableColumn<TransferredDto, String> colSapCode;
@@ -56,6 +63,7 @@ public class InventoryTransferController {
     @FXML private TableColumn<TransferredDto, Integer> colQuantity;
     @FXML private TableColumn<TransferredDto, String> colFromWarehouse;
     @FXML private TableColumn<TransferredDto, String> colToWarehouse;
+    @FXML private TableColumn<Object, Integer> colNoTransferred;
 
     @FXML private TableView<SAPSummaryDto> tblRequiredSummary;
     @FXML private TableColumn<SAPSummaryDto, String> colSapCodeRequired;
@@ -63,37 +71,36 @@ public class InventoryTransferController {
     @FXML private TableColumn<SAPSummaryDto, Integer> colScanned;
     @FXML private TableColumn<SAPSummaryDto, String> colStatus;
     @FXML private TableColumn<Object, Integer> colNoRequired;
-    @FXML private TableColumn<Object, Integer> colNoTransferred;
-
-    @FXML private TextField txtDeleteBarcode;
-    @FXML private Button btnDeleteFromWO;
 
 
-
-    private ObservableList<SAPSummaryDto> sapSummaryList = FXCollections.observableArrayList();
-    private Map<String, SAPSummaryDto> sapSummaryMap = new HashMap<>();
-
-
-    @FXML private ComboBox<String> cbWorkOrder;
-
-
-
-    private final List<TransferredDto> transferredList = new ArrayList<>();
-    private Set<String> alreadyScannedRollCodes = new HashSet<>();
-    @FXML private Button btnImportFromExcel;
+    /* ============================================================
+     * 2. SERVICES & VARIABLES
+     * ============================================================ */
+    private final WarehouseTransferService warehouseTransferService;
+    private final WarehouseService warehouseService;
+    private final MaterialService materialService;
+    private final TransferLogService transferLogService;
+    private final WorkOrderService workOrderService;
 
     private boolean isBatchImport = false;
-
-
-    private final WarehouseTransferService warehouseTransferService;
     private WarehouseTransfer currentTransfer;
-    private final WorkOrderService workOrderService;
-    private final WarehouseService warehouseService;
-    private final TransferLogService transferLogService;
-    private final MaterialService materialService;
 
+    private final Map<String, SAPSummaryDto> sapSummaryMap = new HashMap<>();
+    private final ObservableList<SAPSummaryDto> sapSummaryList = FXCollections.observableArrayList();
+    private final Set<String> alreadyScannedRollCodes = new HashSet<>();
+
+
+    /* ============================================================
+     * 3. CONSTRUCTOR
+     * ============================================================ */
     @Autowired
-    public InventoryTransferController(WarehouseTransferService warehouseTransferService, WarehouseService warehouseService, MaterialService materialService, TransferLogService transferLogService, WorkOrderService workOrderService) {
+    public InventoryTransferController(
+            WarehouseTransferService warehouseTransferService,
+            WarehouseService warehouseService,
+            MaterialService materialService,
+            TransferLogService transferLogService,
+            WorkOrderService workOrderService) {
+
         this.warehouseTransferService = warehouseTransferService;
         this.warehouseService = warehouseService;
         this.materialService = materialService;
@@ -101,158 +108,170 @@ public class InventoryTransferController {
         this.workOrderService = workOrderService;
     }
 
+
+    /* ============================================================
+     * 4. INITIALIZE
+     * ============================================================ */
     @FXML
     public void initialize() {
+
         loadWarehouses();
         loadWorkOrders();
 
-        // Disable combobox trước
-        cbSourceWarehouse.setDisable(true);
-        cbTargetWarehouse.setDisable(true);
-
-        // Enable combobox nếu nhập employeeID
-        txtEmployeeID.textProperty().addListener((obs, oldText, newText) -> {
-            boolean notEmpty = !newText.trim().isEmpty();
-            cbSourceWarehouse.setDisable(!notEmpty);
-            cbTargetWarehouse.setDisable(!notEmpty);
-        });
-
-        setupBarcodeScanner();
-        setupTransferredTable();
-        tblTransferred.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        tblTransferred.setOnKeyPressed(event -> {
-            if (event.isControlDown() && event.getCode().toString().equals("C")) {
-                copyTransferredSelectionToClipboard();
-            }
-        });
-
-        tblRequiredSummary.setOnKeyPressed(event -> {
-            if (event.isControlDown() && event.getCode().toString().equals("C")) {
-                FxClipboardUtils.copySelectionToClipboard(tblRequiredSummary);
-            }
-        });
-
         setupRequiredSummaryTable();
+        setupTransferredTable();
+        setupBarcodeScanner();
+        setupUIEvents();
 
-        cbWorkOrder.valueProperty().addListener((obs, oldVal, newVal) -> {
-            if (newVal != null && !newVal.isEmpty()) {
-                loadRequiredSummary(newVal);
-            }
-        });
+        FxClipboardUtils.enableCopyShortcut(tblTransferred);
+        FxClipboardUtils.enableCopyShortcut(tblRequiredSummary);
+    }
+
+
+    /* ============================================================
+     * 5. UI SETUP (Tables, Listeners)
+     * ============================================================ */
+
+    private void setupUIEvents() {
+
         cbWorkOrder.setOnMouseClicked(e -> loadWorkOrders());
 
+        cbWorkOrder.valueProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null) loadRequiredSummary(newVal);
+        });
 
-        tblRequiredSummary.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        txtEmployeeID.textProperty().addListener((obs, oldText, newText) -> {
+            boolean enable = !newText.trim().isEmpty();
+            cbSourceWarehouse.setDisable(!enable);
+            cbTargetWarehouse.setDisable(!enable);
+        });
 
         btnImportFromExcel.setOnAction(e -> handleImportFromExcel());
         btnDeleteFromWO.setOnAction(e -> handleDeleteBarcode());
-
-
-
-        tblRequiredSummary.getSelectionModel().setCellSelectionEnabled(true);
-        tblRequiredSummary.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-
-        tblTransferred.getSelectionModel().setCellSelectionEnabled(true);
-        tblTransferred.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-
+        txtDeleteBarcode.setOnAction(e -> handleDeleteBarcode());
     }
 
     private void setupRequiredSummaryTable() {
-        colNoRequired.setCellValueFactory(cell ->
-                new SimpleIntegerProperty(tblRequiredSummary.getItems().indexOf(cell.getValue()) + 1).asObject()
-        );
-
+        colNoRequired.setCellValueFactory(c ->
+                new SimpleIntegerProperty(tblRequiredSummary.getItems().indexOf(c.getValue()) + 1).asObject());
         colSapCodeRequired.setCellValueFactory(new PropertyValueFactory<>("sapCode"));
-        colRequired.setCellValueFactory(new PropertyValueFactory<>("required")); // <-- đúng
-        colScanned.setCellValueFactory(new PropertyValueFactory<>("scanned"));  // <-- đúng
+        colRequired.setCellValueFactory(new PropertyValueFactory<>("required"));
+        colScanned.setCellValueFactory(new PropertyValueFactory<>("scanned"));
         colStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
     }
 
-
-
-        private void setupTransferredTable() {
-        colNoTransferred.setCellValueFactory(cell ->
-                new SimpleIntegerProperty(tblTransferred.getItems().indexOf(cell.getValue()) + 1).asObject()
-        );
+    private void setupTransferredTable() {
+        colNoTransferred.setCellValueFactory(c ->
+                new SimpleIntegerProperty(tblTransferred.getItems().indexOf(c.getValue()) + 1).asObject());
         colBarcode.setCellValueFactory(new PropertyValueFactory<>("rollCode"));
         colSapCode.setCellValueFactory(new PropertyValueFactory<>("sapCode"));
         colSpec.setCellValueFactory(new PropertyValueFactory<>("spec"));
         colQuantity.setCellValueFactory(new PropertyValueFactory<>("quantity"));
         colFromWarehouse.setCellValueFactory(new PropertyValueFactory<>("fromWarehouse"));
         colToWarehouse.setCellValueFactory(new PropertyValueFactory<>("toWarehouse"));
-        tblTransferred.getSelectionModel().setCellSelectionEnabled(true); // chọn từng ô
-        tblTransferred.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE); // cho chọn nhiều ô
-
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-
-    private void loadWarehouses() {
-        List<Warehouse> warehouses = warehouseService.getAllWarehouses();
-        List<String> warehouseNames = warehouses.stream()
-                .map(Warehouse::getName)
-                .toList();
-
-        cbSourceWarehouse.setItems(FXCollections.observableArrayList(warehouseNames));
-        cbTargetWarehouse.setItems(FXCollections.observableArrayList(warehouseNames));
-    }
-    private void loadWorkOrders() {
-        cbWorkOrder.getItems().clear();
-
-        List<String> workOrderCodes = workOrderService.getAllWorkOrders().stream()
-                .map(WorkOrder::getWorkOrderCode)
-                .toList();
-
-        cbWorkOrder.setItems(FXCollections.observableArrayList(workOrderCodes));
     }
 
 
-    private void loadRequiredSummary(String workOrderCode) {
-        sapSummaryMap.clear();
-        sapSummaryList.clear();
-        alreadyScannedRollCodes.clear();
-
-        // Lấy danh sách yêu cầu vật liệu
-        List<MaterialRequirementDto> data = workOrderService.getGroupedMaterialRequirements(workOrderCode);
-        for (MaterialRequirementDto dto : data) {
-            sapSummaryMap.put(dto.getSappn(), new SAPSummaryDto(dto.getSappn(), dto.getRequiredQty()));
-        }
-
-        // Lấy các cuộn đã chuyển theo W/O
-        int workOrderId = workOrderService.getWorkOrderIdByCode(workOrderCode);
-        List<WarehouseTransferDetail> details = warehouseTransferService.getDetailsByWorkOrderId(workOrderId);
-
-        for (WarehouseTransferDetail detail : details) {
-            SAPSummaryDto summary = sapSummaryMap.get(detail.getSapCode());
-            if (summary != null) {
-                summary.setScanned(summary.getScanned() + detail.getQuantity());
-                summary.setStatus(summary.getScanned() >= summary.getRequired() ? "Đủ" : "Thiếu");
-            }
-        }
-
-
-        List<WarehouseTransferDetail> pastDetails =
-                warehouseTransferService.getDetailsByWorkOrderId(workOrderId);
-
-        for (WarehouseTransferDetail d : pastDetails) {
-            alreadyScannedRollCodes.add(d.getRollCode());
-        }
-
-        sapSummaryList.addAll(sapSummaryMap.values());
-        tblRequiredSummary.setItems(sapSummaryList);
-    }
-    ////////////////////////////////////////////////////////////////////////////////////////////////
     private void setupBarcodeScanner() {
         txtBarcode.setOnAction(e -> handleBarcodeScanned());
     }
 
 
+    /* ============================================================
+     * 6. LOAD DATA (Warehouses, WorkOrders, Summary)
+     * ============================================================ */
+
+    private void loadWarehouses() {
+        List<String> names = warehouseService.getAllWarehouses()
+                .stream().map(Warehouse::getName).toList();
+        cbSourceWarehouse.setItems(FXCollections.observableArrayList(names));
+        cbTargetWarehouse.setItems(FXCollections.observableArrayList(names));
+    }
+
+    private void loadWorkOrders() {
+        cbWorkOrder.getItems().clear();
+
+        List<String> codes = workOrderService.getAllWorkOrders()
+                .stream().map(WorkOrder::getWorkOrderCode).toList();
+
+        cbWorkOrder.setItems(FXCollections.observableArrayList(codes));
+    }
+
+
+    /** Load summary for selected WO */
+    private void loadRequiredSummary(String workOrderCode) {
+
+        sapSummaryMap.clear();
+        sapSummaryList.clear();
+        alreadyScannedRollCodes.clear();
+
+        int workOrderId = workOrderService.getWorkOrderIdByCode(workOrderCode);
+
+        // 1) YÊU CẦU
+        for (var req : workOrderService.getGroupedMaterialRequirements(workOrderCode)) {
+            sapSummaryMap.put(req.getSappn(), new SAPSummaryDto(req.getSappn(), req.getRequiredQty()));
+        }
+
+        // 2) DETAILS đã chuyển
+        List<WarehouseTransferDetail> details = warehouseTransferService.getDetailsByWorkOrderId(workOrderId);
+        if (details.isEmpty()) {
+            sapSummaryList.addAll(sapSummaryMap.values());
+            tblRequiredSummary.setItems(sapSummaryList);
+            tblTransferred.getItems().clear();
+            return;
+        }
+
+        // Cache
+        Set<Integer> transferIds = details.stream().map(WarehouseTransferDetail::getTransferId).collect(Collectors.toSet());
+        Set<String> rollCodes = details.stream().map(WarehouseTransferDetail::getRollCode).collect(Collectors.toSet());
+
+        Map<Integer, WarehouseTransfer> transferMap = warehouseTransferService.getTransfersByIds(transferIds);
+        Map<String, Material> materialMap = materialService.getMaterialsByRollCodes(rollCodes);
+
+        // Update summary
+        for (WarehouseTransferDetail d : details) {
+            SAPSummaryDto s = sapSummaryMap.get(d.getSapCode());
+            if (s != null) {
+                s.setScanned(s.getScanned() + d.getQuantity());
+                s.setStatus(s.getScanned() >= s.getRequired() ? "Đủ" : "Thiếu");
+                alreadyScannedRollCodes.add(d.getRollCode());
+            }
+        }
+
+        sapSummaryList.addAll(sapSummaryMap.values());
+        tblRequiredSummary.setItems(sapSummaryList);
+
+        // Build transferred list
+        List<TransferredDto> dtos = details.stream()
+                .map(d -> {
+                    Material m = materialMap.get(d.getRollCode());
+                    WarehouseTransfer t = transferMap.get(d.getTransferId());
+                    return new TransferredDto(
+                            d.getRollCode(),
+                            d.getSapCode(),
+                            m != null ? m.getSpec() : "",
+                            d.getQuantity(),
+                            warehouseService.getWarehouseNameById(t.getFromWarehouseId()),
+                            warehouseService.getWarehouseNameById(t.getToWarehouseId())
+                    );
+                })
+                .toList();
+
+        tblTransferred.setItems(FXCollections.observableArrayList(dtos));
+    }
+
+
+    /* ============================================================
+     * 7. MAIN FEATURES (Scan, Delete, Import Excel)
+     * ============================================================ */
+
     private void handleBarcodeScanned() {
         String barcode = txtBarcode.getText().trim();
         if (barcode.isEmpty()) return;
 
-        int toId = getSelectedWarehouseId(cbTargetWarehouse);
-        int fromId = getSelectedWarehouseId(cbSourceWarehouse);
+        // Validate basic info
+        int toId = getWarehouseId(cbTargetWarehouse);
+        int fromId = getWarehouseId(cbSourceWarehouse);
         if (toId == -1 || fromId == -1 || toId == fromId) {
             showAlert("Kho chuyển đến và đi không hợp lệ");
             return;
@@ -272,17 +291,14 @@ public class InventoryTransferController {
 
         Material material = materialService.getMaterialByRollCode(barcode);
         if (material == null) {
-            showAlert("Không tìm thấy vật liệu có mã vạch: " + barcode);
+            showAlert("Không tìm thấy vật liệu: " + barcode);
             return;
         }
 
         if (alreadyScannedRollCodes.contains(barcode)) {
-            showAlert("Cuộn mã vạch này đã được quét trước đó cho W/O này.");
+            showAlert("Cuộn đã được quét trong W/O này.");
             return;
         }
-
-
-
 
         String sapCode = material.getSapCode();
         SAPSummaryDto summary = sapSummaryMap.get(sapCode);
@@ -291,305 +307,272 @@ public class InventoryTransferController {
             return;
         }
 
-        // Khởi tạo transfer nếu chưa có
-        // Nếu chưa có currentTransfer thì kiểm tra DB
-        if (currentTransfer == null) {
-            int workOrderId = workOrderService.getWorkOrderIdByCode(woCode);
-            currentTransfer = warehouseTransferService.findExistingTransfer(fromId, toId, workOrderId, employeeId);
+        // Create transfer if needed
+        int woId = workOrderService.getWorkOrderIdByCode(woCode);
+        initOrLoadCurrentTransfer(fromId, toId, employeeId, woCode, woId);
 
-            if (currentTransfer == null) {
-                currentTransfer = new WarehouseTransfer();
-                currentTransfer.setFromWarehouseId(fromId);
-                currentTransfer.setToWarehouseId(toId);
-                currentTransfer.setEmployeeId(employeeId);
-                currentTransfer.setTransferDate(LocalDateTime.now());
-                currentTransfer.setNote("Chuyển từ W/O: " + woCode);
-                currentTransfer.setWorkOrderId(workOrderId);
-
-                warehouseTransferService.createTransfer(currentTransfer, new ArrayList<>());
-                currentTransfer = warehouseTransferService.getAllTransfers().getLast();
-            }
-        }
-
-
-        // Đã có cuộn này trong Transfer hiện tại?
-        if (warehouseTransferService.getDetailRepository().existsByTransferIdAndRollCode(currentTransfer.getTransferId(), material.getRollCode())) {
-            showAlert("Cuộn mã vạch đã được quét trong W/O này.");
+        // Check existed in transfer
+        if (warehouseTransferService.getDetailRepository()
+                .existsByTransferIdAndRollCode(currentTransfer.getTransferId(), barcode)) {
+            showAlert("Cuộn đã có trong phiếu chuyển.");
             return;
         }
 
-        // Tạo detail mới
+        // Save detail
         WarehouseTransferDetail detail = new WarehouseTransferDetail();
         detail.setTransferId(currentTransfer.getTransferId());
-        detail.setRollCode(material.getRollCode());
+        detail.setRollCode(barcode);
         detail.setSapCode(sapCode);
         detail.setQuantity(material.getQuantity());
         detail.setCreatedAt(LocalDateTime.now());
-
-        // Lưu detail
         warehouseTransferService.getDetailRepository().add(detail);
 
-        // Cập nhật UI (tải lại toàn bộ danh sách đã chuyển)
-        List<TransferredDto> transferredDtos = warehouseTransferService.getDetailsByTransferId(currentTransfer.getTransferId())
-                .stream()
-                .map(d -> new TransferredDto(
-                        d.getRollCode(), d.getSapCode(), materialService.getMaterialByRollCode(d.getRollCode()).getSpec(),
-                        d.getQuantity(), cbSourceWarehouse.getValue(), cbTargetWarehouse.getValue()))
-                .toList();
-
-        tblTransferred.setItems(FXCollections.observableArrayList(transferredDtos));
-
-
-        summary.setScanned(summary.getScanned() + material.getQuantity());
-        summary.setStatus(summary.getScanned() >= summary.getRequired() ? "Đủ" : "Thiếu");
-        tblRequiredSummary.refresh();
+        updateTransferredTable();
+        updateSummaryAfterScan(summary, material);
+        updateMaterialWarehouse(material, toId);
+        addTransferLog(material, fromId, toId, employeeId, woCode);
 
         txtBarcode.clear();
-
-        // Cập nhật kho hiện tại của cuộn
-        material.setWarehouseId(toId);
-        materialService.updateMaterial(material);
-
-        // Ghi log chuyển kho
-        TransferLog log = new TransferLog();
-        log.setTransferId(currentTransfer.getTransferId());
-        log.setRollCode(material.getRollCode());
-        log.setFromWarehouseId(fromId);
-        log.setToWarehouseId(toId);
-        log.setTransferDate(LocalDateTime.now());
-        log.setNote("Chuyển từ W/O: " + woCode);
-        log.setEmployeeId(employeeId);
-        transferLogService.addTransfer(log);
-
     }
+
 
     private void handleDeleteBarcode() {
         String barcode = txtDeleteBarcode.getText().trim();
         if (barcode.isEmpty()) return;
 
         String woCode = cbWorkOrder.getValue();
-        if (woCode == null || woCode.isEmpty()) {
+        if (woCode == null) {
             showAlert("Vui lòng chọn Work Order.");
             return;
         }
 
-        int workOrderId = workOrderService.getWorkOrderIdByCode(woCode);
+        int woId = workOrderService.getWorkOrderIdByCode(woCode);
         Material material = materialService.getMaterialByRollCode(barcode);
         if (material == null) {
-            showAlert("Không tìm thấy vật liệu có mã vạch: " + barcode);
+            showAlert("Không tìm thấy vật liệu: " + barcode);
             return;
         }
 
-        // Tìm transfer hiện tại
-        List<WarehouseTransfer> transfers = warehouseTransferService.getAllTransfers();
-        Optional<WarehouseTransfer> transferOpt = transfers.stream()
-                .filter(t -> Objects.equals(t.getWorkOrderId(), workOrderId))
+        Optional<WarehouseTransfer> transferOpt = warehouseTransferService.getAllTransfers()
+                .stream()
+                .filter(t -> Objects.equals(t.getWorkOrderId(), woId))
                 .filter(t -> warehouseTransferService.getDetailRepository()
                         .existsByTransferIdAndRollCode(t.getTransferId(), barcode))
                 .findFirst();
 
         if (transferOpt.isEmpty()) {
-            showAlert("Không tìm thấy W/O chứa mã vạch này.");
+            showAlert("Không tìm thấy chi tiết chứa cuộn này.");
             return;
         }
 
         WarehouseTransfer transfer = transferOpt.get();
         int transferId = transfer.getTransferId();
 
-        // Xóa chi tiết
         warehouseTransferService.getDetailRepository().deleteByTransferIdAndRollCode(transferId, barcode);
+        updateTransferredTable();
 
-        // Cập nhật lại bảng chuyển
-        List<TransferredDto> updatedList = warehouseTransferService.getDetailsByTransferId(transferId)
-                .stream()
-                .map(d -> {
-                    Material m = materialService.getMaterialByRollCode(d.getRollCode());
-                    return new TransferredDto(
-                            d.getRollCode(), d.getSapCode(), m.getSpec(), d.getQuantity(),
-                            cbSourceWarehouse.getValue(), cbTargetWarehouse.getValue()
-                    );
-                })
-                .toList();
-
-        tblTransferred.setItems(FXCollections.observableArrayList(updatedList));
-
-        // Trừ lại số đã quét
-        String sapCode = material.getSapCode();
-        SAPSummaryDto summary = sapSummaryMap.get(sapCode);
+        // Update summary
+        SAPSummaryDto summary = sapSummaryMap.get(material.getSapCode());
         if (summary != null) {
             summary.setScanned(Math.max(0, summary.getScanned() - material.getQuantity()));
             summary.setStatus(summary.getScanned() >= summary.getRequired() ? "Đủ" : "Thiếu");
             tblRequiredSummary.refresh();
         }
 
-        // Gỡ khỏi danh sách cuộn đã quét
         alreadyScannedRollCodes.remove(barcode);
         txtDeleteBarcode.clear();
 
-        showAlert("✅ Đã xóa khỏi W/O.");
+        showAlert("Đã xóa.");
     }
 
-
-    private void showAlert(String msg) {
-        if (isBatchImport) return; // ✅ Không hiện alert khi đang import
-        Alert alert = new Alert(Alert.AlertType.WARNING, msg);
-        alert.show();
-    }
-
-
-    private int getSelectedWarehouseId(ComboBox<String> cb) {
-        String name = cb.getValue();
-        if (name == null) return -1;
-        return warehouseService.getAllWarehouses().stream()
-                .filter(w -> w.getName().equals(name))
-                .map(Warehouse::getWarehouseId)
-                .findFirst().orElse(-1);
-    }
-
-    private void copyTransferredSelectionToClipboard() {
-        StringBuilder clipboardString = new StringBuilder();
-        ObservableList<TablePosition> positionList = tblTransferred.getSelectionModel().getSelectedCells();
-
-        int prevRow = -1;
-        for (TablePosition position : positionList) {
-            int row = position.getRow();
-            int col = position.getColumn();
-
-            Object cell = tblTransferred.getColumns().get(col).getCellData(row);
-            if (cell == null) {
-                cell = "";
-            }
-
-            if (prevRow == row) {
-                clipboardString.append('\t');
-            } else if (prevRow != -1) {
-                clipboardString.append('\n');
-            }
-
-            clipboardString.append(cell);
-            prevRow = row;
-        }
-
-        final ClipboardContent clipboardContent = new ClipboardContent();
-        clipboardContent.putString(clipboardString.toString());
-        Clipboard.getSystemClipboard().setContent(clipboardContent);
-    }
 
     private void handleImportFromExcel() {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Chọn file barcode Excel");
-        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel Files", "*.xlsx", "*.xls"));
-        File selectedFile = fileChooser.showOpenDialog(null);
-        if (selectedFile == null) return;
-
-        List<BarcodeError> errorList = new ArrayList<>();
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Chọn file Excel");
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel", "*.xlsx", "*.xls"));
+        File file = chooser.showOpenDialog(null);
+        if (file == null) return;
 
         String woCode = cbWorkOrder.getValue();
-        if (woCode == null || woCode.isEmpty()) {
-            showAlert("Vui lòng chọn Work Order trước khi import.");
+        if (woCode == null) {
+            showAlert("Chọn Work Order trước khi import.");
             return;
         }
 
-        int workOrderId = workOrderService.getWorkOrderIdByCode(woCode);
+        int woId = workOrderService.getWorkOrderIdByCode(woCode);
 
-        // 🔁 Load toàn bộ rollCode đã được chuyển cho WorkOrder này
-        Set<String> existingCodesInWO = warehouseTransferService.getDetailsByWorkOrderId(workOrderId)
-                .stream()
-                .map(WarehouseTransferDetail::getRollCode)
-                .collect(Collectors.toSet());
+        Set<String> existing = warehouseTransferService.getDetailsByWorkOrderId(woId)
+                .stream().map(WarehouseTransferDetail::getRollCode).collect(Collectors.toSet());
 
-        isBatchImport = true; // ✅ Bắt đầu batch import
-        try (FileInputStream fis = new FileInputStream(selectedFile);
-             Workbook workbook = new XSSFWorkbook(fis)) {
+        List<BarcodeError> errors = new ArrayList<>();
+        isBatchImport = true;
 
+        try (Workbook workbook = new XSSFWorkbook(new FileInputStream(file))) {
             Sheet sheet = workbook.getSheetAt(0);
 
             for (Row row : sheet) {
                 if (row.getRowNum() == 0) continue;
-
                 String barcode = getCellString(row.getCell(0)).trim();
                 if (barcode.isEmpty()) continue;
 
+                if (existing.contains(barcode)) {
+                    errors.add(new BarcodeError(barcode, "Đã tồn tại"));
+                    continue;
+                }
+
                 try {
-                    if (existingCodesInWO.contains(barcode)) {
-                        errorList.add(new BarcodeError(barcode, "Đã tồn tại trong Work Order hiện tại"));
-                        continue;
-                    }
-
                     txtBarcode.setText(barcode);
-                    handleBarcodeScanned(); // ✅ Thêm cuộn
-
-                    existingCodesInWO.add(barcode);
-                    alreadyScannedRollCodes.add(barcode);
-
+                    handleBarcodeScanned();
+                    existing.add(barcode);
                 } catch (Exception ex) {
-                    errorList.add(new BarcodeError(barcode, ex.getMessage()));
+                    errors.add(new BarcodeError(barcode, ex.getMessage()));
                 }
             }
 
-            if (!errorList.isEmpty()) {
-                exportErrorListToExcel(errorList);
-                Alert alert = new Alert(Alert.AlertType.WARNING, "Import hoàn tất! Một số cuộn bị lỗi đã được ghi ra file.");
-                alert.show();
-            } else {
-                Alert alert = new Alert(Alert.AlertType.INFORMATION, "✅ Import thành công toàn bộ cuộn.");
-                alert.show();
-            }
+            if (!errors.isEmpty()) exportErrorList(errors);
+            showAlert(errors.isEmpty() ? "Import OK" : "Có lỗi, đã export.");
 
         } catch (Exception e) {
+            showAlert("Lỗi import: " + e.getMessage());
             e.printStackTrace();
-            Alert alert = new Alert(Alert.AlertType.ERROR, "❌ Lỗi import: " + e.getMessage());
-            alert.show();
         } finally {
-            isBatchImport = false; // ✅ Luôn reset lại
+            isBatchImport = false;
         }
-
     }
 
 
-    private void exportErrorListToExcel(List<BarcodeError> errors) {
-        Workbook workbook = new XSSFWorkbook();
-        Sheet sheet = workbook.createSheet("Lỗi import");
+    /* ============================================================
+     * 8.  UTILS + SMALL METHODS
+     * ============================================================ */
 
-        Row header = sheet.createRow(0);
-        header.createCell(0).setCellValue("Barcode");
-        header.createCell(1).setCellValue("Lý do");
+    private void initOrLoadCurrentTransfer(int fromId, int toId, String employeeId, String woCode, int woId) {
 
-        int rowNum = 1;
-        for (BarcodeError error : errors) {
-            Row row = sheet.createRow(rowNum++);
-            row.createCell(0).setCellValue(error.getBarcode());
-            row.createCell(1).setCellValue(error.getReason());
+        if (currentTransfer != null) return;
+
+        currentTransfer = warehouseTransferService.findExistingTransfer(fromId, toId, woId, employeeId);
+
+        if (currentTransfer == null) {
+            WarehouseTransfer t = new WarehouseTransfer();
+            t.setFromWarehouseId(fromId);
+            t.setToWarehouseId(toId);
+            t.setEmployeeId(employeeId);
+            t.setWorkOrderId(woId);
+            t.setTransferDate(LocalDateTime.now());
+            t.setNote("Chuyển từ W/O: " + woCode);
+
+            warehouseTransferService.createTransfer(t, new ArrayList<>());
+            currentTransfer = warehouseTransferService.getAllTransfers().getLast();
         }
+    }
 
+
+    private int getWarehouseId(ComboBox<String> cb) {
+        String name = cb.getValue();
+        if (name == null) return -1;
+
+        return warehouseService.getAllWarehouses()
+                .stream().filter(w -> w.getName().equals(name))
+                .map(Warehouse::getWarehouseId)
+                .findFirst().orElse(-1);
+    }
+
+
+    private void updateTransferredTable() {
+        int id = currentTransfer.getTransferId();
+        List<TransferredDto> dtos = warehouseTransferService.getDetailsByTransferId(id)
+                .stream()
+                .map(d -> {
+                    Material m = materialService.getMaterialByRollCode(d.getRollCode());
+                    return new TransferredDto(
+                            d.getRollCode(),
+                            d.getSapCode(),
+                            m.getSpec(),
+                            d.getQuantity(),
+                            cbSourceWarehouse.getValue(),
+                            cbTargetWarehouse.getValue());
+                })
+                .toList();
+
+        tblTransferred.setItems(FXCollections.observableArrayList(dtos));
+    }
+
+
+    private void updateSummaryAfterScan(SAPSummaryDto summary, Material material) {
+        summary.setScanned(summary.getScanned() + material.getQuantity());
+        summary.setStatus(summary.getScanned() >= summary.getRequired() ? "Đủ" : "Thiếu");
+        tblRequiredSummary.refresh();
+        alreadyScannedRollCodes.add(material.getRollCode());
+    }
+
+
+    private void updateMaterialWarehouse(Material m, int toId) {
+        m.setWarehouseId(toId);
+        materialService.updateMaterial(m);
+    }
+
+
+    private void addTransferLog(Material material, int fromId, int toId, String emp, String woCode) {
+        TransferLog log = new TransferLog();
+        log.setTransferId(currentTransfer.getTransferId());
+        log.setRollCode(material.getRollCode());
+        log.setFromWarehouseId(fromId);
+        log.setToWarehouseId(toId);
+        log.setTransferDate(LocalDateTime.now());
+        log.setEmployeeId(emp);
+        log.setNote("Chuyển từ W/O: " + woCode);
+        transferLogService.addTransfer(log);
+    }
+
+
+    private void exportErrorList(List<BarcodeError> errors) {
         try {
-            FileChooser saveChooser = new FileChooser();
-            saveChooser.setTitle("Lưu danh sách lỗi");
-            saveChooser.setInitialFileName("ImportErrors.xlsx");
-            saveChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel", "*.xlsx"));
+            Workbook workbook = new XSSFWorkbook();
+            Sheet sheet = workbook.createSheet("Lỗi import");
 
-            File file = saveChooser.showSaveDialog(null);
+            Row header = sheet.createRow(0);
+            header.createCell(0).setCellValue("Barcode");
+            header.createCell(1).setCellValue("Lý do");
+
+            int r = 1;
+            for (BarcodeError er : errors) {
+                Row row = sheet.createRow(r++);
+                row.createCell(0).setCellValue(er.getBarcode());
+                row.createCell(1).setCellValue(er.getReason());
+            }
+
+            FileChooser save = new FileChooser();
+            save.setInitialFileName("ImportErrors.xlsx");
+            save.getExtensionFilters().add(
+                    new FileChooser.ExtensionFilter("Excel", "*.xlsx")
+            );
+
+            File file = save.showSaveDialog(null);
             if (file != null) {
                 try (FileOutputStream fos = new FileOutputStream(file)) {
                     workbook.write(fos);
                 }
             }
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            showAlert("Lỗi khi lưu file lỗi: " + e.getMessage());
+        } catch (Exception ex) {
+            showAlert("Lỗi export: " + ex.getMessage());
         }
     }
 
 
-
-    private String getCellString(Cell cell) {
-        if (cell == null) return "";
-        return switch (cell.getCellType()) {
-            case STRING -> cell.getStringCellValue().trim();
-            case NUMERIC -> String.valueOf((long) cell.getNumericCellValue());
-            case BOOLEAN -> String.valueOf(cell.getBooleanCellValue());
+    private String getCellString(Cell c) {
+        if (c == null) return "";
+        return switch (c.getCellType()) {
+            case STRING -> c.getStringCellValue().trim();
+            case NUMERIC -> String.valueOf((long) c.getNumericCellValue());
+            case BOOLEAN -> String.valueOf(c.getBooleanCellValue());
             default -> "";
         };
     }
+
+
+    private void showAlert(String msg) {
+        if (isBatchImport) return;
+        Alert alert = new Alert(Alert.AlertType.WARNING, msg);
+        alert.show();
+    }
 }
+

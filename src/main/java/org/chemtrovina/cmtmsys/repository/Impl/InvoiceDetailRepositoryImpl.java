@@ -64,6 +64,13 @@ public class InvoiceDetailRepositoryImpl extends GenericRepositoryImpl<InvoiceDe
         return jdbcTemplate.query(sql, new Object[]{invoiceId}, new InvoiceDetailRowMapper());
     }
 
+    @Override
+    public List<String> findAllSapPNs() {
+        String sql = "SELECT DISTINCT SapPN FROM InvoiceDetail WHERE SapPN IS NOT NULL AND SapPN <> '' ORDER BY SapPN";
+        return jdbcTemplate.queryForList(sql, String.class);
+    }
+
+
     static class InvoiceDetailRowMapper implements RowMapper<InvoiceDetail> {
         @Override
         public InvoiceDetail mapRow(ResultSet rs, int rowNum) throws SQLException {

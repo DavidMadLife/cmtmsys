@@ -4,11 +4,13 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Control;
 import javafx.scene.control.MenuButton;
 import javafx.scene.control.MenuItem;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import org.chemtrovina.cmtmsys.App;
+import org.chemtrovina.cmtmsys.config.RolePermissionConfig;
 import org.chemtrovina.cmtmsys.context.UserContext;
 import org.chemtrovina.cmtmsys.model.enums.UserRole;
 import org.chemtrovina.cmtmsys.utils.SpringFXMLLoader;
@@ -59,6 +61,8 @@ public class NavbarController {
     @FXML private MenuItem menuImportCycleTime;
     @FXML private MenuItem menuShiftScheduleSMT;
 
+
+    @FXML private MenuButton menuStencil;
     @FXML private MenuItem menuStencilManager;
     @FXML private MenuItem menuStencilTransferLog, menuShiftSummary;
 
@@ -74,7 +78,10 @@ public class NavbarController {
     @FXML private MenuItem menuSolderList;   // có thể thêm item khác sau, ví dụ Import...
     @FXML private MenuItem menuSolderOut;
 
-
+    // ==== Spare Part Menu ====
+    @FXML private MenuButton menuSparePart;
+    @FXML private MenuItem menuSparePartManager;
+    @FXML private MenuItem menuSparePartManagerOut;
 
     @FXML private MenuItem menuChangePassword, menuManageAccount;
     @FXML private MenuItem menuLogout;
@@ -88,55 +95,64 @@ public class NavbarController {
     private void applyRolePermissions() {
         UserRole role = UserContext.getUser().getRole();
 
-        // === Planning Menu ===
-        if (role != UserRole.ADMIN && role != UserRole.SUBLEEDER && role != UserRole.INVENTORY) {
-            menuPlan.setVisible(false);
-            menuPlan.setManaged(false);
-        }
+        // Duyệt toàn bộ các menu có thể null
+        setPermission(menuWarehouse, "menuWarehouse", role);
+        setPermission(btnInvoice, "btnInvoice", role);
+        setPermission(btnScan, "btnScan", role);
+        setPermission(btnHistory, "btnHistory", role);
+        setPermission(btnMOQ, "btnMOQ", role);
 
-        // === Employee Menu ===
-        if (role != UserRole.ADMIN && role != UserRole.EMPLOYEE) {
-            menuEmployee.setVisible(false);
-            menuEmployee.setManaged(false);
-        }
+        setPermission(menuEmployee, "menuEmployee", role);
+        setPermission(btnEmployee, "btnEmployee", role);
 
-        // === Inventory Menu ===
-        if (role != UserRole.ADMIN && role != UserRole.INVENTORY && role != UserRole.SUBLEEDER) {
-            menuInventory.setVisible(false);
-            menuInventory.setManaged(false);
-        }
+        setPermission(menuInventory, "menuInventory", role);
+        setPermission(menuProduct, "menuProduct", role);
+        setPermission(menuWorkOrder, "menuWorkOrder", role);
+        setPermission(menuMaterialCart, "menuMaterialCart", role);
+        setPermission(menuMaterialCartCreate, "menuMaterialCart", role);
 
-        // === Warehouse Menu Items phân quyền ===
-        boolean isAdminOrWarehouse = role == UserRole.ADMIN || role == UserRole.GENERALWAREHOUSE;
-        boolean isLimitedRole = role == UserRole.INVENTORY || role == UserRole.SUBLEEDER;
+        setPermission(menuPlan, "menuPlan", role);
 
-        // === Solder permission ===
-        boolean allowSolderAccess = role == UserRole.ADMIN || role == UserRole.INVENTORY || role == UserRole.SUBLEEDER;
-        if (menuSolder != null) {
-            menuSolder.setVisible(allowSolderAccess);
-            menuSolder.setManaged(allowSolderAccess);
-            if (menuSolderList != null) menuSolderList.setVisible(allowSolderAccess);
-        }
+        setPermission(menuPerformance, "menuPerformance", role);
+        setPermission(menuPcbPerformanceLog, "menuPcbPerformanceLog", role);
+        setPermission(menuPcbPerformanceHistory, "menuPcbPerformanceHistory", role);
+
+        setPermission(menuSolder, "menuSolder", role);
+        setPermission(menuSolderList, "menuSolderList", role);
+
+        setPermission(menuSparePart, "menuSparePart", role);
+
+        // Stencil
+        setPermission(menuStencil, "menuStencil", role);
+        setPermission(menuStencilManager, "menuStencilManager", role);
+        setPermission(menuStencilTransferLog, "menuStencilTransferLog", role);
+
+        // E-Board
+        setPermission(menuEBoard, "menuEBoard", role);
+        setPermission(menuEBoardLog, "menuEBoardLog", role);
+        setPermission(menuEBoardHistory, "menuEBoardHistory", role);
 
 
-        btnInvoice.setVisible(isAdminOrWarehouse);
-        btnScan.setVisible(isAdminOrWarehouse);
-        btnHistory.setVisible(isAdminOrWarehouse);
-        btnMOQ.setVisible(isAdminOrWarehouse || isLimitedRole);
-
-        // Nếu có ít nhất một item visible thì hiện menu
-        boolean anyVisible = btnInvoice.isVisible() || btnScan.isVisible()
-                || btnHistory.isVisible() || btnMOQ.isVisible();
-
-        menuWarehouse.setVisible(anyVisible);
-        menuWarehouse.setManaged(anyVisible);
-
-        // === Material Cart permission for SUBLEEDER ===
-        boolean allowCartAccess = role == UserRole.ADMIN || role == UserRole.INVENTORY || role == UserRole.SUBLEEDER;
-        menuMaterialCart.setVisible(allowCartAccess);
-        menuMaterialCartCreate.setVisible(allowCartAccess);
-        System.out.println("User role: " + role);
+        System.out.println("✅ Role applied: " + role);
     }
+
+    private void setPermission(Object node, String menuId, UserRole role) {
+        boolean canAccess = RolePermissionConfig.canAccess(menuId, role);
+
+        if (node instanceof MenuButton menuButton) {
+            menuButton.setVisible(canAccess);
+            menuButton.setManaged(canAccess);
+        }
+        else if (node instanceof MenuItem menuItem) {
+            menuItem.setVisible(canAccess);
+        }
+        else if (node instanceof javafx.scene.control.Control control) {
+            control.setVisible(canAccess);
+            control.setManaged(canAccess);
+        }
+    }
+
+
 
 
 
@@ -202,6 +218,12 @@ public class NavbarController {
                 e -> openTab("Solder OUT (Aging)", "/org/chemtrovina/cmtmsys/view/solder-out-view.fxml")
         );
 
+        menuSparePartManager.setOnAction(e ->
+                openTab("Spare Part In", "/org/chemtrovina/cmtmsys/view/spare_part_view.fxml"));
+        menuSparePartManagerOut.setOnAction(e ->
+                openTab("Spare Part Out", "/org/chemtrovina/cmtmsys/view/spare_part_output_view.fxml"));
+
+
 
 
         menuChangePassword.setOnAction(e -> openChangePasswordDialog());
@@ -233,6 +255,7 @@ public class NavbarController {
         Stage stage = (Stage) menuUser.getScene().getWindow();
         stage.close();
 
+
         // Mở lại màn hình login
         try {
             FXMLLoader loader = SpringFXMLLoader.load(App.class.getResource("view/login.fxml"));
@@ -243,6 +266,7 @@ public class NavbarController {
             loginStage.setTitle("Đăng nhập");
             loginStage.setResizable(false);
             loginStage.show();
+
         } catch (IOException e) {
             e.printStackTrace();
         }

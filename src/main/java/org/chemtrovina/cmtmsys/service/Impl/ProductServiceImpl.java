@@ -19,6 +19,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public void addProduct(Product product) {
+        if (repository.checkProductExists(product.getProductCode(), product.getModelType())) {
+            throw new IllegalArgumentException("❌ Sản phẩm đã tồn tại (trùng ProductCode + ModelType).");
+        }
         repository.add(product);
     }
 
@@ -44,7 +47,13 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public List<Product> getAllProducts() {
-        return repository.findAll();
+
+        List<Product> products = repository.findAll();
+        System.out.println("Products count: " + products.size());
+        for (Product p : products) {
+            System.out.println(p.getProductId() + " - " + p.getProductCode() + " - " + p.getModelType());
+        }
+        return products;
     }
     @Override
     public Product getProductByCode(String code) {
@@ -70,6 +79,26 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public String getProductCodeByPlanItemId(int planItemId) {
         return repository.findProductCodeByPlanItemId(planItemId);
+    }
+
+    @Override
+    public Product getProductByNameAndType(String productName, ModelType modelType) {
+        return repository.findByNameAndModelType(productName, modelType);
+    }
+
+    @Override
+    public Product getProductByCodeOrNameAndType(String code, String name, ModelType modelType) {
+        Product product = null;
+
+        if (code != null && !code.isBlank()) {
+            product = repository.findByCodeAndModelType(code, modelType);
+        }
+
+        if (product == null && name != null && !name.isBlank()) {
+            product = repository.findByNameAndModelType(name, modelType);
+        }
+
+        return product;
     }
 
 

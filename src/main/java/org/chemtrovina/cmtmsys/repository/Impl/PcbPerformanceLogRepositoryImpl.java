@@ -76,10 +76,16 @@ public class PcbPerformanceLogRepositoryImpl implements PcbPerformanceLogReposit
     }
 
     @Override
-    public List<PcbPerformanceLogHistoryDTO> searchLogDTOs(String modelCode, ModelType modelType,
-                                                           LocalDateTime from, LocalDateTime to) {
+    public List<PcbPerformanceLogHistoryDTO> searchLogDTOs(
+            String modelCode,
+            ModelType modelType,
+            LocalDateTime from,
+            LocalDateTime to,
+            Integer warehouseId
+    ) {
         StringBuilder sql = new StringBuilder("""
         SELECT 
+            l.LogId,
             p.ProductCode,
             p.ModelType,
             l.CarrierId,
@@ -96,27 +102,51 @@ public class PcbPerformanceLogRepositoryImpl implements PcbPerformanceLogReposit
         WHERE 1 = 1
     """);
 
+        // 🧩 Thêm điều kiện động
         newLine(sql, modelCode != null && !modelCode.isBlank(), "AND p.ProductCode LIKE ?");
         newLine(sql, modelType != null, "AND p.ModelType = ?");
         newLine(sql, from != null, "AND l.CreatedAt >= ?");
         newLine(sql, to != null, "AND l.CreatedAt <= ?");
+        newLine(sql, warehouseId != null, "AND l.WarehouseId = ?");
         sql.append(" ORDER BY l.CreatedAt DESC");
 
-        Object[] params = buildParams(modelCode, modelType, from, to);
+        // 🧠 Xây params
+        List<Object> params = new java.util.ArrayList<>();
+        if (modelCode != null && !modelCode.isBlank()) params.add("%" + modelCode.trim() + "%");
+        if (modelType != null) params.add(modelType.name());
+        if (from != null) params.add(java.sql.Timestamp.valueOf(from));
+        if (to != null) params.add(java.sql.Timestamp.valueOf(to));
+        if (warehouseId != null) params.add(warehouseId);
 
-        return jdbcTemplate.query(sql.toString(), (rs, rowNum) -> new PcbPerformanceLogHistoryDTO(
-                rs.getString("ProductCode"),
-                ModelType.valueOf(rs.getString("ModelType")),
-                rs.getString("CarrierId"),
-                rs.getString("AoiMachineCode"),
-                rs.getInt("TotalModules"),
-                rs.getInt("NgModules"),
-                rs.getDouble("Performance"),
-                rs.getString("LogFileName"),
-                rs.getTimestamp("CreatedAt").toLocalDateTime(),
-                rs.getString("WarehouseName")
-        ), params);
+        return jdbcTemplate.query(sql.toString(), params.toArray(), (rs, rowNum) -> {
+            String rawType = rs.getString("ModelType");
+            ModelType safeType = null;
+            if (rawType != null && !rawType.isBlank()) {
+                try {
+                    safeType = ModelType.valueOf(rawType.trim().toUpperCase());
+                } catch (IllegalArgumentException ex) {
+                    safeType = null;
+                }
+            }
+
+            PcbPerformanceLogHistoryDTO dto = new PcbPerformanceLogHistoryDTO();
+            dto.setLogId(rs.getInt("LogId")); // ✅ logId để liên kết vật tư
+            dto.setModelCode(rs.getString("ProductCode"));
+            dto.setModelType(safeType);
+            dto.setCarrierId(rs.getString("CarrierId"));
+            dto.setAoi(rs.getString("AoiMachineCode"));
+            dto.setTotalModules(rs.getInt("TotalModules"));
+            dto.setNgModules(rs.getInt("NgModules"));
+            dto.setPerformance(rs.getDouble("Performance"));
+            dto.setLogFileName(rs.getString("LogFileName"));
+            dto.setCreatedAt(rs.getTimestamp("CreatedAt").toLocalDateTime());
+            dto.setWarehouseName(rs.getString("WarehouseName"));
+            return dto;
+        });
     }
+
+
+
 
 
     private void newLine(StringBuilder sql) {
@@ -164,9 +194,19 @@ public class PcbPerformanceLogRepositoryImpl implements PcbPerformanceLogReposit
     """;
 
         return jdbcTemplate.query(sql, new Object[]{warehouseId, start, end}, (rs, rowNum) -> {
+            String rawType = rs.getString("ModelType");
+            ModelType safeType = null;
+            if (rawType != null && !rawType.isBlank()) {
+                try {
+                    safeType = ModelType.valueOf(rawType.trim().toUpperCase());
+                } catch (IllegalArgumentException ex) {
+                    safeType = null;
+                }
+            }
+
             PcbPerformanceLogHistoryDTO dto = new PcbPerformanceLogHistoryDTO();
             dto.setModelCode(rs.getString("ModelCode"));
-            dto.setModelType(ModelType.valueOf(rs.getString("ModelType")));
+            dto.setModelType(safeType);
             dto.setCarrierId(rs.getString("CarrierId"));
             dto.setAoi(rs.getString("AoiMachineCode"));
             dto.setTotalModules(rs.getInt("TotalModules"));
@@ -178,6 +218,7 @@ public class PcbPerformanceLogRepositoryImpl implements PcbPerformanceLogReposit
             return dto;
         });
     }
+
 
 
     public class PcbPerformanceLogHistoryRowMapper implements RowMapper<PcbPerformanceLogHistoryDTO> {
@@ -215,6 +256,74 @@ public class PcbPerformanceLogRepositoryImpl implements PcbPerformanceLogReposit
         );
 
         return results.isEmpty() ? null : results.get(0);
+    }
+
+
+    @Override
+    public PcbPerformanceLog findByCarrierId(String carrierId) {
+        String sql = """
+        SELECT TOP 1 *
+        FROM PcbPerformanceLog
+        WHERE CarrierId = ?
+        ORDER BY CreatedAt DESC
+    """;
+
+        List<PcbPerformanceLog> results = jdbcTemplate.query(
+                sql,
+                new PcbPerformanceLogRowMapper(),
+                carrierId
+        );
+
+        return results.isEmpty() ? null : results.get(0);
+    }
+
+    @Override
+    public List<PcbPerformanceLogHistoryDTO> getLogsByCarrierId(String carrierId) {
+        String sql = """
+        SELECT 
+            l.LogId,
+            p.ProductCode,
+            p.ModelType,
+            l.CarrierId,
+            l.AoiMachineCode,
+            l.TotalModules,
+            l.NgModules,
+            l.Performance,
+            l.LogFileName,
+            l.CreatedAt,
+            w.Name AS WarehouseName
+        FROM PcbPerformanceLog l
+        JOIN Products p ON l.ProductId = p.ProductId
+        JOIN Warehouses w ON l.WarehouseId = w.WarehouseId
+        WHERE l.CarrierId = ?
+        ORDER BY l.CreatedAt DESC
+    """;
+
+        return jdbcTemplate.query(sql, new Object[]{carrierId}, (rs, rowNum) -> {
+            String rawType = rs.getString("ModelType");
+            ModelType safeType = null;
+            if (rawType != null && !rawType.isBlank()) {
+                try {
+                    safeType = ModelType.valueOf(rawType.trim().toUpperCase());
+                } catch (IllegalArgumentException ex) {
+                    safeType = null;
+                }
+            }
+
+            PcbPerformanceLogHistoryDTO dto = new PcbPerformanceLogHistoryDTO();
+            dto.setLogId(rs.getInt("LogId"));
+            dto.setModelCode(rs.getString("ProductCode"));
+            dto.setModelType(safeType);
+            dto.setCarrierId(rs.getString("CarrierId"));
+            dto.setAoi(rs.getString("AoiMachineCode"));
+            dto.setTotalModules(rs.getInt("TotalModules"));
+            dto.setNgModules(rs.getInt("NgModules"));
+            dto.setPerformance(rs.getDouble("Performance"));
+            dto.setLogFileName(rs.getString("LogFileName"));
+            dto.setCreatedAt(rs.getTimestamp("CreatedAt").toLocalDateTime());
+            dto.setWarehouseName(rs.getString("WarehouseName"));
+            return dto;
+        });
     }
 
 

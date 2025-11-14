@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="10" xmlns="http://javafx.com/javafx/23.0.1"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="org.chemtrovina.cmtmsys.controller.MaterialTraceController">
+
+    <Label text="Truy vết tiêu hao vật tư" style="-fx-font-size:18; -fx-font-weight:bold" />
+
+    <HBox spacing="10">
+        <TextField fx:id="txtCarrierId" promptText="Nhập Carrier ID hoặc file log..." />
+        <Button fx:id="btnSearch" text="Tìm kiếm" />
+    </HBox>
+
+    <TableView fx:id="tblTrace">
+        <columns>
+            <TableColumn fx:id="colRollCode" text="RollCode" />
+            <TableColumn fx:id="colSapCode" text="SapCode" />
+            <TableColumn fx:id="colFeederCode" text="Feeder" />
+            <TableColumn fx:id="colConsumedQty" text="Tiêu hao" />
+            <TableColumn fx:id="colCreatedAt" text="Thời gian trừ" />
+        </columns>
+    </TableView>
+
+    <TextArea fx:id="txtSummary" prefHeight="100" promptText="Tổng quan tiêu hao / tồn / feeder mapping..." />
+
+</VBox>
+

@@ -7,8 +7,11 @@ import org.chemtrovina.cmtmsys.repository.base.WarehouseTransferRepository;
 import org.chemtrovina.cmtmsys.service.base.WarehouseTransferService;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -75,6 +78,19 @@ public class WarehouseTransferServiceImpl implements WarehouseTransferService {
     public int getFromWarehouseIdByTransferId(int transferId) {
         return transferRepository.getFromWarehouseIdByTransferId(transferId);
     }
+
+    @Override
+    public WarehouseTransfer getTransferById(int transferId) {
+        return transferRepository.findById(transferId);
+    }
+
+    @Override
+    public Map<Integer, WarehouseTransfer> getTransfersByIds(Set<Integer> ids) {
+        if (ids == null || ids.isEmpty()) return Collections.emptyMap();
+        List<WarehouseTransfer> transfers = transferRepository.findByIds(ids);
+        return transfers.stream().collect(Collectors.toMap(WarehouseTransfer::getTransferId, t -> t));
+    }
+
 
 
 }

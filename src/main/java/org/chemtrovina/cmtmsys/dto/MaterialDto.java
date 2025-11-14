@@ -3,7 +3,7 @@ package org.chemtrovina.cmtmsys.dto;
 import java.time.LocalDateTime;
 
 public class MaterialDto {
-    private int materialId; // 🆕 thêm ID để thao tác delete/update
+    private int materialId;           // 🆕 ID để thao tác delete/update
     private String sapCode;
     private String rollCode;
     private int quantity;
@@ -11,13 +11,19 @@ public class MaterialDto {
     private String spec;
     private LocalDateTime createdAt;
     private String employeeId;
+    private String lot;
+    private String maker;             // ✅ thêm mới
 
+    // =====================================================================
+    // ⚙️ Constructors
+    // =====================================================================
     public MaterialDto() {
         // constructor mặc định (bắt buộc cho JavaFX, Jackson...)
     }
 
     public MaterialDto(int materialId, String sapCode, String rollCode, int quantity,
-                       String warehouseName, String spec, LocalDateTime createdAt, String employeeId) {
+                       String warehouseName, String spec, LocalDateTime createdAt,
+                       String employeeId, String lot, String maker) { // ✅ thêm maker
         this.materialId = materialId;
         this.sapCode = sapCode;
         this.rollCode = rollCode;
@@ -26,9 +32,13 @@ public class MaterialDto {
         this.spec = spec;
         this.createdAt = createdAt;
         this.employeeId = employeeId;
+        this.lot = lot;
+        this.maker = maker; // ✅
     }
 
-    // ✅ Getters
+    // =====================================================================
+    // 🧱 Getters
+    // =====================================================================
     public int getMaterialId() {
         return materialId;
     }
@@ -61,7 +71,17 @@ public class MaterialDto {
         return employeeId;
     }
 
-    // ✅ Setters (dành cho cập nhật thông tin)
+    public String getLot() {
+        return lot;
+    }
+
+    public String getMaker() {        // ✅ thêm getter
+        return maker;
+    }
+
+    // =====================================================================
+    // 🧭 Setters
+    // =====================================================================
     public void setMaterialId(int materialId) {
         this.materialId = materialId;
     }
@@ -92,5 +112,13 @@ public class MaterialDto {
 
     public void setEmployeeId(String employeeId) {
         this.employeeId = employeeId;
+    }
+
+    public void setLot(String lot) {
+        this.lot = lot;
+    }
+
+    public void setMaker(String maker) { // ✅ thêm setter
+        this.maker = maker;
     }
 }

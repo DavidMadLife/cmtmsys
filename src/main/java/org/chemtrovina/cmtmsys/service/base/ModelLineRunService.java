@@ -8,4 +8,6 @@ public interface ModelLineRunService {
     void endRun(int runId);
     List<ModelLineRun> getRunsByModelLineId(int modelLineId);
     void reopenRun(int runId);
+
+    ModelLineRun getActiveRun(int modelLineId);
 }

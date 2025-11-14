@@ -12,4 +12,7 @@ public interface InvoiceDetailRepository extends GenericRepository<InvoiceDetail
     List<InvoiceDetail> findAll();
     void updateInvoiceDetail(int detailId, InvoiceDetail newDetail);
     InvoiceDetail findBySapPNAndInvoiceId(String sapPN, int invoiceId);
+
+    List<String> findAllSapPNs();
+
 }

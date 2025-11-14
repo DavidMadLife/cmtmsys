@@ -113,31 +113,16 @@ public class InvoiceController {
         initComboBox();
         loadInvoiceList();
         startAutoGC();
-        tblData.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        tblData.getSelectionModel().setCellSelectionEnabled(true);
-        tblData.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-
+        FxClipboardUtils.enableCopyShortcut(tblData);
+        FxClipboardUtils.enableCopyShortcut(tableView);
 
         tblData.setOnKeyPressed(event -> {
-            if (event.isControlDown() && event.getCode() == KeyCode.C) {
-                FxClipboardUtils.copySelectionToClipboard(tblData);
-            }
-
             if (event.isControlDown() && event.getCode() == KeyCode.F) {
                 openSearchDialog();
             }
         });
 
-        tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        tableView.getSelectionModel().setCellSelectionEnabled(true);
-        tableView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-
-
         tableView.setOnKeyPressed(event -> {
-            if (event.isControlDown() && event.getCode() == KeyCode.C) {
-                FxClipboardUtils.copySelectionToClipboard(tableView);
-            }
-
             if (event.isControlDown() && event.getCode() == KeyCode.F) {
                 openSearchDialog();
             }

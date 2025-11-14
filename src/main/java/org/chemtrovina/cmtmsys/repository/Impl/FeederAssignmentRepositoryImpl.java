@@ -34,4 +34,18 @@ public class FeederAssignmentRepositoryImpl implements FeederAssignmentRepositor
         List<FeederAssignment> list = jdbc.query(sql, new FeederAssignmentRowMapper(), runId, feederId);
         return list.isEmpty() ? null : list.get(0);
     }
+
+    @Override
+    public FeederAssignment findById(int assignmentId) {
+        String sql = "SELECT * FROM FeederAssignment WHERE AssignmentId = ?";
+        List<FeederAssignment> list = jdbc.query(
+                sql,
+                new FeederAssignmentRowMapper(),
+                assignmentId
+        );
+        return list.isEmpty() ? null : list.get(0);
+    }
+
+
+
 }

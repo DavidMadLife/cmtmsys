@@ -205,6 +205,18 @@ public class HistoryRepositoryImpl extends GenericRepositoryImpl<History> implem
         }
     }
 
+    public void deleteLastBySapPNAndInvoiceId(String sapPN, int invoiceId) {
+        String sql = """
+        DELETE FROM History
+        WHERE Id = (
+            SELECT TOP 1 Id FROM History
+            WHERE SapPN = ? AND InvoiceId = ?
+        )
+    """;
+        jdbcTemplate.update(sql, sapPN, invoiceId);
+    }
+
+
     static class HistoryRowMapper implements RowMapper<History> {
         @Override
         public History mapRow(ResultSet rs, int rowNum) throws SQLException {

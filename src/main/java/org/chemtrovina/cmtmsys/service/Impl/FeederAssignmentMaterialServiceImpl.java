@@ -63,6 +63,10 @@ public class FeederAssignmentMaterialServiceImpl implements FeederAssignmentMate
     }
 
 
+    @Override
+    public FeederAssignmentMaterial getLatestByMaterialId(int materialId) {
+        return repository.findLatestByMaterialId(materialId);
+    }
 
 
 

@@ -1,17 +1,20 @@
 package org.chemtrovina.cmtmsys.controller;
 
-import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.scene.Node;
-import javafx.scene.chart.*;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.input.KeyCode;
+import org.chemtrovina.cmtmsys.dto.MaterialUsage;
 import org.chemtrovina.cmtmsys.dto.PcbPerformanceLogHistoryDTO;
 import org.chemtrovina.cmtmsys.model.enums.ModelType;
+import org.chemtrovina.cmtmsys.service.base.MaterialConsumeDetailLogService;
 import org.chemtrovina.cmtmsys.service.base.PcbPerformanceLogService;
+import org.chemtrovina.cmtmsys.service.base.WarehouseService;
+import org.chemtrovina.cmtmsys.utils.FxAlertUtils;
 import org.chemtrovina.cmtmsys.utils.FxClipboardUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -19,16 +22,25 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.*;
+import java.util.List;
 
 @Component
 public class PerformanceLogHistoryController {
 
+    // ============================================================================
+    // 🧩 1️⃣ FXML FIELDS
+    // ============================================================================
     @FXML private TextField txtModelCode;
     @FXML private ComboBox<ModelType> cbModelType;
+    @FXML private ComboBox<String> cbWarehouse;
+
     @FXML private DatePicker dpStartDate, dpEndDate;
     @FXML private Button btnSearch;
+    @FXML private Button btnClearFilter;
 
+
+
+    // Bảng log hiệu suất
     @FXML private TableView<PcbPerformanceLogHistoryDTO> tblLogs;
     @FXML private TableColumn<PcbPerformanceLogHistoryDTO, String> colModelCode;
     @FXML private TableColumn<PcbPerformanceLogHistoryDTO, String> colCarrierId;
@@ -40,46 +52,122 @@ public class PerformanceLogHistoryController {
     @FXML private TableColumn<PcbPerformanceLogHistoryDTO, String> colWarehouse;
     @FXML private TableColumn<PcbPerformanceLogHistoryDTO, LocalDateTime> colCreatedAt;
 
-    @FXML private LineChart<String, Number> barChart;
-    @FXML private CategoryAxis xAxis;
-    @FXML private NumberAxis yAxis;
+    // Bảng vật tư sử dụng
+    @FXML private TableView<MaterialUsage> tblMaterials;
+    @FXML private TableColumn<MaterialUsage, String> colSapCode;
+    @FXML private TableColumn<MaterialUsage, String> colRollCode;
+    @FXML private TableColumn<MaterialUsage, Integer> colQuantity;
+    @FXML private TableColumn<MaterialUsage, String> colWarehouseName;
+    @FXML private TableColumn<MaterialUsage, String> colSpec;
+    @FXML private TableColumn<MaterialUsage, String> colLot;
+    @FXML private TableColumn<MaterialUsage, String> colMaker; // 🆕
+    @FXML private TableColumn<MaterialUsage, LocalDateTime> colCreated;
 
+    @FXML private TextField txtCarrierLookup;
+    @FXML private Button btnLookupCarrier;
+    @FXML private Label lblCarrierInfo;
+
+
+    // ============================================================================
+    // ⚙️ 2️⃣ SERVICES & STATE
+    // ============================================================================
     private final PcbPerformanceLogService logService;
+    private final MaterialConsumeDetailLogService consumeDetailService;
+    private final WarehouseService warehouseService;
     private final ObservableList<PcbPerformanceLogHistoryDTO> logList = FXCollections.observableArrayList();
 
+    // ============================================================================
+    // 🏗️ 3️⃣ CONSTRUCTOR
+    // ============================================================================
     @Autowired
-    public PerformanceLogHistoryController(PcbPerformanceLogService logService) {
+    public PerformanceLogHistoryController(PcbPerformanceLogService logService,
+                                           MaterialConsumeDetailLogService consumeDetailService,
+                                           WarehouseService warehouseService) {
         this.logService = logService;
+        this.consumeDetailService = consumeDetailService;
+        this.warehouseService = warehouseService;
     }
 
+    // ============================================================================
+    // 🚀 4️⃣ INITIALIZATION
+    // ============================================================================
     @FXML
     public void initialize() {
-        cbModelType.setItems(FXCollections.observableArrayList(ModelType.values()));
-
-        tblLogs.setItems(logList);
-
-        colModelCode.setCellValueFactory(data -> new ReadOnlyStringWrapper(data.getValue().getModelCode()));
-        colCarrierId.setCellValueFactory(data -> new ReadOnlyStringWrapper(data.getValue().getCarrierId()));
-        colAoi.setCellValueFactory(data -> new ReadOnlyStringWrapper(data.getValue().getAoi()));
-        colTotal.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().getTotalModules()));
-        colNg.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().getNgModules()));
-        colPerformance.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().getPerformance()));
-        colFileName.setCellValueFactory(data -> new ReadOnlyStringWrapper(data.getValue().getLogFileName()));
-        colWarehouse.setCellValueFactory(data -> new ReadOnlyStringWrapper(data.getValue().getWarehouseName()));
-        colCreatedAt.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().getCreatedAt()));
-
-        btnSearch.setOnAction(e -> performSearch());
-
-        tblLogs.getSelectionModel().setCellSelectionEnabled(true);
-        tblLogs.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-
-        tblLogs.setOnKeyPressed(e -> {
-            if (e.isControlDown() && e.getCode() == javafx.scene.input.KeyCode.C) {
-                FxClipboardUtils.copySelectionToClipboard(tblLogs); // true = kèm header
-            }
-        });
+        setupComboBoxes();
+        setupLogTable();
+        setupWarehouseCombo();
+        setupMaterialTable();
+        FxClipboardUtils.enableCopyShortcut(tblLogs);
+        FxClipboardUtils.enableCopyShortcut(tblMaterials);
+        setupEvents();
     }
 
+    // ============================================================================
+    // 🧱 5️⃣ UI SETUP
+    // ============================================================================
+    private void setupComboBoxes() {
+        cbModelType.setItems(FXCollections.observableArrayList(ModelType.values()));
+    }
+
+    private void setupLogTable() {
+        tblLogs.setItems(logList);
+
+        colModelCode.setCellValueFactory(d -> new ReadOnlyStringWrapper(d.getValue().getModelCode()));
+        colCarrierId.setCellValueFactory(d -> new ReadOnlyStringWrapper(d.getValue().getCarrierId()));
+        colAoi.setCellValueFactory(d -> new ReadOnlyStringWrapper(d.getValue().getAoi()));
+        colTotal.setCellValueFactory(d -> new ReadOnlyObjectWrapper<>(d.getValue().getTotalModules()));
+        colNg.setCellValueFactory(d -> new ReadOnlyObjectWrapper<>(d.getValue().getNgModules()));
+        colPerformance.setCellValueFactory(d -> new ReadOnlyObjectWrapper<>(d.getValue().getPerformance()));
+        colFileName.setCellValueFactory(d -> new ReadOnlyStringWrapper(d.getValue().getLogFileName()));
+        colWarehouse.setCellValueFactory(d -> new ReadOnlyStringWrapper(d.getValue().getWarehouseName()));
+        colCreatedAt.setCellValueFactory(d -> new ReadOnlyObjectWrapper<>(d.getValue().getCreatedAt()));
+    }
+
+    private void setupMaterialTable() {
+        colSapCode.setCellValueFactory(new PropertyValueFactory<>("sapCode"));
+        colRollCode.setCellValueFactory(new PropertyValueFactory<>("rollCode"));
+        colQuantity.setCellValueFactory(new PropertyValueFactory<>("quantityUsed"));
+        colWarehouseName.setCellValueFactory(new PropertyValueFactory<>("warehouseName"));
+        colSpec.setCellValueFactory(new PropertyValueFactory<>("spec"));
+        colLot.setCellValueFactory(new PropertyValueFactory<>("lot"));
+        colCreated.setCellValueFactory(new PropertyValueFactory<>("created"));
+    }
+
+    private void setupWarehouseCombo() {
+        cbWarehouse.setItems(FXCollections.observableArrayList(
+                warehouseService.getAllWarehouses().stream()
+                        .map(w -> w.getName()) // ✅ chỉ lấy tên
+                        .toList()
+        ));
+    }
+
+
+
+
+    // ============================================================================
+    // 🎯 6️⃣ EVENT HANDLERS
+    // ============================================================================
+    private void setupEvents() {
+        btnSearch.setOnAction(e -> performSearch());
+        btnClearFilter.setOnAction(e -> clearFilters());
+        tblLogs.getSelectionModel().selectedItemProperty().addListener((obs, old, now) -> {
+            if (now != null) loadMaterialsFor(now);
+        });
+
+        btnLookupCarrier.setOnAction(e -> lookupCarrier());
+
+        tblLogs.setOnKeyPressed(event -> {
+            if (event.getCode() == KeyCode.ESCAPE) {
+                clearFilters();
+            }
+        });
+
+
+    }
+
+    // ============================================================================
+    // 🔍 7️⃣ CORE LOGIC
+    // ============================================================================
     private void performSearch() {
         String modelCode = txtModelCode.getText().trim();
         ModelType modelType = cbModelType.getValue();
@@ -90,86 +178,91 @@ public class PerformanceLogHistoryController {
         LocalDateTime from = (start != null) ? start.atStartOfDay() : null;
         LocalDateTime to = (end != null) ? end.atTime(LocalTime.MAX) : null;
 
+        Integer warehouseId = null;
+        String selectedName = cbWarehouse.getValue();
+        if (selectedName != null && !selectedName.isBlank()) {
+            warehouseId = warehouseService.getAllWarehouses().stream()
+                    .filter(w -> w.getName().equals(selectedName))
+                    .map(w -> w.getWarehouseId())
+                    .findFirst()
+                    .orElse(null);
+        }
+
+
         List<PcbPerformanceLogHistoryDTO> results = logService.searchLogs(
                 modelCode.isEmpty() ? null : modelCode,
                 modelType,
                 from,
-                to
+                to,
+                warehouseId   // 🆕 Thêm tham số này
         );
 
         logList.setAll(results);
-        updateBarChart(results);
+
+        if (!results.isEmpty()) {
+            tblLogs.getSelectionModel().select(0);
+            loadMaterialsFor(results.get(0));
+        } else {
+            tblMaterials.setItems(FXCollections.emptyObservableList());
+        }
     }
 
-    private void updateBarChart(List<PcbPerformanceLogHistoryDTO> results) {
-        barChart.getData().clear();
-
-        List<PcbPerformanceLogHistoryDTO> sortedResults = new ArrayList<>(results);
-        sortedResults.sort(Comparator.comparing(PcbPerformanceLogHistoryDTO::getCreatedAt));
-
-
-        XYChart.Series<String, Number> seriesGood = new XYChart.Series<>();
-        seriesGood.setName("Good");
-
-        XYChart.Series<String, Number> seriesNg = new XYChart.Series<>();
-        seriesNg.setName("NG");
-
-        Map<String, int[]> dataMap = new LinkedHashMap<>();
-        for (PcbPerformanceLogHistoryDTO dto : sortedResults) {
-            String key = dto.getCreatedAt().toLocalDate().toString();
-            int[] counts = dataMap.getOrDefault(key, new int[]{0, 0});
-            counts[0] += dto.getTotalModules() - dto.getNgModules(); // Good
-            counts[1] += dto.getNgModules();                         // NG
-            dataMap.put(key, counts);
+    private void lookupCarrier() {
+        String carrierId = txtCarrierLookup.getText().trim();
+        if (carrierId.isEmpty()) {
+            FxAlertUtils.warning("⚠️ Vui lòng nhập Carrier ID để tra cứu.");
+            return;
         }
 
+        // Lấy thông tin log theo Carrier ID
+        List<PcbPerformanceLogHistoryDTO> logs = logService.getLogsByCarrierId(carrierId);
 
-        for (Map.Entry<String, int[]> entry : dataMap.entrySet()) {
-            XYChart.Data<String, Number> goodData = new XYChart.Data<>(entry.getKey(), entry.getValue()[0]);
-            XYChart.Data<String, Number> ngData = new XYChart.Data<>(entry.getKey(), entry.getValue()[1]);
-
-            goodData.nodeProperty().addListener((obs, oldNode, newNode) -> {
-                if (newNode != null) {
-                    newNode.setStyle("-fx-bar-fill: #4CAF50;");
-                }
-            });
-
-            ngData.nodeProperty().addListener((obs, oldNode, newNode) -> {
-                if (newNode != null) {
-                    newNode.setStyle("-fx-bar-fill: #F44336;");
-                }
-            });
-
-            seriesGood.getData().add(goodData);
-            seriesNg.getData().add(ngData);
+        if (logs.isEmpty()) {
+            lblCarrierInfo.setText("❌ Không tìm thấy dữ liệu cho Carrier ID: " + carrierId);
+            tblMaterials.setItems(FXCollections.emptyObservableList());
+            return;
         }
 
-        barChart.getData().addAll(seriesGood, seriesNg);
+        PcbPerformanceLogHistoryDTO log = logs.get(0);
+        lblCarrierInfo.setText("✅ Model: " + log.getModelCode() + " | AOI: " + log.getAoi() + " | Line: " + log.getWarehouseName());
 
-        // Gán màu legend sau khi BarChart render xong
-        Platform.runLater(() -> {
-            // Gán màu đường cho từng series
-            for (Node node : barChart.lookupAll(".chart-series-line")) {
-                if (node.getStyleClass().toString().contains("series0")) {
-                    node.setStyle("-fx-stroke: #4CAF50;"); // xanh lá
-                } else if (node.getStyleClass().toString().contains("series1")) {
-                    node.setStyle("-fx-stroke: #F44336;"); // đỏ
-                }
-            }
+        // Hiển thị vật tư đã dùng
+        List<MaterialUsage> materials = consumeDetailService.getMaterialUsageBySourceLog(log.getLogId());
+        tblMaterials.setItems(FXCollections.observableArrayList(materials));
 
-            // Gán màu chú thích (legend) khớp với màu dòng
-            int index = 0;
-            for (Node legend : barChart.lookupAll(".chart-legend-item-symbol")) {
-                String color = switch (index++) {
-                    case 0 -> "#4CAF50"; // Good
-                    case 1 -> "#F44336"; // NG
-                    default -> "black";
-                };
-                legend.setStyle("-fx-background-color: " + color + ", white;");
-            }
-        });
+        // Highlight log tương ứng trong bảng
+        tblLogs.getSelectionModel().clearSelection();
+        tblLogs.getItems().stream()
+                .filter(item -> item.getCarrierId().equalsIgnoreCase(carrierId))
+                .findFirst()
+                .ifPresent(item -> tblLogs.getSelectionModel().select(item));
+    }
 
 
+
+    private void loadMaterialsFor(PcbPerformanceLogHistoryDTO dto) {
+        if (dto.getLogId() == 0) {
+            tblMaterials.setItems(FXCollections.emptyObservableList());
+            return;
+        }
+
+        List<MaterialUsage> rows = consumeDetailService.getMaterialUsageBySourceLog(dto.getLogId());
+        tblMaterials.setItems(FXCollections.observableArrayList(rows));
+    }
+    private void clearFilters() {
+        // 🧹 Xóa các trường lọc
+        txtModelCode.clear();
+        cbModelType.getSelectionModel().clearSelection();
+        cbWarehouse.getSelectionModel().clearSelection();
+        dpStartDate.setValue(null);
+        dpEndDate.setValue(null);
+
+        // 🧩 Làm trống bảng kết quả
+        logList.clear();
+        tblMaterials.getItems().clear();
+
+        // 🧠 Reset label tra cứu nếu có
+        lblCarrierInfo.setText("");
     }
 
 }

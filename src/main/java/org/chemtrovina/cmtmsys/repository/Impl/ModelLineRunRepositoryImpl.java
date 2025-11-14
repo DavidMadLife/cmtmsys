@@ -65,5 +65,17 @@ public class ModelLineRunRepositoryImpl implements ModelLineRunRepository {
         return jdbc.queryForObject(sql, new ModelLineRunRowMapper(), modelLineId);
     }
 
+    @Override
+    public ModelLineRun findActiveRunByModelLineId(int modelLineId) {
+        String sql = """
+        SELECT TOP 1 *
+        FROM ModelLineRuns
+        WHERE ModelLineID = ?
+          AND Status = 'Running'
+        ORDER BY StartedAt DESC
+    """;
+        List<ModelLineRun> results = jdbc.query(sql, new ModelLineRunRowMapper(), modelLineId);
+        return results.isEmpty() ? null : results.get(0);
+    }
 
 }

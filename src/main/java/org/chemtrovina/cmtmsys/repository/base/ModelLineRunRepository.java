@@ -13,4 +13,7 @@ public interface ModelLineRunRepository {
     void markRunsAsDuplicate(int modelLineId, LocalDate date);
     ModelLineRun findLatestRunByModelLineId(int modelLineId);
 
+    ModelLineRun findActiveRunByModelLineId(int modelLineId);
+
+
 }

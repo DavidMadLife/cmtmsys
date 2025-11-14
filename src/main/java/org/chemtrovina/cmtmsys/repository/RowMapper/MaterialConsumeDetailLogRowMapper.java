@@ -18,6 +18,7 @@ public class MaterialConsumeDetailLogRowMapper implements RowMapper<MaterialCons
         log.setRunDate(rs.getObject("RunDate", LocalDate.class));
         log.setMaterialId(rs.getInt("MaterialID"));
         log.setConsumedQty(rs.getInt("ConsumedQty"));
+        log.setSourceLogId(rs.getObject("SourceLogId") != null ? rs.getInt("SourceLogId") : null);
         log.setCreatedAt(rs.getObject("CreatedAt", LocalDateTime.class));
         return log;
     }

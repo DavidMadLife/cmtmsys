@@ -18,6 +18,7 @@ public interface FeederAssignmentMaterialRepository {
     void deleteById(int id);
 
 
+    FeederAssignmentMaterial findLatestByMaterialId(int materialId);
 
 
 }

@@ -6,6 +6,7 @@ import org.chemtrovina.cmtmsys.repository.base.WarehouseTransferDetailRepository
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public interface WarehouseTransferService {
     void createTransfer(WarehouseTransfer transfer, List<WarehouseTransferDetail> details);
@@ -18,6 +19,7 @@ public interface WarehouseTransferService {
     Map<String,Integer> getScannedQuantitiesByWO(int workOrderId);
     Map<String, Integer> getActualReturnedByWorkOrderId(int workOrderId);
     int getFromWarehouseIdByTransferId(int transferId);
+    WarehouseTransfer getTransferById(int transferId);
 
-
+    Map<Integer, WarehouseTransfer> getTransfersByIds(Set<Integer> ids);
 }

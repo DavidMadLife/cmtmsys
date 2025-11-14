@@ -90,16 +90,19 @@ public class ProductRepositoryImpl implements ProductRepository {
     @Override
     public void updateProduct(Product product) {
         String sql = """
-            UPDATE Products
-            SET productCode = ?, description = ?, modelType = ?, updatedDate = GETDATE()
-            WHERE productId = ?
-        """;
+        UPDATE Products
+        SET productCode = ?, name = ?, description = ?, modelType = ?, updatedDate = GETDATE()
+        WHERE productId = ?
+    """;
         jdbcTemplate.update(sql,
                 product.getProductCode(),
+                product.getName(),
                 product.getDescription(),
-                product.getModelType().toString(),
-                product.getProductId());
+                product.getModelType().name(),
+                product.getProductId()  // ✅ đúng: ID là kiểu int
+        );
     }
+
 
     @Override
     public void deleteProductWithBOM(int productId) {
@@ -136,6 +139,12 @@ public class ProductRepositoryImpl implements ProductRepository {
         return jdbcTemplate.queryForObject(sql, new Object[]{planItemId}, String.class);
     }
 
+    @Override
+    public Product findByNameAndModelType(String productName, ModelType modelType) {
+        String sql = "SELECT * FROM Products WHERE Name = ? AND ModelType = ?";
+        List<Product> results = jdbcTemplate.query(sql, new ProductRowMapper(), productName, modelType.name());
+        return results.isEmpty() ? null : results.get(0);
+    }
 
 
 

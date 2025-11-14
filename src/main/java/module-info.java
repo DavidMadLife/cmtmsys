@@ -6,6 +6,7 @@ module org.chemtrovina.cmtmsys {
     requires org.kordamp.ikonli.javafx;
     requires org.kordamp.bootstrapfx.core;
     requires java.sql;
+    requires javafx.swing;
     requires spring.jdbc;
     requires org.apache.poi.ooxml;
     requires spring.tx;

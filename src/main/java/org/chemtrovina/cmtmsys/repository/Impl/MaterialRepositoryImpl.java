@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-
 @Repository
 public class MaterialRepositoryImpl implements MaterialRepository {
 
@@ -24,56 +23,74 @@ public class MaterialRepositoryImpl implements MaterialRepository {
 
     @Override
     public void add(Material material) {
-        String sql = "INSERT INTO Materials (SapCode, RollCode, Quantity, WarehouseID, CreatedAt, Spec, EmployeeID) VALUES (?, ?, ?, ?, ?, ?, ?)";
-        jdbcTemplate.update(sql, material.getSapCode(), material.getRollCode(), material.getQuantity(),
-                material.getWarehouseId(), material.getCreatedAt(), material.getSpec(), material.getEmployeeId());
+        String sql = """
+            INSERT INTO Materials 
+            (SapCode, RollCode, Quantity, WarehouseID, CreatedAt, Spec, EmployeeID, Lot, Maker)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """;
+        jdbcTemplate.update(sql,
+                material.getSapCode(),
+                material.getRollCode(),
+                material.getQuantity(),
+                material.getWarehouseId(),
+                material.getCreatedAt(),
+                material.getSpec(),
+                material.getEmployeeId(),
+                material.getLot(),
+                material.getMaker() // ✅ mới
+        );
     }
 
     @Override
     public void update(Material material) {
         Integer treeId = material.getTreeId();
 
-        // Nếu TreeId null hoặc không tồn tại trong MaterialCartTrees, bỏ qua TreeID
+        // Kiểm tra treeId có tồn tại không
         boolean treeExists = (treeId != null) && jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM MaterialCartTrees WHERE TreeID = ?",
                 Integer.class, treeId) > 0;
 
         if (treeExists) {
-            String sql = "UPDATE Materials SET SapCode = ?, Quantity = ?, Spec = ?, EmployeeID = ?, WarehouseID = ?, TreeID = ? WHERE MaterialID = ?";
-            jdbcTemplate.update(
-                    sql,
+            String sql = """
+                UPDATE Materials 
+                SET SapCode = ?, Quantity = ?, Spec = ?, EmployeeID = ?, WarehouseID = ?, TreeID = ?, Lot = ?, Maker = ?
+                WHERE MaterialID = ?
+            """;
+            jdbcTemplate.update(sql,
                     material.getSapCode(),
                     material.getQuantity(),
                     material.getSpec(),
                     material.getEmployeeId(),
                     material.getWarehouseId(),
                     treeId,
+                    material.getLot(),
+                    material.getMaker(), // ✅ mới
                     material.getMaterialId()
             );
         } else {
-            String sql = "UPDATE Materials SET SapCode = ?, Quantity = ?, Spec = ?, EmployeeID = ?, WarehouseID = ?, TreeID = NULL WHERE MaterialID = ?";
-            jdbcTemplate.update(
-                    sql,
+            String sql = """
+                UPDATE Materials 
+                SET SapCode = ?, Quantity = ?, Spec = ?, EmployeeID = ?, WarehouseID = ?, Lot = ?, Maker = ?
+                WHERE MaterialID = ?
+            """;
+            jdbcTemplate.update(sql,
                     material.getSapCode(),
                     material.getQuantity(),
                     material.getSpec(),
                     material.getEmployeeId(),
                     material.getWarehouseId(),
+                    material.getLot(),
+                    material.getMaker(), // ✅ mới
                     material.getMaterialId()
             );
         }
     }
 
-
-
     @Override
     public List<Material> findByIds(Set<Integer> ids) {
         if (ids == null || ids.isEmpty()) return List.of();
 
-        String inSql = ids.stream()
-                .map(id -> "?")
-                .collect(Collectors.joining(", "));
-
+        String inSql = ids.stream().map(id -> "?").collect(Collectors.joining(", "));
         String sql = "SELECT * FROM Materials WHERE MaterialID IN (" + inSql + ")";
         return jdbcTemplate.query(sql, new MaterialRowMapper(), ids.toArray());
     }
@@ -84,14 +101,11 @@ public class MaterialRepositoryImpl implements MaterialRepository {
         return jdbcTemplate.query(sql, new MaterialRowMapper(), sapCode);
     }
 
-
     @Override
     public List<Material> getByTreeId(int treeId) {
         String sql = "SELECT * FROM Materials WHERE TreeID = ?";
         return jdbcTemplate.query(sql, new MaterialRowMapper(), treeId);
     }
-
-
 
     @Override
     public void deleteById(int id) {
@@ -156,27 +170,28 @@ public class MaterialRepositoryImpl implements MaterialRepository {
 
     @Override
     public void restore(int planItemId, int quantity) {
-        // Ví dụ cộng lại vào kho tồn theo PlanItemID hoặc ProductID
         String sql = """
-        UPDATE Materials
-        SET Quantity = Quantity + ?
-        WHERE SapCode = (
-            SELECT p.ProductCode
-            FROM ProductionPlanItems ppi
-            JOIN Products p ON ppi.ProductID = p.ProductID
-            WHERE ppi.PlanItemID = ?
-        )
-    """;
+            UPDATE Materials
+            SET Quantity = Quantity + ?
+            WHERE SapCode = (
+                SELECT p.ProductCode
+                FROM ProductionPlanItems ppi
+                JOIN Products p ON ppi.ProductID = p.ProductID
+                WHERE ppi.PlanItemID = ?
+            )
+        """;
         jdbcTemplate.update(sql, quantity, planItemId);
     }
+
     public void updateIgnoreTreeId(Material material) {
-        String sql = "UPDATE Materials SET SapCode = ?, Quantity = ?, Spec = ?, EmployeeID = ? WHERE MaterialID = ?";
+        String sql = "UPDATE Materials SET SapCode = ?, Quantity = ?, Spec = ?, EmployeeID = ?, Maker = ? WHERE MaterialID = ?";
         jdbcTemplate.update(
                 sql,
                 material.getSapCode(),
                 material.getQuantity(),
                 material.getSpec(),
                 material.getEmployeeId(),
+                material.getMaker(), // ✅ thêm mới
                 material.getMaterialId()
         );
     }
@@ -185,7 +200,7 @@ public class MaterialRepositoryImpl implements MaterialRepository {
     public List<Material> findByRollCodes(List<String> rollCodes) {
         if (rollCodes == null || rollCodes.isEmpty()) return List.of();
 
-        final int MAX_PARAMS = 1000; // Đảm bảo không vượt 2100
+        final int MAX_PARAMS = 1000; // Tránh vượt giới hạn 2100
         List<Material> result = new ArrayList<>();
 
         for (int i = 0; i < rollCodes.size(); i += MAX_PARAMS) {
@@ -199,8 +214,4 @@ public class MaterialRepositoryImpl implements MaterialRepository {
 
         return result;
     }
-
-
-
-
 }

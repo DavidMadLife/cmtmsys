@@ -15,6 +15,7 @@
 
 <BorderPane style="-fx-background-color: #456F92;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.chemtrovina.cmtmsys.controller.ScanController">
 
+   <!-- ========== HEADER (FILTER) ========== -->
    <top>
       <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-padding: 10;">
          <children>
@@ -27,11 +28,10 @@
                <Text text="Invoice No" />
                <ComboBox fx:id="cbInvoiceNo1" prefWidth="150" />
             </HBox>
-            <HBox alignment="CENTER_LEFT" layoutX="254.0" layoutY="20.0" spacing="5" style="-fx-background-color: white; -fx-background-radius: 5; -fx-padding: 5 10;">
-               <children>
-                  <Text text="Invoice PN" />
-                  <ComboBox fx:id="cbInvoicePN" prefWidth="150" />
-               </children>
+
+            <HBox alignment="CENTER_LEFT" spacing="5" style="-fx-background-color: white; -fx-background-radius: 5; -fx-padding: 5 10;">
+               <Text text="Invoice PN" />
+               <ComboBox fx:id="cbInvoicePN" prefWidth="150" />
             </HBox>
 
             <Button fx:id="btnSearch" text="Search" />
@@ -40,78 +40,81 @@
       </HBox>
    </top>
 
+   <!-- ========== CENTER CONTENT ========== -->
    <center>
       <HBox spacing="20" style="-fx-padding: 10;">
-         <!-- LEFT SIDE -->
+         <!-- ===== LEFT SIDE ===== -->
          <VBox spacing="10" HBox.hgrow="ALWAYS">
 
-            <!-- TOP: Invoice Table + Input Form -->
-            <HBox spacing="10">
-               <!-- Invoice Table -->
-               <TableView fx:id="tblInvoiceList" prefHeight="120.0" prefWidth="300">
-                  <columns>
-                     <TableColumn fx:id="colDate" prefWidth="100" text="Date" />
-                     <TableColumn fx:id="colInvoiceNo" prefWidth="140" text="Invoice No" />
-                  </columns>
-               </TableView>
+            <!-- Invoice list -->
+            <TableView fx:id="tblInvoiceList" prefHeight="120" prefWidth="300">
+               <columns>
+                  <TableColumn fx:id="colDate" prefWidth="100" text="Date" />
+                  <TableColumn fx:id="colInvoiceNo" prefWidth="140" text="Invoice No" />
+               </columns>
+            </TableView>
 
-               <!-- Scan Inputs -->
-               <VBox spacing="10">
-                  <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-background-color: white; -fx-background-radius: 5; -fx-padding: 5 10;">
-                     <Text text="ID" />
-                     <TextField fx:id="txtScanInput" prefHeight="25.0" prefWidth="174.0" />
-                     <Button fx:id="btnOnOff" prefHeight="25.0" prefWidth="58.0" style="-fx-background-color: #a9a9ff;" text="ON" textFill="WHITE" />
-                  </HBox>
+            <!-- Scan area -->
+            <VBox spacing="10">
 
-                  <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-background-color: white; -fx-background-radius: 5; -fx-padding: 5 10;">
-                     <Text text="Scan Code" />
-                     <TextField fx:id="txtScanCode" prefWidth="200" />
-                  </HBox>
+               <!-- Scan ID -->
+               <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-background-color: white; -fx-background-radius: 5; -fx-padding: 5 10;">
+                  <Text text="Operator ID" />
+                  <TextField fx:id="txtScanInput" prefHeight="25" prefWidth="180" />
+                  <Button fx:id="btnOnOff" prefHeight="25" prefWidth="60" style="-fx-background-color: #3b7bd0; -fx-background-radius: 5;" text="ON" textFill="WHITE" />
+               </HBox>
 
-                  <Button fx:id="btnScanOddReel" disable="true" style="-fx-opacity: 0.6;" text="Scan odd reel" />
-               </VBox>
-            </HBox>
+               <!-- Select SAP -->
+               <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-background-color: white; -fx-background-radius: 5; -fx-padding: 5 10;">
+                  <Text text="Select SAP" />
+                  <TextField fx:id="txtSapSelect" prefWidth="200" promptText="Choose SAP..." />
+               </HBox>
 
-            <!-- Bottom Table -->
+               <!-- Scan Maker Code -->
+               <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-background-color: white; -fx-background-radius: 5; -fx-padding: 5 10;">
+                  <Text text="Scan MakerPN" />
+                  <TextField fx:id="txtScanCode" prefWidth="200" promptText="Scan maker code here..." />
+               </HBox>
+
+               <Button fx:id="btnScanOddReel" disable="true" style="-fx-opacity: 0.6;" text="Scan Odd Reel" />
+            </VBox>
+
+            <!-- ===== Table showing all codes ===== -->
             <TableView fx:id="tblScanDetails" VBox.vgrow="ALWAYS">
                <columns>
-                  <TableColumn fx:id="colMakerCode" prefWidth="100" text="Maker Code" />
                   <TableColumn fx:id="colSapCode" prefWidth="100" text="SAP Code" />
-                  <TableColumn fx:id="colMaker" prefWidth="90" text="Maker" />
-                  <TableColumn fx:id="colSpec" prefWidth="100" text="Spec" />
-                  <TableColumn fx:id="colMOQ" prefWidth="70" text="MOQ" />
-                  <TableColumn fx:id="colQty" prefWidth="70" text="Qty" />
+                  <TableColumn fx:id="colMakerCode" prefWidth="100" text="Maker Code" />
+                  <TableColumn fx:id="colMOQ" prefWidth="60" text="MOQ" />
+                  <TableColumn fx:id="colQty" prefWidth="90" text="Qty Required" />
+                  <TableColumn fx:id="colQtyScanned" prefWidth="100" text="Qty Scanned" />
                   <TableColumn fx:id="colReelQty" prefWidth="80" text="Reel Qty" />
-                  <TableColumn fx:id="colInvoice" prefWidth="85.0" text="Invoice" />
+                  <TableColumn fx:id="colStatus" prefWidth="80" text="Status" />
                </columns>
             </TableView>
 
             <Button fx:id="btnRefresh" alignment="CENTER_RIGHT" text="Refresh" />
          </VBox>
 
-         <!-- RIGHT SIDE -->
+         <!-- ===== RIGHT SIDE (Result Panel) ===== -->
          <VBox alignment="TOP_CENTER" prefWidth="400" spacing="20" HBox.hgrow="ALWAYS">
-            <!-- Title -->
             <StackPane prefHeight="60" style="-fx-background-color: #3789e1; -fx-background-radius: 10;">
-               <Text fx:id="txtScanResultTitle" fill="WHITE" style="-fx-font-weight: Bold;" text="Scan Result">
-                  <font><Font size="24.0" /></font>
+               <Text fx:id="txtScanResultTitle" fill="WHITE" style="-fx-font-weight: bold;" text="Scan Result">
+                  <font><Font size="24" /></font>
                </Text>
             </StackPane>
 
-            <!-- Result Auto-Resizable -->
             <StackPane fx:id="paneScanResult" style="-fx-background-color: #aeadad; -fx-background-radius: 10;" VBox.vgrow="ALWAYS">
                <Text fx:id="txtScanStatus" fill="#807a7a" text="None">
-                  <font><Font size="64.0" /></font>
+                  <font><Font size="64" /></font>
                </Text>
             </StackPane>
 
-            <!-- Bottom Buttons -->
             <HBox alignment="CENTER" spacing="20">
-               <Button fx:id="btnKeepGoing" style="-fx-background-color: #22d73a; -fx-font-weight: Bold; -fx-background-radius: 10;" text="Keep going" textFill="WHITE">
-                  <font><Font size="18.0" /></font>
+               <Button fx:id="btnKeepGoing" style="-fx-background-color: #22d73a; -fx-font-weight: bold; -fx-background-radius: 10;" text="Keep Going" textFill="WHITE">
+                  <font><Font size="18" /></font>
                </Button>
-               <Button fx:id="btnCallSuperV" style="-fx-background-color: #f54d4d; -fx-font-weight: Bold; -fx-background-radius: 10;" text="Call Super-V" textFill="WHITE">
-                  <font><Font size="18.0" /></font>
+               <Button fx:id="btnCallSuperV" style="-fx-background-color: #f54d4d; -fx-font-weight: bold; -fx-background-radius: 10;" text="Call Super-V" textFill="WHITE">
+                  <font><Font size="18" /></font>
                </Button>
             </HBox>
          </VBox>

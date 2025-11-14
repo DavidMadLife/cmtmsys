@@ -6,4 +6,6 @@ public interface FeederAssignmentService {
     FeederAssignment assignFeeder(int runId, int feederId, String assignedBy);
 
     FeederAssignment getAssignment(int runId, int feederId);
+
+    FeederAssignment getById(int assignmentId);
 }

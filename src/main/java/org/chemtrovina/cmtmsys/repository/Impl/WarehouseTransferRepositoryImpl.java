@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 
 @Repository
@@ -91,6 +92,19 @@ public class WarehouseTransferRepositoryImpl implements WarehouseTransferReposit
         String sql = "SELECT FromWarehouseId FROM WarehouseTransfers WHERE TransferId = ?";
         return jdbcTemplate.queryForObject(sql, Integer.class, transferId);
     }
+
+
+    @Override
+    public List<WarehouseTransfer> findByIds(Set<Integer> ids) {
+        if (ids == null || ids.isEmpty()) return List.of();
+
+        // Ghép danh sách id thành chuỗi ?,?,?
+        String inSql = ids.stream().map(id -> "?").collect(java.util.stream.Collectors.joining(","));
+        String sql = "SELECT * FROM WarehouseTransfers WHERE TransferID IN (" + inSql + ")";
+
+        return jdbcTemplate.query(sql, new WarehouseTransferRowMapper(), ids.toArray());
+    }
+
 
 
 }

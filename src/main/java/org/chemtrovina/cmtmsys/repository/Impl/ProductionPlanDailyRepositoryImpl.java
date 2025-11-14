@@ -268,8 +268,6 @@ public class ProductionPlanDailyRepositoryImpl implements ProductionPlanDailyRep
     }
 
 
-
-
     @Override
     public int getActualQuantity(int planItemId, LocalDate runDate) {
         String sql = "SELECT COALESCE(ActualQuantity, 0) FROM ProductionPlanDaily WHERE PlanItemID = ? AND RunDate = ?";

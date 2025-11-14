@@ -96,4 +96,11 @@ public class ProductBOMRepositoryImpl implements ProductBOMRepository {
         ), productCode, modelType);
     }
 
+    @Override
+    public List<String> getAllProductCodesWithBOM() {
+        return jdbcTemplate.query("SELECT DISTINCT p.productCode FROM ProductBOM b JOIN Products p ON p.productId = b.productId",
+                (rs, i) -> rs.getString("productCode"));
+    }
+
+
 }

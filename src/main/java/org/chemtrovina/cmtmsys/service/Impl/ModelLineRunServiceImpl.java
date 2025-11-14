@@ -72,6 +72,22 @@ public class ModelLineRunServiceImpl implements ModelLineRunService {
         }
     }
 
+    @Override
+    public ModelLineRun getActiveRun(int modelLineId) {
+        // Ưu tiên Run đang ở trạng thái "Running"
+        ModelLineRun active = repository.findActiveRunByModelLineId(modelLineId);
+        if (active != null) return active;
+
+        // Nếu chưa có Run nào đang "Running", fallback: lấy Run gần nhất trong hôm nay
+        List<ModelLineRun> todayRuns = repository.findByModelLineId(modelLineId).stream()
+                .filter(r -> r.getStartedAt() != null &&
+                        r.getStartedAt().toLocalDate().equals(LocalDate.now()))
+                .sorted((a, b) -> b.getStartedAt().compareTo(a.getStartedAt())) // mới nhất trước
+                .toList();
+
+        return todayRuns.isEmpty() ? null : todayRuns.get(0);
+    }
+
 
 
     @Override

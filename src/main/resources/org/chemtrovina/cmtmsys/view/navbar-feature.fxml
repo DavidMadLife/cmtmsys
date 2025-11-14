@@ -102,8 +102,12 @@
             </items>
         </MenuButton>
 
-
-
-
+        <!-- Menu: Spare Part -->
+        <MenuButton fx:id="menuSparePart" text="Spare Part" style="-fx-font-weight: bold;" prefWidth="160">
+            <items>
+                <MenuItem fx:id="menuSparePartManager" text="Spare Part In (Input Spare part)"/>
+                <MenuItem fx:id="menuSparePartManagerOut" text="Spare Part Out (Output Spare part)"/>
+            </items>
+        </MenuButton>
     </items>
 </ToolBar>

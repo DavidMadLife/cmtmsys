@@ -47,4 +47,9 @@ public class InvoiceDetailServiceImpl implements InvoiceDetailService {
         return invoiceDetailRepository.findBySapPNAndInvoiceId(sapPN, invoiceId);
     }
 
+    @Override
+    public List<String> getAllSapPNs() {
+        return invoiceDetailRepository.findAllSapPNs();
+    }
+
 }

@@ -32,7 +32,7 @@ public class PcbPerformanceLog {
         this.createdAt = createdAt;
     }
 
-    // Getter & Setter
+    // Getter & Setter 
     public int getLogId() {
         return logId;
     }

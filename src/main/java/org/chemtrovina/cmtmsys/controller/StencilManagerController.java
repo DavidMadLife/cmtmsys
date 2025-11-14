@@ -552,6 +552,7 @@ public class StencilManagerController {
                         skipped++; errorMessages.add("Dòng " + (i + 1) + ": Barcode '" + barcode + "' đã tồn tại"); continue;
                     }
 
+
                     Stencil s = new Stencil();
                     s.setBarcode(barcode);
                     s.setStencilNo(stencilNo);

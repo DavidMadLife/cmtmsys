@@ -27,6 +27,7 @@ import org.chemtrovina.cmtmsys.service.Impl.WarehouseServiceImpl;
 import org.chemtrovina.cmtmsys.service.base.MaterialService;
 import org.chemtrovina.cmtmsys.service.base.TransferLogService;
 import org.chemtrovina.cmtmsys.service.base.WarehouseService;
+import org.chemtrovina.cmtmsys.utils.FxClipboardUtils;
 import org.chemtrovina.cmtmsys.utils.FxFilterUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -46,11 +47,14 @@ public class InventoryCheckController {
     @FXML private TableColumn<MaterialDto, Integer> colNo;
     @FXML private TableColumn<MaterialDto, String> colSapCode;
     @FXML private TableColumn<MaterialDto, String> colSpec;
+    @FXML private TableColumn<MaterialDto, String> colLot;
     @FXML private TableColumn<MaterialDto, String> colRollCode;
     @FXML private TableColumn<MaterialDto, Integer> colQuantity;
     @FXML private TableColumn<MaterialDto, String> colWarehouse;
     @FXML private TableColumn<MaterialDto, LocalDateTime> colCreatedAt;
     @FXML private TableColumn<MaterialDto, String> colEmployeeId;
+    @FXML private TableColumn<MaterialDto, String> colMaker; // 🆕 thêm cột Maker
+
     @FXML private Button btnChooseFile;
     @FXML private Button btnImportData;
     @FXML private Text txtFileName;
@@ -84,8 +88,8 @@ public class InventoryCheckController {
         //loadData();
         setupFileImport();
         setupSearch();
-        tblMaterials.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         btnClear.setOnAction(e -> clearFilters());
+        FxClipboardUtils.enableCopyShortcut(tblMaterials);
 
     }
 
@@ -99,10 +103,10 @@ public class InventoryCheckController {
         colQuantity.setCellValueFactory(new PropertyValueFactory<>("quantity"));
         colWarehouse.setCellValueFactory(new PropertyValueFactory<>("warehouseName"));
         colSpec.setCellValueFactory(new PropertyValueFactory<>("spec"));
+        colLot.setCellValueFactory(new PropertyValueFactory<>("lot"));
         colCreatedAt.setCellValueFactory(new PropertyValueFactory<>("createdAt"));
         colEmployeeId.setCellValueFactory(new PropertyValueFactory<>("employeeId"));
-        tblMaterials.getSelectionModel().setCellSelectionEnabled(true);
-        tblMaterials.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        colMaker.setCellValueFactory(new PropertyValueFactory<>("maker")); // 🆕
 
         tblMaterials.setRowFactory(tv -> {
             TableRow<MaterialDto> row = new TableRow<>();
@@ -209,43 +213,53 @@ public class InventoryCheckController {
     private void showUpdateDialog(MaterialDto dto) {
         Dialog<MaterialDto> dialog = new Dialog<>();
         dialog.setTitle("Cập nhật vật liệu");
+        dialog.setHeaderText("Chỉnh sửa thông tin vật liệu");
 
+        // ======= Controls =======
         Label lblQuantity = new Label("Số lượng:");
         TextField txtQuantity = new TextField(String.valueOf(dto.getQuantity()));
 
+        Label lblLot = new Label("Mã Lot (Data Code):");
+        TextField txtLot = new TextField(dto.getLot() != null ? dto.getLot() : "");
+
+        // ======= Layout =======
         GridPane grid = new GridPane();
         grid.setHgap(10);
         grid.setVgap(10);
         grid.add(lblQuantity, 0, 0);
         grid.add(txtQuantity, 1, 0);
+        grid.add(lblLot, 0, 1);
+        grid.add(txtLot, 1, 1);
 
         dialog.getDialogPane().setContent(grid);
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
+        // ======= Logic xử lý =======
         dialog.setResultConverter(button -> {
             if (button == ButtonType.OK) {
                 try {
                     int quantity = Integer.parseInt(txtQuantity.getText().trim());
                     dto.setQuantity(quantity);
+                    dto.setLot(txtLot.getText().trim().isEmpty() ? null : txtLot.getText().trim());
                     return dto;
                 } catch (NumberFormatException e) {
-                    showAlert(Alert.AlertType.WARNING, "Giá trị không hợp lệ", "Số lượng phải là số.");
+                    showAlert(Alert.AlertType.WARNING, "Giá trị không hợp lệ", "Số lượng phải là số nguyên hợp lệ.");
                 }
             }
             return null;
         });
 
+        // ======= Save result =======
         dialog.showAndWait().ifPresent(updatedDto -> {
             try {
                 materialService.updateMaterialDto(updatedDto);
-                tblMaterials.refresh(); // cập nhật lại bảng
-                showAlert(Alert.AlertType.INFORMATION, "Đã cập nhật", "Cập nhật thành công.");
+                tblMaterials.refresh(); // ✅ làm mới bảng
+                showAlert(Alert.AlertType.INFORMATION, "✅ Thành công", "Đã cập nhật vật liệu thành công.");
             } catch (Exception e) {
-                showAlert(Alert.AlertType.ERROR, "Lỗi", "Không thể cập nhật: " + e.getMessage());
+                showAlert(Alert.AlertType.ERROR, "❌ Lỗi", "Không thể cập nhật vật liệu: " + e.getMessage());
             }
         });
     }
-
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -270,8 +284,14 @@ public class InventoryCheckController {
             }
         });
 
+        txtFilterSapCode.setOnKeyPressed(e -> {
+            if (e.getCode() == javafx.scene.input.KeyCode.ENTER) onSearch();
+        });
+        txtFilterBarcode.setOnKeyPressed(e -> {
+            if (e.getCode() == javafx.scene.input.KeyCode.ENTER) onSearch();
+        });
+
         btnSearch.setOnAction(e -> onSearch());
-        setupCopyAction();
 
     }
 
@@ -295,42 +315,7 @@ public class InventoryCheckController {
         //setupFilterMenus(filtered);
     }
 
-    private void setupCopyAction() {
-        tblMaterials.setOnKeyPressed(event -> {
-            if (event.isControlDown() && event.getCode().toString().equals("C")) {
-                copyMaterialSelectionToClipboard();
-            }
-        });
-    }
 
-    private void copyMaterialSelectionToClipboard() {
-        StringBuilder clipboardString = new StringBuilder();
-        ObservableList<TablePosition> positionList = tblMaterials.getSelectionModel().getSelectedCells();
-
-        int prevRow = -1;
-        for (TablePosition position : positionList) {
-            int row = position.getRow();
-            int col = position.getColumn();
-
-            Object cell = tblMaterials.getColumns().get(col).getCellData(row);
-            if (cell == null) {
-                cell = "";
-            }
-
-            if (prevRow == row) {
-                clipboardString.append('\t');
-            } else if (prevRow != -1) {
-                clipboardString.append('\n');
-            }
-
-            clipboardString.append(cell);
-            prevRow = row;
-        }
-
-        final ClipboardContent clipboardContent = new ClipboardContent();
-        clipboardContent.putString(clipboardString.toString());
-        Clipboard.getSystemClipboard().setContent(clipboardContent);
-    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -370,20 +355,5 @@ public class InventoryCheckController {
         tblMaterials.setItems(FXCollections.observableArrayList(filtered));
     }
 
-    private void setupFilterMenus(List<MaterialDto> data) {
-        // Dọn context menu cũ (nếu có)
-        colSapCode.setContextMenu(null);
-        colSpec.setContextMenu(null);
-        colRollCode.setContextMenu(null);
-        colWarehouse.setContextMenu(null);
-        colEmployeeId.setContextMenu(null);
-
-        // Setup lại filter menu
-        FxFilterUtils.setupFilterMenu(colSapCode, data, MaterialDto::getSapCode, this::applyGeneralFilter);
-        FxFilterUtils.setupFilterMenu(colSpec, data, MaterialDto::getSpec, this::applyGeneralFilter);
-        FxFilterUtils.setupFilterMenu(colRollCode, data, MaterialDto::getRollCode, this::applyGeneralFilter);
-        FxFilterUtils.setupFilterMenu(colWarehouse, data, MaterialDto::getWarehouseName, this::applyGeneralFilter);
-        FxFilterUtils.setupFilterMenu(colEmployeeId, data, MaterialDto::getEmployeeId, this::applyGeneralFilter);
-    }
 
 }

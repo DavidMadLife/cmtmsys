@@ -9,6 +9,7 @@ import javafx.stage.FileChooser;
 import org.chemtrovina.cmtmsys.model.*;
 import org.chemtrovina.cmtmsys.model.enums.ModelType;
 import org.chemtrovina.cmtmsys.service.base.*;
+import org.chemtrovina.cmtmsys.utils.AutoCompleteUtils;
 import org.chemtrovina.cmtmsys.utils.FxClipboardUtils;
 import org.chemtrovina.cmtmsys.utils.TableUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,14 +21,15 @@ import java.util.List;
 @Component
 public class FeederListController {
 
+    // region FXML
     @FXML private TextField txtModelCode;
+    @FXML private TextField txtModelName;
     @FXML private ComboBox<ModelType> cbModelType;
     @FXML private ComboBox<Warehouse> cbLines;
     @FXML private Button btnLoadFeeders;
 
     @FXML private TableView<Feeder> tblFeederList;
     @FXML private TableColumn<Feeder, Integer> colNo;
-
     @FXML private TableColumn<Feeder, String> colFeederCode;
     @FXML private TableColumn<Feeder, String> colSapCode;
     @FXML private TableColumn<Feeder, Integer> colQty;
@@ -41,67 +43,54 @@ public class FeederListController {
     @FXML private Text txtSelectedFileName;
     @FXML private Button btnImportFeederList;
     @FXML private Button btnDeleteSelectedFeeders;
-
+    // endregion
 
     private File selectedFile;
     private ObservableList<Feeder> allFeeders = FXCollections.observableArrayList();
 
     private final ProductService productService;
     private final WarehouseService warehouseService;
-    private final ModelLineService modelLineService;
     private final FeederService feederService;
 
     @Autowired
-    public FeederListController(
-            ProductService productService,
-            WarehouseService warehouseService,
-            ModelLineService modelLineService,
-            FeederService feederService
-    ) {
+    public FeederListController(ProductService productService,
+                                WarehouseService warehouseService,
+                                ModelLineService modelLineService,
+                                FeederService feederService) {
         this.productService = productService;
         this.warehouseService = warehouseService;
-        this.modelLineService = modelLineService;
         this.feederService = feederService;
     }
 
+    // region INITIALIZE
     @FXML
     public void initialize() {
-        setupComboBoxes();
-        setupModelTypeComboBox();
+        setupCombos();
         setupTable();
         setupImport();
-        setupSearch();
-        enableClipboardSupport();
-        setupDelete();
+        setupSearchAndDelete();
+        FxClipboardUtils.enableCopyShortcut(tblFeederList);
         TableUtils.centerAlignAllColumns(tblFeederList);
     }
+    // endregion
 
-    private void setupModelTypeComboBox() {
+
+    // region SETUP UI
+    private void setupCombos() {
+        // Model Type
         cbModelType.setItems(FXCollections.observableArrayList(ModelType.values()));
-        cbModelType.setCellFactory(lv -> new ListCell<>() {
-            @Override protected void updateItem(ModelType item, boolean empty) {
-                super.updateItem(item, empty);
-                setText(empty || item == null ? null : item.name());
-            }
-        });
-        cbModelType.setButtonCell(new ListCell<>() {
-            @Override protected void updateItem(ModelType item, boolean empty) {
-                super.updateItem(item, empty);
-                setText(empty || item == null ? null : item.name());
-            }
-        });
-    }
+        cbModelType.setButtonCell(createComboCell());
+        cbModelType.setCellFactory(lv -> createComboCell());
 
-    private void setupComboBoxes() {
+        // Lines
         cbLines.setItems(FXCollections.observableArrayList(warehouseService.getAllWarehouses()));
-
-        cbLines.setCellFactory(lv -> new ListCell<>() {
+        cbLines.setButtonCell(new ListCell<>() {
             @Override protected void updateItem(Warehouse item, boolean empty) {
                 super.updateItem(item, empty);
                 setText(empty || item == null ? null : item.getName());
             }
         });
-        cbLines.setButtonCell(new ListCell<>() {
+        cbLines.setCellFactory(lv -> new ListCell<>() {
             @Override protected void updateItem(Warehouse item, boolean empty) {
                 super.updateItem(item, empty);
                 setText(empty || item == null ? null : item.getName());
@@ -111,47 +100,65 @@ public class FeederListController {
         btnLoadFeeders.setOnAction(e -> loadFeederList());
     }
 
+    private ListCell<ModelType> createComboCell() {
+        return new ListCell<>() {
+            @Override protected void updateItem(ModelType item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : item.name());
+            }
+        };
+    }
+
     private void setupTable() {
-
         colNo.setCellValueFactory(cell -> new javafx.beans.property.SimpleIntegerProperty(
-                tblFeederList.getItems().indexOf(cell.getValue()) + 1
-        ).asObject());
-        colFeederCode.setCellValueFactory(cell -> new javafx.beans.property.SimpleStringProperty(cell.getValue().getFeederCode()));
-        colSapCode.setCellValueFactory(cell -> new javafx.beans.property.SimpleStringProperty(cell.getValue().getSapCode()));
-        colQty.setCellValueFactory(cell -> new javafx.beans.property.SimpleIntegerProperty(cell.getValue().getQty()).asObject());
-        colMachine.setCellValueFactory(cell -> new javafx.beans.property.SimpleStringProperty(cell.getValue().getMachine()));
+                tblFeederList.getItems().indexOf(cell.getValue()) + 1).asObject());
+        colFeederCode.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(c.getValue().getFeederCode()));
+        colSapCode.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(c.getValue().getSapCode()));
+        colQty.setCellValueFactory(c -> new javafx.beans.property.SimpleIntegerProperty(c.getValue().getQty()).asObject());
+        colMachine.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(c.getValue().getMachine()));
 
-        TableUtils.centerAlignColumn(colNo);
-        TableUtils.centerAlignColumn(colFeederCode);
-        TableUtils.centerAlignColumn(colSapCode);
-        TableUtils.centerAlignColumn(colQty);
-        TableUtils.centerAlignColumn(colMachine);
+        // AutoComplete
+        List<Product> allProducts = productService.getAllProducts();
+        AutoCompleteUtils.setupAutoComplete(txtModelCode,
+                allProducts.stream().map(Product::getProductCode).filter(s -> s != null && !s.isBlank()).distinct().toList());
+        if (txtModelName != null)
+            AutoCompleteUtils.setupAutoComplete(txtModelName,
+                    allProducts.stream().map(Product::getName).filter(s -> s != null && !s.isBlank()).distinct().toList());
+    }
+    // endregion
 
-        tblFeederList.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
+    // region CORE LOGIC
+    private Product getSelectedProduct() {
+        String code = txtModelCode.getText().trim();
+        String name = txtModelName != null ? txtModelName.getText().trim() : "";
+        ModelType type = cbModelType.getValue();
 
+        if ((code.isEmpty() && name.isEmpty()) || type == null) {
+            showAlert(Alert.AlertType.WARNING, "Thiếu thông tin",
+                    "Vui lòng nhập Model Code hoặc Model Name và chọn Model Type.");
+            return null;
+        }
 
+        Product product = productService.getProductByCodeOrNameAndType(code, name, type);
+        if (product == null)
+            showAlert(Alert.AlertType.ERROR, "Không tìm thấy Model", "Model không tồn tại trong hệ thống.");
 
+        return product;
     }
 
     private void loadFeederList() {
-        String modelCode = txtModelCode.getText().trim();
-        ModelType modelType = cbModelType.getValue();
-        Warehouse selectedLine = cbLines.getValue();
-
-        if (modelCode.isEmpty() || modelType == null || selectedLine == null) {
-            showAlert(Alert.AlertType.WARNING, "Thiếu thông tin", "Vui lòng nhập đầy đủ Model Code, Model Type và Line.");
+        Warehouse line = cbLines.getValue();
+        if (line == null) {
+            showAlert(Alert.AlertType.WARNING, "Thiếu thông tin", "Vui lòng chọn Line.");
             return;
         }
 
-        Product product = productService.getProductByCodeAndType(modelCode, modelType);
-        if (product == null) {
-            showAlert(Alert.AlertType.ERROR, "Không tìm thấy Model", "Model không tồn tại trong hệ thống.");
-            return;
-        }
+        Product product = getSelectedProduct();
+        if (product == null) return;
 
         try {
-            List<Feeder> result = feederService.getFeedersByModelAndLine(product.getProductId(), selectedLine.getWarehouseId());
+            List<Feeder> result = feederService.getFeedersByModelAndLine(product.getProductId(), line.getWarehouseId());
             allFeeders = FXCollections.observableArrayList(result);
             tblFeederList.setItems(allFeeders);
         } catch (Exception e) {
@@ -160,33 +167,27 @@ public class FeederListController {
             tblFeederList.setItems(FXCollections.emptyObservableList());
         }
     }
+    // endregion
 
-    private void setupSearch() {
+
+    // region SEARCH + DELETE
+    private void setupSearchAndDelete() {
         btnSearchFeeder.setOnAction(e -> {
-            String modelCode = txtModelCode.getText().trim();
-            ModelType modelType = cbModelType.getValue();
-            Warehouse selectedLine = cbLines.getValue();
-
-            if (modelCode.isEmpty() || modelType == null || selectedLine == null) {
-                showAlert(Alert.AlertType.WARNING, "Thiếu thông tin", "Vui lòng nhập Model Code, Model Type và Line.");
+            Warehouse line = cbLines.getValue();
+            if (line == null) {
+                showAlert(Alert.AlertType.WARNING, "Thiếu thông tin", "Vui lòng chọn Line.");
                 return;
             }
 
-            Product product = productService.getProductByCodeAndType(modelCode, modelType);
-            if (product == null) {
-                showAlert(Alert.AlertType.ERROR, "Không tìm thấy Model", "Model không tồn tại trong hệ thống.");
-                return;
-            }
-
-            String feederCode = txtFilterFeederCode.getText().trim();
-            String sapCode = txtFilterSapCode.getText().trim();
+            Product product = getSelectedProduct();
+            if (product == null) return;
 
             try {
                 List<Feeder> filtered = feederService.searchFeeders(
                         product.getProductId(),
-                        selectedLine.getWarehouseId(),
-                        feederCode,
-                        sapCode
+                        line.getWarehouseId(),
+                        txtFilterFeederCode.getText().trim(),
+                        txtFilterSapCode.getText().trim()
                 );
                 tblFeederList.setItems(FXCollections.observableArrayList(filtered));
             } catch (Exception ex) {
@@ -198,10 +199,43 @@ public class FeederListController {
         btnClearSearch.setOnAction(e -> {
             txtFilterFeederCode.clear();
             txtFilterSapCode.clear();
+            txtModelCode.clear();
+            if (txtModelName != null) txtModelName.clear();
             loadFeederList();
         });
-    }
 
+        btnDeleteSelectedFeeders.setOnAction(e -> {
+            List<Feeder> selected = tblFeederList.getSelectionModel().getSelectedItems();
+            if (selected == null || selected.isEmpty()) {
+                showAlert(Alert.AlertType.WARNING, "Không có lựa chọn", "Vui lòng chọn feeder để xóa.");
+                return;
+            }
+
+            Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+            confirm.setTitle("Xác nhận xóa");
+            confirm.setContentText("Bạn có chắc chắn muốn xóa " + selected.size() + " feeder?");
+            confirm.showAndWait().ifPresent(result -> {
+                if (result == ButtonType.OK) {
+                    try {
+                        for (Feeder f : selected)
+                            feederService.deleteFeederById(f.getFeederId());
+
+                        showAlert(Alert.AlertType.INFORMATION, "Thành công", "Đã xóa feeder.");
+                        loadFeederList();
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        showAlert(Alert.AlertType.ERROR, "Lỗi", "Không thể xóa feeder: " + ex.getMessage());
+                    }
+                }
+            });
+        });
+
+        tblFeederList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+    }
+    // endregion
+
+
+    // region IMPORT
     private void setupImport() {
         btnChooseFile.setOnAction(e -> {
             FileChooser fileChooser = new FileChooser();
@@ -230,52 +264,7 @@ public class FeederListController {
             selectedFile = null;
         });
     }
-
-    private void setupDelete() {
-        btnDeleteSelectedFeeders.setOnAction(e -> {
-            List<Feeder> selected = tblFeederList.getSelectionModel().getSelectedItems();
-
-            if (selected == null || selected.isEmpty()) {
-                showAlert(Alert.AlertType.WARNING, "Không có lựa chọn", "Vui lòng chọn feeder để xóa.");
-                return;
-            }
-
-            Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-            confirm.setTitle("Xác nhận xóa");
-            confirm.setHeaderText(null);
-            confirm.setContentText("Bạn có chắc chắn muốn xóa " + selected.size() + " feeder?");
-            confirm.showAndWait().ifPresent(result -> {
-                if (result == ButtonType.OK) {
-                    try {
-                        for (Feeder feeder : selected) {
-                            feederService.deleteFeederById(feeder.getFeederId()); // 🚀 Xóa feeder + xóa modelLine nếu cần
-                        }
-
-                        showAlert(Alert.AlertType.INFORMATION, "Thành công", "Đã xóa feeder.");
-                        loadFeederList(); // Refresh lại danh sách
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                        showAlert(Alert.AlertType.ERROR, "Lỗi", "Không thể xóa feeder: " + ex.getMessage());
-                    }
-                }
-            });
-        });
-
-        tblFeederList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-    }
-
-
-    private void enableClipboardSupport() {
-
-        tblFeederList.getSelectionModel().setCellSelectionEnabled(true);
-        tblFeederList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-
-        tblFeederList.setOnKeyPressed(e -> {
-            if (e.isControlDown() && e.getCode().toString().equals("C")) {
-                FxClipboardUtils.copySelectionToClipboard(tblFeederList);
-            }
-        });
-    }
+    // endregion
 
 
     private void showAlert(Alert.AlertType type, String title, String content) {

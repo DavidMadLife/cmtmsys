@@ -15,6 +15,7 @@ public interface ProductBOMService {
 
     List<ProductBomDto> getBomDtoByCodeAndModel(String productCode, String modelType);
 
+    List<String> getAllProductCodesWithBOM();
 
 
 }

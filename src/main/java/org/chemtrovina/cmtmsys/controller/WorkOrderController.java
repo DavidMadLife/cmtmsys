@@ -38,6 +38,7 @@ import org.chemtrovina.cmtmsys.service.Impl.WorkOrderServiceImpl;
 import org.chemtrovina.cmtmsys.service.base.RejectedMaterialService;
 import org.chemtrovina.cmtmsys.service.base.WarehouseTransferService;
 import org.chemtrovina.cmtmsys.service.base.WorkOrderService;
+import org.chemtrovina.cmtmsys.utils.FxClipboardUtils;
 import org.chemtrovina.cmtmsys.utils.FxFilterUtils;
 import org.chemtrovina.cmtmsys.utils.SpringFXMLLoader;
 import org.chemtrovina.cmtmsys.utils.TableUtils;
@@ -107,18 +108,9 @@ public class WorkOrderController {
     public void initialize() {
         setupWorkOrderTable();
         setupEventHandlers();
-        tblMaterialByProduct.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        tblWorkOrders.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
-        tblWorkOrders.getSelectionModel().setCellSelectionEnabled(true);
-        tblWorkOrders.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        tblMaterialByProduct.getSelectionModel().setCellSelectionEnabled(true);
-        tblMaterialByProduct.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-
-        btnChooseImportFile.setOnAction(e -> chooseExcelFile());
-        btnImportWorkOrder.setOnAction(e -> importWorkOrderFromExcel());
-
-
+        FxClipboardUtils.enableCopyShortcut(tblWorkOrders);
+        FxClipboardUtils.enableCopyShortcut(tblMaterialByProduct);
     }
 
     private void setupWorkOrderTable() {
@@ -192,22 +184,10 @@ public class WorkOrderController {
     private void setupEventHandlers() {
         btnLoadWorkOrders.setOnAction(e -> handleLoadWorkOrders());
         btnClearFilter.setOnAction(e -> handleClearFilters());
-
-        tblWorkOrders.setOnKeyPressed(event -> {
-            if (event.isControlDown() && event.getCode().toString().equals("C")) {
-                copySelectionToClipboard(tblWorkOrders);
-            }
-        });
-
-        tblMaterialByProduct.setOnKeyPressed(event -> {
-            if (event.isControlDown() && event.getCode().toString().equals("C")) {
-                copySelectionToClipboard(tblMaterialByProduct);
-            }
-        });
-
         btnAddWorkOrder.setOnAction(e -> openCreateWorkOrderDialog());
         btnTransferNG.setOnAction(e -> handleTransferNG());
-
+        btnChooseImportFile.setOnAction(e -> chooseExcelFile());
+        btnImportWorkOrder.setOnAction(e -> importWorkOrderFromExcel());
     }
 
 
@@ -223,69 +203,22 @@ public class WorkOrderController {
     }
 
 
+    @FXML
     private void importWorkOrderFromExcel() {
         if (importFile == null) {
             showAlert("Vui lòng chọn file Excel.");
             return;
         }
-
-        try (FileInputStream fis = new FileInputStream(importFile);
-             Workbook workbook = new XSSFWorkbook(fis)) {
-
-            Sheet sheet = workbook.getSheetAt(0);
-            JdbcTemplate jdbcTemplate = new JdbcTemplate(DataSourceConfig.getDataSource());
-
-            // 1. Tạo WorkOrder mới
-            String woCode = workOrderService.generateNewWorkOrderCode(LocalDate.now());
-            // bạn có thể tự định dạng
-            jdbcTemplate.update(
-                    "INSERT INTO WorkOrders (workOrderCode, description, createdDate, updatedDate) VALUES (?, ?, GETDATE(), GETDATE())",
-                    woCode, "Tạo từ import Excel"
-            );
-
-            // 2. Lấy workOrderId vừa tạo
-            int workOrderId = jdbcTemplate.queryForObject(
-                    "SELECT workOrderId FROM WorkOrders WHERE workOrderCode = ?",
-                    new Object[]{woCode}, Integer.class
-            );
-
-            int success = 0;
-            int failed = 0;
-
-            for (Row row : sheet) {
-                if (row.getRowNum() == 0) continue; // Bỏ header
-
-                String productCode = getCellString(row.getCell(0)).trim();
-                double quantity = row.getCell(1).getNumericCellValue();
-
-                List<Integer> productIds = jdbcTemplate.query(
-                        "SELECT productId FROM Products WHERE productCode = ?",
-                        new Object[]{productCode},
-                        (rs, rowNum) -> rs.getInt("productId")
-                );
-
-                if (productIds.isEmpty()) {
-                    System.out.println("⚠ Không tìm thấy Product: " + productCode);
-                    failed++;
-                    continue;
-                }
-
-                jdbcTemplate.update(
-                        "INSERT INTO WorkOrderItems (workOrderId, productId, quantity, createdDate, updatedDate) VALUES (?, ?, ?, GETDATE(), GETDATE())",
-                        workOrderId, productIds.get(0), (int) quantity
-                );
-
-                success++;
-            }
-
-            showAlert("✅ Đã tạo Work Order: " + woCode + "\nSản phẩm thành công: " + success + "\nBỏ qua: " + failed);
-            handleLoadWorkOrders(); // reload list
-
+        try {
+            workOrderService.importFromExcel(importFile);
+            showAlert("✅ Import thành công!");
+            handleLoadWorkOrders();
         } catch (Exception e) {
             e.printStackTrace();
             showAlert("❌ Lỗi khi import: " + e.getMessage());
         }
     }
+
 
     private void openCreateWorkOrderDialog() {
         try {
@@ -510,32 +443,6 @@ public class WorkOrderController {
 
     }
 
-    private void copySelectionToClipboard(TableView<?> table) {
-        StringBuilder clipboardString = new StringBuilder();
-        ObservableList<TablePosition> positionList = table.getSelectionModel().getSelectedCells();
-
-        int prevRow = -1;
-        for (TablePosition position : positionList) {
-            int row = position.getRow();
-            int col = position.getColumn();
-
-            Object cell = table.getColumns().get(col).getCellData(row);
-            if (cell == null) cell = "";
-
-            if (prevRow == row) {
-                clipboardString.append('\t');
-            } else if (prevRow != -1) {
-                clipboardString.append('\n');
-            }
-
-            clipboardString.append(cell);
-            prevRow = row;
-        }
-
-        final ClipboardContent clipboardContent = new ClipboardContent();
-        clipboardContent.putString(clipboardString.toString());
-        Clipboard.getSystemClipboard().setContent(clipboardContent);
-    }
 
     private void openUpdateWorkOrderDialog(WorkOrder workOrder) {
         try {
@@ -567,14 +474,6 @@ public class WorkOrderController {
         });
     }
 
-    private String getCellString(Cell cell) {
-        if (cell == null) return "";
-        return switch (cell.getCellType()) {
-            case STRING -> cell.getStringCellValue();
-            case NUMERIC -> String.valueOf((int) cell.getNumericCellValue());
-            default -> "";
-        };
-    }
     private void applyGeneralFilter(List<String> selectedValues) {
         List<WorkOrder> all = workOrderService.getAllWorkOrders();
         List<WorkOrder> filtered = all.stream()

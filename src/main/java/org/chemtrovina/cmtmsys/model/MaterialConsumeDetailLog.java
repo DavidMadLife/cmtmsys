@@ -11,16 +11,19 @@ public class MaterialConsumeDetailLog {
     private int materialId;
     private int consumedQty;
     private LocalDateTime createdAt;
+    private Integer sourceLogId;
 
     // Constructors
     public MaterialConsumeDetailLog() {
     }
 
-    public MaterialConsumeDetailLog(int planItemId, LocalDate runDate, int materialId, int consumedQty) {
+    public MaterialConsumeDetailLog(int planItemId, LocalDate runDate, int materialId, int consumedQty, LocalDateTime createdAt, Integer sourceLogId) {
         this.planItemId = planItemId;
         this.runDate = runDate;
         this.materialId = materialId;
         this.consumedQty = consumedQty;
+        this.createdAt = createdAt;
+        this.sourceLogId = sourceLogId;
     }
 
     // Getters and Setters
@@ -37,9 +40,10 @@ public class MaterialConsumeDetailLog {
         return planItemId;
     }
 
-    public void setPlanItemId(int planItemId) {
-        this.planItemId = planItemId;
+    public void setPlanItemId(Integer planItemId) {
+        this.planItemId = (planItemId == null) ? 0 : planItemId;
     }
+
 
     public LocalDate getRunDate() {
         return runDate;
@@ -72,4 +76,13 @@ public class MaterialConsumeDetailLog {
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
+
+    public Integer getSourceLogId() {
+        return sourceLogId;
+    }
+
+    public void setSourceLogId(Integer sourceLogId) {
+        this.sourceLogId = sourceLogId;
+    }
+
 }

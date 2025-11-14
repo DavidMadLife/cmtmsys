@@ -6,6 +6,7 @@ import org.chemtrovina.cmtmsys.model.Material;
 import java.io.File;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public interface MaterialService {
@@ -34,5 +35,6 @@ public interface MaterialService {
 
     Material addMaterialToTree(int treeId, String rollCode);
 
+    Map<String, Material> getMaterialsByRollCodes(Set<String> rollCodes);
 
 }

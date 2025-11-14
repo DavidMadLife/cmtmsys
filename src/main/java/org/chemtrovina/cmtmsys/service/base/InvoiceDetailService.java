@@ -12,4 +12,7 @@ public interface InvoiceDetailService {
     List<InvoiceDetail> findAll();
     List<InvoiceDetail> findByInvoiceId(String invoiceId);
     InvoiceDetail getInvoiceDetailBySapPNAndInvoiceId(String sapPN, int invoiceId);
+
+    List<String> getAllSapPNs();
+
 }

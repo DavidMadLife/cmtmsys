@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane prefHeight="720" prefWidth="1100"
+            xmlns="http://javafx.com/javafx/23.0.1"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="org.chemtrovina.cmtmsys.controller.SparePartController">
+
+    <VBox spacing="15" AnchorPane.topAnchor="10" AnchorPane.leftAnchor="15"
+          AnchorPane.rightAnchor="15" AnchorPane.bottomAnchor="10">
+
+        <!-- Tiêu đề -->
+        <Label text="🧰 Quản lý Spare Part"
+               style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
+
+        <!-- FORM + ẢNH SONG SONG -->
+        <HBox spacing="20" alignment="TOP_LEFT">
+
+            <!-- Cột 1: Ảnh -->
+            <VBox spacing="10" alignment="TOP_CENTER">
+                <TitledPane text="📸 Ảnh phụ tùng" expanded="true" collapsible="false">
+                    <VBox spacing="8" alignment="CENTER">
+                        <BorderPane fx:id="imageDropArea"
+                                    prefWidth="260" prefHeight="260"
+                                    style="-fx-border-color: #bbb; -fx-border-width: 2; -fx-border-style: dashed; -fx-border-radius: 8;
+                                           -fx-background-color: #fafafa; -fx-background-radius: 8;">
+                            <center>
+                                <ImageView fx:id="imgPreview" fitWidth="240" fitHeight="240" preserveRatio="true"/>
+                            </center>
+                        </BorderPane>
+
+                        <Label fx:id="lblImageName" text="Chưa chọn ảnh" style="-fx-text-fill: #666;"/>
+
+                        <HBox spacing="10" alignment="CENTER">
+                            <Button fx:id="btnChooseImage" text="📂 Chọn ảnh"/>
+                            <Button fx:id="btnPasteImage" text="📋 Dán ảnh (Ctrl+V)"/>
+                        </HBox>
+                    </VBox>
+                </TitledPane>
+            </VBox>
+
+            <!-- Cột 2: Form nhập liệu -->
+            <GridPane hgap="12" vgap="10" alignment="TOP_LEFT">
+                <columnConstraints>
+                    <ColumnConstraints prefWidth="120"/>
+                    <ColumnConstraints prefWidth="260"/>
+                    <ColumnConstraints prefWidth="120"/>
+                    <ColumnConstraints prefWidth="260"/>
+                </columnConstraints>
+
+                <!-- Dòng 1 -->
+                <Label text="Tên phụ tùng:" GridPane.columnIndex="0" GridPane.rowIndex="0"
+                       alignment="CENTER_RIGHT" GridPane.halignment="RIGHT"/>
+                <TextField fx:id="txtName" promptText="Nhập tên phụ tùng"
+                           GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+
+                <Label text="Mã phụ tùng:" GridPane.columnIndex="2" GridPane.rowIndex="0"
+                       alignment="CENTER_RIGHT" GridPane.halignment="RIGHT"/>
+                <TextField fx:id="txtCode" promptText="Nhập mã phụ tùng"
+                           GridPane.columnIndex="3" GridPane.rowIndex="0"/>
+
+                <!-- Dòng 2 -->
+                <Label text="Nhà cung cấp:" GridPane.columnIndex="0" GridPane.rowIndex="1"
+                       alignment="CENTER_RIGHT" GridPane.halignment="RIGHT"/>
+                <TextField fx:id="txtSupplier" promptText="Nhập nhà cung cấp"
+                           GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+
+                <Label text="Nhà sản xuất:" GridPane.columnIndex="2" GridPane.rowIndex="1"
+                       alignment="CENTER_RIGHT" GridPane.halignment="RIGHT"/>
+                <TextField fx:id="txtManufacturer" promptText="Nhập nhà sản xuất"
+                           GridPane.columnIndex="3" GridPane.rowIndex="1"/>
+
+                <!-- Dòng 3 -->
+                <Label text="Số lượng:" GridPane.columnIndex="0" GridPane.rowIndex="2"
+                       alignment="CENTER_RIGHT" GridPane.halignment="RIGHT"/>
+                <TextField fx:id="txtQuantity" promptText="Nhập số lượng"
+                           GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+
+                <Label text="Đơn vị:" GridPane.columnIndex="2" GridPane.rowIndex="2"
+                       alignment="CENTER_RIGHT" GridPane.halignment="RIGHT"/>
+                <TextField fx:id="txtUnit" promptText="EA, PCS, SET..."
+                           GridPane.columnIndex="3" GridPane.rowIndex="2"/>
+
+                <!-- Dòng 4 -->
+                <Label text="Người nhập kho:" GridPane.columnIndex="0" GridPane.rowIndex="3"
+                       alignment="CENTER_RIGHT" GridPane.halignment="RIGHT"/>
+                <TextField fx:id="txtKeeper" promptText="Tên người nhập kho"
+                           GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+
+                <Label text="Ghi chú:" GridPane.columnIndex="2" GridPane.rowIndex="3"
+                       alignment="CENTER_RIGHT" GridPane.halignment="RIGHT"/>
+                <TextField fx:id="txtNote" promptText="Ghi chú thêm"
+                           GridPane.columnIndex="3" GridPane.rowIndex="3"/>
+
+                <!-- Dòng 5 -->
+                <Label text="Ngày nhập:" GridPane.columnIndex="0" GridPane.rowIndex="4"
+                       alignment="CENTER_RIGHT" GridPane.halignment="RIGHT"/>
+                <DatePicker fx:id="dpDate" GridPane.columnIndex="1" GridPane.rowIndex="4"/>
+            </GridPane>
+        </HBox>
+
+        <!-- Nút thao tác -->
+        <HBox spacing="12" alignment="CENTER_LEFT">
+            <Button fx:id="btnAdd" text="➕ Thêm mới"/>
+            <Button fx:id="btnUpdate" text="📝 Cập nhật"/>
+            <Button fx:id="btnDelete" text="🗑️ Xóa"/>
+            <Button fx:id="btnClear" text="🔄 Làm mới"/>
+        </HBox>
+
+        <!-- Bảng dữ liệu -->
+        <TableView fx:id="tblSpareParts" VBox.vgrow="ALWAYS">
+            <columns>
+                <TableColumn fx:id="colId" text="ID" prefWidth="50"/>
+                <TableColumn fx:id="colDate" text="Ngày" prefWidth="90"/>
+                <TableColumn fx:id="colName" text="Tên phụ tùng" prefWidth="160"/>
+                <TableColumn fx:id="colCode" text="Mã phụ tùng" prefWidth="120"/>
+                <TableColumn fx:id="colImage" text="Ảnh" prefWidth="100"/>
+                <TableColumn fx:id="colSupplier" text="Nhà cung cấp" prefWidth="150"/>
+                <TableColumn fx:id="colManufacturer" text="Nhà sản xuất" prefWidth="150"/>
+                <TableColumn fx:id="colQuantity" text="SL" prefWidth="70"/>
+                <TableColumn fx:id="colUnit" text="Đơn vị" prefWidth="80"/>
+                <TableColumn fx:id="colKeeper" text="Người nhập" prefWidth="120"/>
+                <TableColumn fx:id="colNote" text="Ghi chú" prefWidth="150"/>
+            </columns>
+        </TableView>
+    </VBox>
+</AnchorPane>

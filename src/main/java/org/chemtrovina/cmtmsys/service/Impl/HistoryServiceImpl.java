@@ -198,6 +198,10 @@ public class HistoryServiceImpl implements HistoryService {
         historyRepository.delete(id);
     }
 
+    @Override
+    public void deleteLastBySapPNAndInvoiceId(String sapPN, int invoiceId) {
+        historyRepository.deleteLastBySapPNAndInvoiceId(sapPN, invoiceId);
+    }
 
 
     @Override

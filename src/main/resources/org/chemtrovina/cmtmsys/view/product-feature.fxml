@@ -55,6 +55,8 @@
                     <TableColumn fx:id="colProductCodeList" text="Mã sản phẩm" prefWidth="150"/>
                     <TableColumn fx:id="colModelTypeList" text="Loại model" prefWidth="100"/>
                     <TableColumn fx:id="colDescriptionList" text="Mô tả" prefWidth="200"/>
+                    <TableColumn fx:id="colNameList" text="Tên sản phẩm" prefWidth="180"/>
+
                 </columns>
             </TableView>
         </VBox>

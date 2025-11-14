@@ -75,6 +75,38 @@ public class WorkOrderRepositoryImpl implements WorkOrderRepository {
     }
 
 
+    @Override
+    public void insertWorkOrder(String workOrderCode, String description) {
+        jdbcTemplate.update("""
+            INSERT INTO WorkOrders (workOrderCode, description, createdDate, updatedDate)
+            VALUES (?, ?, GETDATE(), GETDATE())
+        """, workOrderCode, description);
+    }
+
+    @Override
+    public int getWorkOrderIdByCode(String workOrderCode) {
+        return jdbcTemplate.queryForObject(
+                "SELECT workOrderId FROM WorkOrders WHERE workOrderCode = ?",
+                Integer.class, workOrderCode
+        );
+    }
+
+    @Override
+    public void insertWorkOrderItem(int workOrderId, int productId, int quantity) {
+        jdbcTemplate.update("""
+            INSERT INTO WorkOrderItems (workOrderId, productId, quantity, createdDate, updatedDate)
+            VALUES (?, ?, ?, GETDATE(), GETDATE())
+        """, workOrderId, productId, quantity);
+    }
+
+    @Override
+    public List<Integer> findProductIdsByCode(String productCode) {
+        return jdbcTemplate.query(
+                "SELECT productId FROM Products WHERE productCode = ?",
+                (rs, rowNum) -> rs.getInt("productId"),
+                productCode
+        );
+    }
 
 
 }

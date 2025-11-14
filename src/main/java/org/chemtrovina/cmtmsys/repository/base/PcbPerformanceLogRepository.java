@@ -13,12 +13,21 @@ public interface PcbPerformanceLogRepository {
     List<PcbPerformanceLog> findByProductId(int productId);
     List<PcbPerformanceLog> findByWarehouseId(int warehouseId);
     boolean existsByCarrierId(String carrierId);
-    public List<PcbPerformanceLogHistoryDTO> searchLogDTOs(String modelCode, ModelType modelType,
-                                                           LocalDateTime from, LocalDateTime to);
+    List<PcbPerformanceLogHistoryDTO> searchLogDTOs(
+            String modelCode,
+            ModelType modelType,
+            LocalDateTime from,
+            LocalDateTime to,
+            Integer warehouseId
+    );
     boolean existsByFileName(String fileName);
 
     List<PcbPerformanceLogHistoryDTO> getLogsByWarehouseAndDateRange(int warehouseId, LocalDateTime start, LocalDateTime end);
 
     PcbPerformanceLog findPrevLog(int warehouseId, LocalDateTime beforeTime);
+    PcbPerformanceLog findByCarrierId(String carrierId);
+
+    List<PcbPerformanceLogHistoryDTO> getLogsByCarrierId(String carrierId);
+
 
 }

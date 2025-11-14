@@ -10,12 +10,9 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<AnchorPane prefHeight="650.0" prefWidth="1000.0"
-            xmlns="http://javafx.com/javafx/23.0.1"
-            xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="org.chemtrovina.cmtmsys.controller.InventoryTransferController">
+<AnchorPane prefHeight="650.0" prefWidth="1000.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.chemtrovina.cmtmsys.controller.InventoryTransferController">
 
-    <VBox spacing="12" AnchorPane.topAnchor="10" AnchorPane.bottomAnchor="10" AnchorPane.leftAnchor="10" AnchorPane.rightAnchor="10">
+    <VBox spacing="12" AnchorPane.bottomAnchor="10" AnchorPane.leftAnchor="10" AnchorPane.rightAnchor="10" AnchorPane.topAnchor="10">
         <!-- Top Filters -->
         <HBox spacing="15">
             <Label text="Nhân viên:" />
@@ -45,8 +42,8 @@
 
         <!-- Table: SAP Status Overview -->
         <VBox spacing="6" VBox.vgrow="ALWAYS">
-            <Label text="Chi tiết vật liệu theo W/O" style="-fx-font-weight: bold" />
-            <TableView fx:id="tblRequiredSummary" prefHeight="200">
+            <Label style="-fx-font-weight: bold" text="Chi tiết vật liệu theo W/O" />
+            <TableView fx:id="tblRequiredSummary" prefHeight="400.0" prefWidth="980.0">
                 <columns>
                     <TableColumn fx:id="colNoRequired" text="NO" />
                     <TableColumn fx:id="colSapCodeRequired" text="SAP Code" />
@@ -57,11 +54,11 @@
             </TableView>
         </VBox>
 
-        <Button fx:id="btnImportFromExcel" text="Import từ Excel"/>
+        <Button fx:id="btnImportFromExcel" text="Import từ Excel" />
 
         <!-- Table: Transfer Log -->
         <VBox spacing="6" VBox.vgrow="ALWAYS">
-            <Label text="Danh sách đã chuyển" style="-fx-font-weight: bold" />
+            <Label style="-fx-font-weight: bold" text="Danh sách đã chuyển" />
             <TableView fx:id="tblTransferred">
                 <columns>
                     <TableColumn fx:id="colNoTransferred" text="NO" />

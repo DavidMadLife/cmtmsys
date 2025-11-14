@@ -14,6 +14,7 @@ import org.chemtrovina.cmtmsys.model.PcbPerformanceLog;
 import org.chemtrovina.cmtmsys.model.Product;
 import org.chemtrovina.cmtmsys.model.Warehouse;
 import org.chemtrovina.cmtmsys.model.enums.ModelType;
+import org.chemtrovina.cmtmsys.service.base.MaterialConsumeDetailLogService;
 import org.chemtrovina.cmtmsys.service.base.PcbPerformanceLogService;
 import org.chemtrovina.cmtmsys.service.base.ProductService;
 import org.chemtrovina.cmtmsys.service.base.WarehouseService;
@@ -52,6 +53,7 @@ public class PerformanceLogController {
     private final PcbPerformanceLogService logService;
     private final WarehouseService warehouseService;
     private final ProductService productService;
+    private final MaterialConsumeDetailLogService consumeDetailService;
     private Path logFolder;
 
     private volatile boolean watching = false;
@@ -63,10 +65,11 @@ public class PerformanceLogController {
 
 
     @Autowired
-    public PerformanceLogController(PcbPerformanceLogService logService, WarehouseService warehouseService, ProductService productService) {
+    public PerformanceLogController(PcbPerformanceLogService logService, WarehouseService warehouseService, ProductService productService, MaterialConsumeDetailLogService consumeDetailService) {
         this.logService = logService;
         this.warehouseService = warehouseService;
         this.productService = productService;
+        this.consumeDetailService = consumeDetailService;
     }
 
     @FXML
@@ -177,7 +180,8 @@ public class PerformanceLogController {
                             }
                         }
 
-                        Product product = productResolver.resolveFromCarrierAndFileName(carrierId, fileName.toString(), this::appendLog);
+                        Product product = productResolver.resolveFromCarrierAndFileName(carrierId, fileName.toString(),
+                                this::appendLog);
                         if (product == null) {
                             appendLog("❌ Không tìm thấy sản phẩm cho Carrier: " + carrierId);
                             continue;
@@ -189,18 +193,27 @@ public class PerformanceLogController {
                                 product,
                                 selectedWarehouse.getWarehouseId(),
                                 this::appendLog
+
                         );
 
                         if (log != null) {
-                            try { 
+                            try {
+                                // 1️⃣ Lưu log AOI vào DB
                                 logService.saveLog(log);
                                 Platform.runLater(() -> logList.add(log));
                                 appendLog("✅ Đã xử lý và lưu log: " + log.getLogFileName() +
                                         " | Model: " + log.getProductId());
+
+                                // 2️⃣ Gọi trừ liệu theo BOM thực tế
+                                appendLog("⚙️ Đang trừ liệu thực tế theo log...");
+                                consumeDetailService.consumeByAoiLog(log);
+                                appendLog("✅ Đã trừ liệu xong cho Carrier: " + log.getCarrierId());
+
                             } catch (Exception e) {
-                                appendLog("❌ Lỗi khi lưu log: " + e.getMessage());
+                                appendLog("❌ Lỗi khi xử lý log hoặc trừ liệu: " + e.getMessage());
                             }
-                        } else {
+                        }
+                        else {
                             appendLog("⚠️ File không tạo được log hợp lệ: " + fileName);
                         }
                     }
@@ -210,7 +223,7 @@ public class PerformanceLogController {
                 }
 
                 appendLog("⛔ Đã dừng theo dõi thư mục.");
-            } catch (Exception ex) { 
+            } catch (Exception ex) {
                 appendLog("❌ Lỗi theo dõi thư mục: " + ex.getMessage());
             } finally {
                 watching = false;

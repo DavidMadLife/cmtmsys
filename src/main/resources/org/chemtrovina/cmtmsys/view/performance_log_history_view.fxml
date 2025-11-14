@@ -1,35 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.chart.BarChart?>
+<?import javafx.scene.chart.LineChart?>
 <?import javafx.scene.chart.CategoryAxis?>
 <?import javafx.scene.chart.NumberAxis?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.ComboBox?>
-<?import javafx.scene.control.DatePicker?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.SplitPane?>
-<?import javafx.scene.control.TableColumn?>
-<?import javafx.scene.control.TableView?>
-<?import javafx.scene.control.TextField?>
-<?import javafx.scene.layout.BorderPane?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
 
-<?import javafx.scene.chart.LineChart?>
 <BorderPane fx:controller="org.chemtrovina.cmtmsys.controller.PerformanceLogHistoryController"
             xmlns="http://javafx.com/javafx/23.0.1"
             xmlns:fx="http://javafx.com/fxml/1"
-            prefHeight="753.0" prefWidth="995.0">
+            prefHeight="800.0" prefWidth="1000.0">
 
-    <!-- Top - Filter Controls -->
+    <!-- Bộ lọc -->
     <top>
         <VBox spacing="10" style="-fx-padding: 10;">
             <HBox spacing="10">
-                <Label text="Model" />
+                <Label text="Model:" />
                 <TextField fx:id="txtModelCode" prefWidth="120" />
 
                 <Label text="Model Type:" />
                 <ComboBox fx:id="cbModelType" prefWidth="120" />
+
+                <Label text="Line:"/>
+                <ComboBox fx:id="cbWarehouse" prefWidth="150"/>
 
                 <Label text="Từ ngày:" />
                 <DatePicker fx:id="dpStartDate" />
@@ -38,39 +31,57 @@
                 <DatePicker fx:id="dpEndDate" />
 
                 <Button fx:id="btnSearch" text="Tìm kiếm" />
+                <Button fx:id="btnClearFilter" text="Xóa lọc" />
             </HBox>
+
+
         </VBox>
     </top>
 
-    <!-- Center - Table and Chart -->
+    <!-- Trung tâm -->
     <center>
-        <SplitPane dividerPositions="0.5" orientation="VERTICAL">
-            <!-- Table View -->
-            <TableView fx:id="tblLogs">
-                <columns>
-                    <TableColumn fx:id="colModelCode" text="Model" />
-                    <TableColumn fx:id="colCarrierId" text="Carrier ID" />
-                    <TableColumn fx:id="colAoi" text="AOI" />
-                    <TableColumn fx:id="colTotal" text="Total" />
-                    <TableColumn fx:id="colNg" text="NG" />
-                    <TableColumn fx:id="colPerformance" text="Performance (%)" />
-                    <TableColumn fx:id="colFileName" text="File" />
-                    <TableColumn fx:id="colWarehouse" text="Warehouse" />
-                    <TableColumn fx:id="colCreatedAt" text="Created At" />
-                </columns>
-            </TableView>
+        <SplitPane orientation="VERTICAL" dividerPositions="0.55">
+            <VBox>
+                <Label text="Danh sách PCB Logs" style="-fx-font-weight: bold; -fx-padding: 5;" />
+                <TableView fx:id="tblLogs">
+                    <columns>
+                        <TableColumn fx:id="colModelCode" text="Model" />
+                        <TableColumn fx:id="colCarrierId" text="Carrier ID" />
+                        <TableColumn fx:id="colAoi" text="AOI" />
+                        <TableColumn fx:id="colTotal" text="Total" />
+                        <TableColumn fx:id="colNg" text="NG" />
+                        <TableColumn fx:id="colPerformance" text="Performance (%)" />
+                        <TableColumn fx:id="colFileName" text="File" />
+                        <TableColumn fx:id="colWarehouse" text="Warehouse" />
+                        <TableColumn fx:id="colCreatedAt" text="Created At" />
+                    </columns>
+                </TableView>
+            </VBox>
 
-            <!-- Chart -->
-            <LineChart fx:id="barChart" prefHeight="300" title="Quantity Good/NG by Date">
-                <xAxis>
-                    <CategoryAxis label="Date" fx:id="xAxis" />
-                </xAxis>
-                <yAxis>
-                    <NumberAxis fx:id="yAxis" label="Quantity" />
-                </yAxis>
-            </LineChart>
+            <!-- 🆕 Khu tra cứu Carrier ID -->
+            <HBox spacing="10" style="-fx-padding: 5; -fx-border-color: #cccccc; -fx-border-width: 0 0 1 0;">
+                <Label text="Tra cứu Carrier ID:" style="-fx-font-weight: bold;" />
+                <TextField fx:id="txtCarrierLookup" promptText="Nhập Carrier ID..." prefWidth="200"/>
+                <Button fx:id="btnLookupCarrier" text="🔍 Tra cứu" />
+                <Label fx:id="lblCarrierInfo" text="" style="-fx-text-fill: #2a5; -fx-font-style: italic;"/>
+            </HBox>
 
-
+            <VBox>
+                <Label text="Vật tư đã sử dụng cho PCB được chọn hoặc tra cứu" style="-fx-font-weight: bold; -fx-padding: 5;" />
+                <TableView fx:id="tblMaterials">
+                    <columns>
+                        <TableColumn fx:id="colSapCode" text="SAP Code" prefWidth="120" />
+                        <TableColumn fx:id="colRollCode" text="Reel Code" prefWidth="120" />
+                        <TableColumn fx:id="colQuantity" text="Quantity Used" prefWidth="100" />
+                        <TableColumn fx:id="colWarehouseName" text="Line" prefWidth="120" />
+                        <TableColumn fx:id="colSpec" text="Spec" prefWidth="150" />
+                        <TableColumn fx:id="colLot" text="Lot" prefWidth="150" />
+                        <TableColumn fx:id="colMaker" text="Cust_Name" prefWidth="150" />
+                        <TableColumn fx:id="colCreated" text="Consume Time" prefWidth="150" />
+                    </columns>
+                </TableView>
+            </VBox>
         </SplitPane>
     </center>
 </BorderPane>
+

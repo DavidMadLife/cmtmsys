@@ -12,5 +12,6 @@ public interface ProductBOMRepository {
     List<ProductBOM> findByProductId(int productId);
     List<ProductBomDto> findBomDtoByProductCode(String productCode);
     List<ProductBomDto> findBomDtoByProductCodeAndModelType(String productCode, String modelType);
+    List<String> getAllProductCodesWithBOM();
 
 }

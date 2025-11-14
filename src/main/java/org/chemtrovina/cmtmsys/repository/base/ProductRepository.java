@@ -24,6 +24,6 @@ public interface ProductRepository {
     List<Product> findAllByCodeContainedInText(String text);
 
     String findProductCodeByPlanItemId(int planItemId);
-
+    Product findByNameAndModelType(String productName, ModelType modelType);
 
 }

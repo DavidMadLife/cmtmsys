@@ -1,5 +1,10 @@
 package org.chemtrovina.cmtmsys.service.Impl;
 
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.chemtrovina.cmtmsys.dto.MaterialRequirementDto;
 import org.chemtrovina.cmtmsys.model.Product;
 import org.chemtrovina.cmtmsys.model.WorkOrder;
@@ -15,6 +20,8 @@ import org.chemtrovina.cmtmsys.service.base.WorkOrderService;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -233,6 +240,52 @@ public class WorkOrderServiceImpl implements WorkOrderService {
                 0,                  // bomPerUnit không cần
                 rs.getInt("RequiredQty")
         ), workOrderCode);
+    }
+
+    @Override
+    public void importFromExcel(File excelFile) {
+        try (FileInputStream fis = new FileInputStream(excelFile);
+             Workbook workbook = new XSSFWorkbook(fis)) {
+
+            Sheet sheet = workbook.getSheetAt(0);
+            String woCode = generateNewWorkOrderCode(LocalDate.now());
+            repository.insertWorkOrder(woCode, "Tạo từ import Excel");
+            int workOrderId = repository.getWorkOrderIdByCode(woCode);
+
+            int success = 0;
+            int failed = 0;
+
+            for (Row row : sheet) {
+                if (row.getRowNum() == 0) continue;
+
+                String productCode = getCellString(row.getCell(0));
+                int quantity = (int) row.getCell(1).getNumericCellValue();
+
+                List<Integer> productIds = repository.findProductIdsByCode(productCode);
+                if (productIds.isEmpty()) {
+                    System.out.println("⚠ Không tìm thấy Product: " + productCode);
+                    failed++;
+                    continue;
+                }
+
+                repository.insertWorkOrderItem(workOrderId, productIds.get(0), quantity);
+                success++;
+            }
+
+            System.out.printf("✅ Import thành công %d dòng, bỏ qua %d%n", success, failed);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi khi import Excel: " + e.getMessage(), e);
+        }
+    }
+
+    private String getCellString(Cell cell) {
+        if (cell == null) return "";
+        return switch (cell.getCellType()) {
+            case STRING -> cell.getStringCellValue();
+            case NUMERIC -> String.valueOf((int) cell.getNumericCellValue());
+            default -> "";
+        };
     }
 
 }

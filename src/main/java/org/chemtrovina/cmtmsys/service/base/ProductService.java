@@ -18,5 +18,6 @@ public interface ProductService {
     List<Product> getProductsByCodeContainedInText(String text);
 
     String getProductCodeByPlanItemId(int planItemId);
-
+    Product getProductByNameAndType(String productName, ModelType modelType);
+    Product getProductByCodeOrNameAndType(String code, String name, ModelType modelType);
 }

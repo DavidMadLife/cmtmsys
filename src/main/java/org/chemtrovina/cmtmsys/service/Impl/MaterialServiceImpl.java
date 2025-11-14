@@ -10,17 +10,13 @@ import org.chemtrovina.cmtmsys.repository.base.MaterialRepository;
 import org.chemtrovina.cmtmsys.service.base.MaterialService;
 import org.chemtrovina.cmtmsys.service.base.TransferLogService;
 import org.chemtrovina.cmtmsys.service.base.WarehouseService;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,7 +26,9 @@ public class MaterialServiceImpl implements MaterialService {
     private final WarehouseService warehouseService;
     private final TransferLogService transferLogService;
 
-    public MaterialServiceImpl(MaterialRepository materialRepository, WarehouseService warehouseService, TransferLogService transferLogService) {
+    public MaterialServiceImpl(MaterialRepository materialRepository,
+                               WarehouseService warehouseService,
+                               TransferLogService transferLogService) {
         this.materialRepository = materialRepository;
         this.warehouseService = warehouseService;
         this.transferLogService = transferLogService;
@@ -54,11 +52,10 @@ public class MaterialServiceImpl implements MaterialService {
         }
 
         material.setQuantity(dto.getQuantity());
-        // Các field khác nếu bạn muốn cho cập nhật
-
+        material.setLot(dto.getLot());
+        material.setMaker(dto.getMaker()); // ✅ thêm cập nhật maker
         materialRepository.update(material);
     }
-
 
     @Override
     public void deleteMaterialById(int id) {
@@ -93,12 +90,10 @@ public class MaterialServiceImpl implements MaterialService {
         int fromId = material.getWarehouseId();
         if (fromId == targetWarehouseId) return material;
 
-        // Tạo transfer log
         TransferLog log = new TransferLog(0, barcode, fromId, targetWarehouseId,
                 LocalDateTime.now(), "", employeeId);
         transferLogService.addTransfer(log);
 
-        // Cập nhật material
         material.setWarehouseId(targetWarehouseId);
         materialRepository.update(material);
 
@@ -118,19 +113,24 @@ public class MaterialServiceImpl implements MaterialService {
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy kho SMT W/H"));
 
             int processedCount = 0;
+
             for (Row row : sheet) {
-                if (row.getRowNum() == 0) continue; // Bỏ qua dòng header
+                if (row.getRowNum() == 0) continue;
 
                 Cell sapCell = row.getCell(0);
                 Cell specCell = row.getCell(1);
                 Cell rollCell = row.getCell(2);
                 Cell qtyCell = row.getCell(3);
+                Cell lotCell = row.getCell(4);   // ✅ cột Lot
+                Cell makerCell = row.getCell(5); // ✅ cột Maker (mới)
 
                 if (sapCell == null || rollCell == null || qtyCell == null) continue;
 
-                String sapCode = sapCell.getCellType() == CellType.STRING ? sapCell.getStringCellValue().trim() : "";
-                String spec = (specCell != null && specCell.getCellType() == CellType.STRING) ? specCell.getStringCellValue().trim() : "";
-                String rollCode = rollCell.getCellType() == CellType.STRING ? rollCell.getStringCellValue().trim() : "";
+                String sapCode = getCellString(sapCell);
+                String spec = getCellString(specCell);
+                String rollCode = getCellString(rollCell);
+                String lot = getCellString(lotCell);
+                String maker = getCellString(makerCell);
 
                 int quantity = 0;
                 if (qtyCell.getCellType() == CellType.NUMERIC) {
@@ -144,13 +144,17 @@ public class MaterialServiceImpl implements MaterialService {
                     existing.setSapCode(sapCode);
                     existing.setSpec(spec);
                     existing.setQuantity(quantity);
+                    existing.setLot(lot.isEmpty() ? existing.getLot() : lot);
+                    existing.setMaker(maker.isEmpty() ? existing.getMaker() : maker); // ✅ thêm maker
                     existing.setCreatedAt(LocalDateTime.now());
                     existing.setEmployeeId(employeeId);
                     materialRepository.updateIgnoreTreeId(existing);
                 } else {
                     Material material = new Material(
                             0, sapCode, rollCode, quantity,
-                            warehouseId, LocalDateTime.now(), spec, employeeId, null
+                            warehouseId, LocalDateTime.now(), spec, employeeId, null,
+                            lot.isEmpty() ? null : lot,
+                            maker.isEmpty() ? null : maker // ✅ thêm maker
                     );
                     materialRepository.add(material);
                 }
@@ -158,32 +162,42 @@ public class MaterialServiceImpl implements MaterialService {
                 processedCount++;
             }
 
-
-            System.out.println("Đã import " + processedCount + " dòng dữ liệu.");
+            System.out.println("Đã import " + processedCount + " dòng dữ liệu (có Maker).");
         } catch (IOException e) {
             throw new RuntimeException("Không thể đọc file Excel", e);
         }
     }
 
+    private String getCellString(Cell cell) {
+        if (cell == null) return "";
+        return switch (cell.getCellType()) {
+            case STRING -> cell.getStringCellValue().trim();
+            case NUMERIC -> String.valueOf((long) cell.getNumericCellValue());
+            default -> "";
+        };
+    }
 
     @Override
-    public List<MaterialDto> searchMaterials(String sapCode, String barCode, LocalDateTime fromDate, LocalDateTime toDate, Integer warehouseId) {
+    public List<MaterialDto> searchMaterials(String sapCode, String barCode,
+                                             LocalDateTime fromDate, LocalDateTime toDate, Integer warehouseId) {
         List<Material> materials = materialRepository.search(sapCode, barCode, fromDate, toDate, warehouseId);
         Map<Integer, String> warehouseMap = warehouseService.getAllWarehouses().stream()
                 .collect(Collectors.toMap(Warehouse::getWarehouseId, Warehouse::getName));
 
-
-        return materials.stream().map(m -> new MaterialDto(
-                m.getMaterialId(), // ✅ THÊM dòng này
-                m.getSapCode(),
-                m.getRollCode(),
-                m.getQuantity(),
-                warehouseMap.getOrDefault(m.getWarehouseId(), "N/A"),
-                m.getSpec(),
-                m.getCreatedAt(),
-                m.getEmployeeId()
-        )).toList();
-
+        return materials.stream()
+                .map(m -> new MaterialDto(
+                        m.getMaterialId(),
+                        m.getSapCode(),
+                        m.getRollCode(),
+                        m.getQuantity(),
+                        warehouseMap.getOrDefault(m.getWarehouseId(), "N/A"),
+                        m.getSpec(),
+                        m.getCreatedAt(),
+                        m.getEmployeeId(),
+                        m.getLot(),
+                        m.getMaker() // ✅ thêm maker
+                ))
+                .toList();
     }
 
     @Override
@@ -202,27 +216,24 @@ public class MaterialServiceImpl implements MaterialService {
         return materialRepository.getByTreeId(treeId);
     }
 
-
     @Override
     public List<MaterialDto> getAllMaterialDtos() {
         List<Material> materials = materialRepository.findAll();
-        List<Warehouse> warehouses = warehouseService.getAllWarehouses();
-
-        Map<Integer, String> warehouseMap = new HashMap<>();
-        for (Warehouse w : warehouses) {
-            warehouseMap.put(w.getWarehouseId(), w.getName());
-        }
+        Map<Integer, String> warehouseMap = warehouseService.getAllWarehouses().stream()
+                .collect(Collectors.toMap(Warehouse::getWarehouseId, Warehouse::getName));
 
         return materials.stream()
                 .map(m -> new MaterialDto(
-                        m.getMaterialId(), // ✅ THÊM dòng này
+                        m.getMaterialId(),
                         m.getSapCode(),
                         m.getRollCode(),
                         m.getQuantity(),
                         warehouseMap.getOrDefault(m.getWarehouseId(), "N/A"),
                         m.getSpec(),
                         m.getCreatedAt(),
-                        m.getEmployeeId()
+                        m.getEmployeeId(),
+                        m.getLot(),
+                        m.getMaker() // ✅ thêm maker
                 ))
                 .toList();
     }
@@ -239,5 +250,10 @@ public class MaterialServiceImpl implements MaterialService {
         return material;
     }
 
-
+    @Override
+    public Map<String, Material> getMaterialsByRollCodes(Set<String> rollCodes) {
+        if (rollCodes == null || rollCodes.isEmpty()) return Collections.emptyMap();
+        List<Material> materials = materialRepository.findByRollCodes(new ArrayList<>(rollCodes));
+        return materials.stream().collect(Collectors.toMap(Material::getRollCode, m -> m));
+    }
 }

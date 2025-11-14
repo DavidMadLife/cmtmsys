@@ -23,6 +23,7 @@
         <!-- Bộ lọc chọn Model và Line -->
         <HBox spacing="10">
             <TextField fx:id="txtModelCode" prefWidth="200" promptText="Nhập mã Model" />
+            <TextField fx:id="txtModelName" prefWidth="150" promptText="Nhập tên model..." />
             <ComboBox fx:id="cbModelType" prefWidth="150" promptText="Loại Model" />
             <ComboBox fx:id="cbLines" prefWidth="200" promptText="Chọn Line" />
             <Button fx:id="btnLoadFeeders" text="Tải danh sách" />

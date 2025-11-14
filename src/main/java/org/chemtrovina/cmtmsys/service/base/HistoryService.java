@@ -40,6 +40,8 @@ public interface HistoryService {
     List<HistoryDetailViewDto> getHistoryByInvoiceId(int invoiceId);
     void deleteLastByMakerPNAndInvoiceId(String makerPN, int invoiceId);
 
+    void deleteLastBySapPNAndInvoiceId(String sapPN, int invoiceId);
+
     int getLastScannedQuantityBySapPN(String sapPN, int invoiceId);
 
 

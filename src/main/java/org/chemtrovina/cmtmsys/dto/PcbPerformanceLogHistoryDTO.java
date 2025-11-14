@@ -5,6 +5,7 @@ import org.chemtrovina.cmtmsys.model.enums.ModelType;
 import java.time.LocalDateTime;
 
 public class PcbPerformanceLogHistoryDTO {
+    private int logId;
     private String modelCode;
     private ModelType modelType;
     private String carrierId;
@@ -19,9 +20,10 @@ public class PcbPerformanceLogHistoryDTO {
 
     public PcbPerformanceLogHistoryDTO() {}
 
-    public PcbPerformanceLogHistoryDTO(String modelCode, ModelType modelType, String carrierId, String aoi,
+    public PcbPerformanceLogHistoryDTO(int logId,String modelCode, ModelType modelType, String carrierId, String aoi,
                                        int totalModules, int ngModules, double performance, String logFileName,
                                        LocalDateTime createdAt, String warehouseName) {
+        this.logId = logId;
         this.modelCode = modelCode;
         this.modelType = modelType;
         this.carrierId = carrierId;
@@ -32,6 +34,13 @@ public class PcbPerformanceLogHistoryDTO {
         this.logFileName = logFileName;
         this.createdAt = createdAt;
         this.warehouseName = warehouseName;
+    }
+
+    public int getLogId() {
+        return logId;
+    }
+    public void setLogId(int logId) {
+        this.logId = logId;
     }
 
     public String getModelCode() {

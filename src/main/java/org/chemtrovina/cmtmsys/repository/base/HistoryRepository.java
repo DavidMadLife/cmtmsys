@@ -12,4 +12,5 @@ public interface HistoryRepository extends GenericRepository<History>{
     List<History> findByInvoiceId(int invoiceId);
     int getTotalScannedQuantityBySapPN(String sapPN, int invoiceId);
     void deleteLastByMakerPNAndInvoiceId(String makerPN, int invoiceId);
+    void deleteLastBySapPNAndInvoiceId(String sapPN, int invoiceId);
 }

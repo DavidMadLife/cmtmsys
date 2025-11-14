@@ -20,6 +20,7 @@ public interface FeederAssignmentMaterialService {
 
     List<FeederAssignmentMaterial> getActiveByFeederId(int feederId);
 
+    FeederAssignmentMaterial getLatestByMaterialId(int materialId);
 
 
 

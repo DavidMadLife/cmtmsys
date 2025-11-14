@@ -14,12 +14,6 @@ import org.chemtrovina.cmtmsys.config.DataSourceConfig;
 import org.chemtrovina.cmtmsys.dto.ProductBomDto;
 import org.chemtrovina.cmtmsys.model.Product;
 import org.chemtrovina.cmtmsys.model.enums.ModelType;
-import org.chemtrovina.cmtmsys.repository.Impl.ProductBOMRepositoryImpl;
-import org.chemtrovina.cmtmsys.repository.Impl.ProductRepositoryImpl;
-import org.chemtrovina.cmtmsys.repository.base.ProductBOMRepository;
-import org.chemtrovina.cmtmsys.repository.base.ProductRepository;
-import org.chemtrovina.cmtmsys.service.Impl.ProductBOMServiceImpl;
-import org.chemtrovina.cmtmsys.service.Impl.ProductServiceImpl;
 import org.chemtrovina.cmtmsys.service.base.ProductBOMService;
 import org.chemtrovina.cmtmsys.service.base.ProductService;
 import org.chemtrovina.cmtmsys.utils.FxClipboardUtils;
@@ -30,6 +24,10 @@ import org.controlsfx.control.textfield.TextFields;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
+
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
+
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -55,6 +53,8 @@ public class ProductController {
     @FXML private TableColumn<Product, String> colProductCodeList;
     @FXML private TableColumn<Product, String> colModelTypeList;
     @FXML private TableColumn<Product, String> colDescriptionList;
+    @FXML private TableColumn<Product, String> colNameList;
+
 
 
     @FXML private Button btnChooseFile;
@@ -93,10 +93,6 @@ public class ProductController {
         cbNewModelType.setItems(FXCollections.observableArrayList("TOP", "BOT", "SINGLE", "BOTTOP","NONE"));
         cbModelTypeFilter.setItems(FXCollections.observableArrayList("TOP", "BOT", "SINGLE", "BOTTOP", "NONE"));
         btnCreateProduct.setOnAction(e -> onCreateProduct());
-        tblProductBOM.getSelectionModel().setCellSelectionEnabled(true);
-        tblProductBOM.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        tblProducts.getSelectionModel().setCellSelectionEnabled(true);
-        tblProducts.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
         TableUtils.centerAlignAllColumns(tblProductBOM);
     }
@@ -115,21 +111,11 @@ public class ProductController {
         colProductCodeList.setCellValueFactory(new PropertyValueFactory<>("productCode"));
         colModelTypeList.setCellValueFactory(new PropertyValueFactory<>("modelType"));
         colDescriptionList.setCellValueFactory(new PropertyValueFactory<>("description"));
+        colNameList.setCellValueFactory(new PropertyValueFactory<>("name"));
 
 
-        tblProductBOM.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        tblProductBOM.setOnKeyPressed(event -> {
-            if (event.isControlDown() && event.getCode() == javafx.scene.input.KeyCode.C) {
-                FxClipboardUtils.copySelectionToClipboard(tblProductBOM);
-            }
-        });
-
-        tblProducts.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        tblProducts.setOnKeyPressed(event -> {
-            if (event.isControlDown() && event.getCode() == javafx.scene.input.KeyCode.C) {
-                FxClipboardUtils.copySelectionToClipboard(tblProducts);
-            }
-        });
+        FxClipboardUtils.enableCopyShortcut(tblProducts);
+        FxClipboardUtils.enableCopyShortcut(tblProductBOM);
 
     }
 
@@ -326,40 +312,33 @@ public class ProductController {
         };
     }
 
+    @FXML
     private void onCreateProduct() {
         String newCode = txtNewProductCode.getText().trim();
         String modelType = cbNewModelType.getValue();
         String modelName = txtNewProductName.getText().trim();
 
         if (newCode.isEmpty() || modelType == null || modelName.isEmpty()) {
-            showAlert("Vui lòng nhập mã sản phẩm, tên model và chọn loại model.");
+            showAlert("⚠️ Vui lòng nhập đầy đủ: Mã sản phẩm, Tên sản phẩm và Loại model.");
             return;
         }
 
-        JdbcTemplate jdbc = new JdbcTemplate(DataSourceConfig.getDataSource());
-
         try {
-            List<Integer> exists = jdbc.query(
-                    "SELECT 1 FROM Products WHERE productCode = ? AND modelType = ?",
-                    new Object[]{newCode, modelType},
-                    (rs, i) -> rs.getInt(1)
-            );
+            Product product = new Product();
+            product.setProductCode(newCode);
+            product.setName(modelName);
+            product.setModelType(Enum.valueOf(ModelType.class, modelType));
+            product.setDescription(modelName);
 
-            if (!exists.isEmpty()) {
-                showAlert("❌ Mã sản phẩm với loại model này đã tồn tại.");
-                return;
-            }
+            productService.addProduct(product);
+            showAlert("✅ Đã tạo sản phẩm mới: " + newCode + " | " + modelName);
 
-            jdbc.update("""
-            INSERT INTO Products (productCode, modelType, description, createdDate, updatedDate)
-            VALUES (?, ?, ?, GETDATE(), GETDATE())
-        """, newCode, modelType, modelName);
-
-            showAlert("✅ Đã tạo sản phẩm mới: " + newCode + " | " + modelType + " | " + modelName);
             txtNewProductCode.clear();
             txtNewProductName.clear();
             cbNewModelType.getSelectionModel().clearSelection();
 
+        } catch (IllegalArgumentException ex) {
+            showAlert("❌ " + ex.getMessage());
         } catch (Exception ex) {
             ex.printStackTrace();
             showAlert("❌ Lỗi khi tạo sản phẩm: " + ex.getMessage());
@@ -370,7 +349,7 @@ public class ProductController {
     private void onUpdateProduct() {
         String code = txtProductCode.getText().trim();
         if (code.isEmpty()) {
-            showAlert("Vui lòng nhập mã sản phẩm để cập nhật.");
+            showAlert("⚠️ Vui lòng nhập mã sản phẩm để cập nhật.");
             return;
         }
 
@@ -380,26 +359,31 @@ public class ProductController {
             return;
         }
 
-        // Tạo dialog
+        // ======= Tạo dialog cập nhật =======
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("Cập nhật sản phẩm");
         dialog.setHeaderText("Chỉnh sửa thông tin sản phẩm");
 
         TextField txtCode = new TextField(selected.getProductCode());
+        TextField txtName = new TextField(selected.getName() != null ? selected.getName() : "");
         TextField txtDesc = new TextField(selected.getDescription() != null ? selected.getDescription() : "");
+
         ComboBox<String> cbModel = new ComboBox<>();
-        cbModel.setItems(FXCollections.observableArrayList("TOP", "BOT", "SINGLE", "BOTTOP","NONE"));
+        cbModel.setItems(FXCollections.observableArrayList("TOP", "BOT", "SINGLE", "BOTTOP", "NONE"));
         cbModel.setValue(selected.getModelType() != null ? selected.getModelType().toString() : "NONE");
 
         GridPane grid = new GridPane();
         grid.setHgap(10);
         grid.setVgap(10);
+
         grid.add(new Label("Mã sản phẩm:"), 0, 0);
         grid.add(txtCode, 1, 0);
-        grid.add(new Label("Mô tả:"), 0, 1);
-        grid.add(txtDesc, 1, 1);
-        grid.add(new Label("Loại model:"), 0, 2);
-        grid.add(cbModel, 1, 2);
+        grid.add(new Label("Tên sản phẩm (Model Name):"), 0, 1);
+        grid.add(txtName, 1, 1);
+        grid.add(new Label("Mô tả:"), 0, 2);
+        grid.add(txtDesc, 1, 2);
+        grid.add(new Label("Loại model:"), 0, 3);
+        grid.add(cbModel, 1, 3);
 
         dialog.getDialogPane().setContent(grid);
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
@@ -408,23 +392,30 @@ public class ProductController {
             if (response == ButtonType.OK) {
                 try {
                     String newCode = txtCode.getText().trim();
+                    String newName = txtName.getText().trim();
                     String desc = txtDesc.getText().trim();
                     String modelStr = cbModel.getValue();
 
-                    if (newCode.isEmpty() || modelStr == null) {
-                        showAlert("Vui lòng nhập đầy đủ thông tin.");
+                    if (newCode.isEmpty() || newName.isEmpty() || modelStr == null) {
+                        showAlert("⚠️ Vui lòng nhập đầy đủ thông tin: Code, Name, Model Type.");
                         return;
                     }
 
+                    // ✅ Cập nhật đối tượng
                     selected.setProductCode(newCode);
+                    selected.setName(newName);
                     selected.setDescription(desc);
                     selected.setModelType(ModelType.valueOf(modelStr));
 
+                    // ✅ Gọi service để cập nhật DB
                     productService.updateProduct(selected);
 
-                    showAlert("✅ Đã cập nhật sản phẩm.");
-                    txtProductCode.setText(newCode);  // Cập nhật lại textbox
-                    onLoadBOM(); // Reload bảng BOM nếu cần
+                    showAlert("✅ Đã cập nhật sản phẩm thành công.");
+
+                    // Cập nhật UI
+                    txtProductCode.setText(newCode);
+                    onLoadBOM(); // Reload BOM nếu có
+                    loadAllProducts(); // Refresh danh sách
 
                 } catch (Exception ex) {
                     ex.printStackTrace();
@@ -432,9 +423,8 @@ public class ProductController {
                 }
             }
         });
-
-        loadAllProducts();
     }
+
 
     private void onDeleteProduct() {
         String code = txtProductCode.getText().trim();

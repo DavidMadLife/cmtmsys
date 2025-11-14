@@ -98,5 +98,22 @@ public class FeederAssignmentMaterialRepositoryImpl implements FeederAssignmentM
         jdbc.update(sql, id);
     }
 
+    @Override
+    public FeederAssignmentMaterial findLatestByMaterialId(int materialId) {
+        String sql = """
+        SELECT TOP 1 * 
+        FROM FeederAssignmentMaterial
+        WHERE MaterialId = ?
+        ORDER BY AttachedAt DESC
+    """;
+        List<FeederAssignmentMaterial> list = jdbc.query(
+                sql,
+                new FeederAssignmentMaterialRowMapper(),
+                materialId
+        );
+        return list.isEmpty() ? null : list.get(0);
+    }
+
+
 
 }

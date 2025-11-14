@@ -13,11 +13,20 @@ public interface PcbPerformanceLogService {
     List<PcbPerformanceLog> getAllLogs();
     List<PcbPerformanceLog> getLogsByProductId(int productId);
     List<PcbPerformanceLog> getLogsByWarehouseId(int warehouseId);
-    List<PcbPerformanceLogHistoryDTO> searchLogs(String modelCode, ModelType modelType,
-                                                 LocalDateTime from, LocalDateTime to);
+    List<PcbPerformanceLogHistoryDTO> searchLogs(
+            String modelCode,
+            ModelType modelType,
+            LocalDateTime from,
+            LocalDateTime to,
+            Integer warehouseId
+    );
 
     boolean isFileAlreadySaved(String fileName);
     List<PcbPerformanceLogHistoryDTO> fetchPerformanceGoodModules(String lineName, LocalDateTime start, LocalDateTime end);
+    PcbPerformanceLog getByCarrierId(String carrierId);
+
+    List<PcbPerformanceLogHistoryDTO> getLogsByCarrierId(String carrierId);
+
 
 
 }
