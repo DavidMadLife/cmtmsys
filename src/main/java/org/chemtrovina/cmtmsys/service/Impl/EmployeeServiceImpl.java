@@ -65,4 +65,10 @@ public class EmployeeServiceImpl implements EmployeeService {
         return employeeRepository.findByMscnId2(mscnId2);
     }
 
+    @Override
+    public void updateManager(int employeeId, String managerName) {
+        employeeRepository.updateManager(employeeId, managerName);
+    }
+
+
 }

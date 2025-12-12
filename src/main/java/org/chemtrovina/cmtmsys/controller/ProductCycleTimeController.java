@@ -1,5 +1,6 @@
 package org.chemtrovina.cmtmsys.controller;
 
+import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
@@ -10,8 +11,8 @@ import org.chemtrovina.cmtmsys.model.Warehouse;
 import org.chemtrovina.cmtmsys.model.enums.ModelType;
 import org.chemtrovina.cmtmsys.service.base.ProductCycleTimeService;
 import org.chemtrovina.cmtmsys.service.base.WarehouseService;
+import org.chemtrovina.cmtmsys.utils.FxAlertUtils;
 import org.chemtrovina.cmtmsys.utils.FxClipboardUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
@@ -21,60 +22,94 @@ import java.util.List;
 @Component
 public class ProductCycleTimeController {
 
+    // ===== FXML =====
     @FXML private TextField txtProductCode;
     @FXML private ComboBox<String> cbModelTypeFilter;
     @FXML private ComboBox<Warehouse> cbLines;
     @FXML private Button btnLoad;
 
-    @FXML private Button btnChooseFile;
+    @FXML private Button btnChooseFile, btnImport;
     @FXML private TextField txtFileName;
-    @FXML private Button btnImport;
 
+    // Table
     @FXML private TableView<ProductCycleTimeViewDto> tblCTime;
-    @FXML
-    private TableColumn<ProductCycleTimeViewDto, Number> colIndex;
-    @FXML private TableColumn<ProductCycleTimeViewDto, String> colProductCode;
-    @FXML private TableColumn<ProductCycleTimeViewDto, String> colModelType;
-    @FXML private TableColumn<ProductCycleTimeViewDto, String> colLine;
-    @FXML private TableColumn<ProductCycleTimeViewDto, Integer> colArray;
-    @FXML private TableColumn<ProductCycleTimeViewDto, BigDecimal> colCTSec;
-    @FXML private TableColumn<ProductCycleTimeViewDto, Integer> colVersion;
-    @FXML private TableColumn<ProductCycleTimeViewDto, Boolean> colActive;
-    @FXML private TableColumn<ProductCycleTimeViewDto, String> colCreatedAt;
 
+    @FXML private TableColumn<ProductCycleTimeViewDto, Number> colIndex;
+    @FXML private TableColumn<ProductCycleTimeViewDto, String> colProductCode, colModelType, colLine, colCreatedAt;
+    @FXML private TableColumn<ProductCycleTimeViewDto, Integer> colArray, colVersion;
+    @FXML private TableColumn<ProductCycleTimeViewDto, BigDecimal> colCTSec;
+    @FXML private TableColumn<ProductCycleTimeViewDto, Boolean> colActive;
+
+    // ===== STATE =====
     private File selectedFile;
 
     private final ProductCycleTimeService cycleTimeService;
     private final WarehouseService warehouseService;
 
-    @Autowired
     public ProductCycleTimeController(ProductCycleTimeService cycleTimeService, WarehouseService warehouseService) {
         this.cycleTimeService = cycleTimeService;
         this.warehouseService = warehouseService;
     }
 
+    // =======================================================================
+    // INIT
+    // =======================================================================
     @FXML
     public void initialize() {
-        cbModelTypeFilter.setItems(FXCollections.observableArrayList("TOP","BOT","SINGLE","BOTTOP","NONE"));
+        setupModelTypeCombo();
+        setupWarehouseCombo();
         setupTable();
-        btnLoad.setOnAction(e -> onLoad());
-        btnChooseFile.setOnAction(e -> onChooseFile());
-        btnImport.setOnAction(e -> onImport());
-        setupComboBoxes();
+        setupButtons();
+        setupShortcuts();
+    }
 
+    // =======================================================================
+    // SETUP UI
+    // =======================================================================
+
+    private void setupButtons() {
+        btnLoad.setOnAction(e -> loadData());
+        btnChooseFile.setOnAction(e -> chooseFile());
+        btnImport.setOnAction(e -> importCycleTimes());
+    }
+
+    private void setupShortcuts() {
         tblCTime.setOnKeyPressed(e -> {
             if (e.isControlDown() && e.getCode() == javafx.scene.input.KeyCode.C) {
-                FxClipboardUtils.copySelectionToClipboard(tblCTime); // true = kèm header
+                FxClipboardUtils.copySelectionToClipboard(tblCTime);
+            }
+        });
+    }
+
+    private void setupModelTypeCombo() {
+        cbModelTypeFilter.setItems(FXCollections.observableArrayList("TOP","BOT","SINGLE","BOTTOP","NONE"));
+    }
+
+    private void setupWarehouseCombo() {
+        List<Warehouse> allLines = warehouseService.getAllWarehouses();
+        cbLines.setItems(FXCollections.observableArrayList(allLines));
+
+        cbLines.setCellFactory(list -> new ListCell<>() {
+            @Override
+            protected void updateItem(Warehouse item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : item.getName());
             }
         });
 
-
-
+        cbLines.setButtonCell(new ListCell<>() {
+            @Override
+            protected void updateItem(Warehouse item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : item.getName());
+            }
+        });
     }
 
     private void setupTable() {
-        colIndex.setCellValueFactory(cd -> javafx.beans.binding.Bindings.createIntegerBinding(
-                () -> tblCTime.getItems().indexOf(cd.getValue()) + 1));
+
+        colIndex.setCellValueFactory(row -> Bindings.createIntegerBinding(
+                () -> tblCTime.getItems().indexOf(row.getValue()) + 1));
 
         colProductCode.setCellValueFactory(new PropertyValueFactory<>("productCode"));
         colModelType.setCellValueFactory(new PropertyValueFactory<>("modelType"));
@@ -85,87 +120,57 @@ public class ProductCycleTimeController {
         colActive.setCellValueFactory(new PropertyValueFactory<>("active"));
         colCreatedAt.setCellValueFactory(new PropertyValueFactory<>("createdAt"));
 
-        tblCTime.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        tblCTime.getSelectionModel().setCellSelectionEnabled(true);
-        tblCTime.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        FxClipboardUtils.enableCopyShortcut(tblCTime);
     }
 
-    private void setupComboBoxes() {
-        // ModelType cho filter
-        cbModelTypeFilter.setItems(FXCollections.observableArrayList("TOP","BOT","SINGLE","BOTTOP","NONE"));
+    // =======================================================================
+    // LOAD DATA
+    // =======================================================================
 
-        // Nạp list line từ service
-        List<Warehouse> all = warehouseService.getAllWarehouses();
-        cbLines.setItems(FXCollections.observableArrayList(all));
-
-        // hiển thị Name trong list dropdown
-        cbLines.setCellFactory(lv -> new ListCell<>() {
-            @Override
-            protected void updateItem(Warehouse item, boolean empty) {
-                super.updateItem(item, empty);
-                setText((empty || item == null) ? null : item.getName());
-            }
-        });
-
-        // hiển thị Name trong ô đã chọn
-        cbLines.setButtonCell(new ListCell<>() {
-            @Override
-            protected void updateItem(Warehouse item, boolean empty) {
-                super.updateItem(item, empty);
-                setText((empty || item == null) ? null : item.getName());
-            }
-        });
-
-        // tuỳ chọn: tự load khi chọn line
-        //cbLines.valueProperty().addListener((obs, old, val) -> onLoad());
-    }
-
-
-    private void onLoad() {
-        String code = safe(txtProductCode.getText());
+    private void loadData() {
+        String productCode = txtProductCode.getText() == null ? "" : txtProductCode.getText().trim();
         String typeStr = cbModelTypeFilter.getValue();
 
-        Warehouse selected = cbLines.getValue();
-        String lineLike = (selected == null) ? "" : selected.getName();
-
-        ModelType type = null;
+        ModelType modelType = null;
         if (typeStr != null && !typeStr.isBlank()) {
-            try { type = ModelType.valueOf(typeStr.trim().toUpperCase()); }
-            catch (IllegalArgumentException ignored) { type = null; }
+            try { modelType = ModelType.valueOf(typeStr.toUpperCase()); }
+            catch (Exception ignored) {}
         }
 
-        var list = cycleTimeService.searchView(code, type, lineLike);
+        Warehouse line = cbLines.getValue();
+        String lineName = (line == null ? "" : line.getName());
+
+        var list = cycleTimeService.searchView(productCode, modelType, lineName);
         tblCTime.setItems(FXCollections.observableArrayList(list));
     }
 
+    // =======================================================================
+    // IMPORT
+    // =======================================================================
 
-    private void onChooseFile() {
+    private void chooseFile() {
         FileChooser chooser = new FileChooser();
         chooser.setTitle("Chọn file Excel Cycle Time");
-        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel", "*.xlsx"));
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel Files", "*.xlsx"));
         selectedFile = chooser.showOpenDialog(null);
+
         txtFileName.setText(selectedFile != null ? selectedFile.getName() : "Chưa chọn file");
     }
 
-    private void onImport() {
+    private void importCycleTimes() {
         if (selectedFile == null) {
-            info("Vui lòng chọn file Excel.");
+            FxAlertUtils.warning("Vui lòng chọn file Excel.");
             return;
         }
+
         try {
-            cycleTimeService.importCycleTimesFromExcel(selectedFile); // gọi service
-            info("✅ Import cycle time hoàn tất.");
-            onLoad();
+            cycleTimeService.importCycleTimesFromExcel(selectedFile);
+            FxAlertUtils.info("✅ Import cycle time hoàn tất.");
+            loadData();
         } catch (Exception ex) {
             ex.printStackTrace();
-            info("❌ Lỗi khi import: " + ex.getMessage());
+            FxAlertUtils.error("❌ Lỗi khi import: " + ex.getMessage());
         }
     }
 
-    private String safe(String s) { return s == null ? "" : s.trim(); }
-    private void info(String msg) {
-        Alert a = new Alert(Alert.AlertType.INFORMATION);
-        a.setTitle("Thông báo"); a.setHeaderText(null); a.setContentText(msg); a.showAndWait();
-    }
 }
-

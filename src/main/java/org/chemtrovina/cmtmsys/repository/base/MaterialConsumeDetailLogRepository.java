@@ -14,7 +14,7 @@ public interface MaterialConsumeDetailLogRepository {
     List<MaterialConsumeDetailLog> findByPlanItemAndDate(int planItemId, LocalDate runDate);
     void deleteByPlanItemAndDate(int planItemId, LocalDate runDate);
     List<MaterialConsumeDetailLog> findBySourceLogId(int sourceLogId);
-    void consumeMaterialByLog(PcbPerformanceLog log);
+    List<String> consumeByAoiLog(PcbPerformanceLog log);
 
     List<MaterialUsage> findUsageBySourceLogId(int sourceLogId);
     List<MaterialUsage> findUsageByCarrierId(String carrierId);

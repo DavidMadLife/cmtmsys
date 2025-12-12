@@ -16,6 +16,7 @@ public class PcbPerformanceLogHistoryDTO {
     private String logFileName;
     private LocalDateTime createdAt;
     private String warehouseName;
+    private double timeDiffSeconds;
 
 
     public PcbPerformanceLogHistoryDTO() {}
@@ -122,4 +123,7 @@ public class PcbPerformanceLogHistoryDTO {
     public void setWarehouseName(String warehouseName) {
         this.warehouseName = warehouseName;
     }
+
+    public double getTimeDiffSeconds() { return timeDiffSeconds; }
+    public void setTimeDiffSeconds(double timeDiffSeconds) { this.timeDiffSeconds = timeDiffSeconds; }
 }

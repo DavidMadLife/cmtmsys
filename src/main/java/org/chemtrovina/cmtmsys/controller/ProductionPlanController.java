@@ -590,6 +590,18 @@ public class ProductionPlanController {
                 colS7, colS8, colS9, colS10, colS11, colS12
         };
 
+        String[] hourLabels = {
+                "🕗 08–10", "🕙 10–12", "🕛 12–14", "🕓 14–16",
+                "🕕 16–18", "🕗 18–20", "🕘 20–22", "🌙 22–00",
+                "🌑 00–02", "🕑 02–04", "🕓 04–06", "🌅 06–08"
+        };
+        for (int i = 0; i < sCols.length; i++) {
+            Label lbl = new Label(hourLabels[i]);
+            lbl.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-alignment: center;");
+            sCols[i].setGraphic(lbl);
+            sCols[i].setText(null);
+        }
+
         for (int i = 0; i < sCols.length; i++) {
             final int idx = i;
             sCols[i].setCellValueFactory(c -> c.getValue().slotProperty(idx).asObject());

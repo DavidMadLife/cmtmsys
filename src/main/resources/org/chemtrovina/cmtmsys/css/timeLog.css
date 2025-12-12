@@ -1,0 +1,38 @@
+/* Màu nền chung cho Header là màu Hồng */
+.table-view .column-header-background,
+.table-view .column-header {
+    -fx-background-color: #ff99cc; /* Mã màu hồng giống ảnh */
+    -fx-size: 45px; /* Chiều cao header */
+
+    -fx-border-color: transparent #555555 #555555 transparent;
+    -fx-border-width: 0.5px;
+}
+
+/* Chỉnh chữ trong Header đậm và màu đen */
+.table-view .column-header .label {
+    -fx-text-fill: black;
+    -fx-font-weight: bold;
+    -fx-alignment: CENTER;
+}
+
+/* Class riêng cho các cột màu Vàng (CỘT NHẬP, Ghi chú) */
+.table-view .column-header.header-yellow {
+    -fx-background-color: #ffff00; /* Màu vàng chanh */
+    -fx-background-insets: 0 0.5 0.5 0;
+}
+/* Nếu header-yellow bị lồng, cần trỏ sâu hơn */
+.header-yellow .column-header {
+    -fx-background-color: #ffff00;
+    -fx-background-insets: 0 0.5 0.5 0;
+}
+
+/* Tạo đường kẻ ô (Grid lines) rõ ràng */
+.table-view .table-cell {
+    -fx-border-color: #a0a0a0; /* Màu xám của đường kẻ */
+    -fx-border-width: 0 1px 1px 0;
+}
+
+/* Bỏ viền Focus xanh mặc định của JavaFX khi click vào bảng */
+.table-view:focused {
+    -fx-background-color: #0096C9;
+}

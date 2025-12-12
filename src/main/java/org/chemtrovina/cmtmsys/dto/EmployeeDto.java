@@ -3,13 +3,14 @@ package org.chemtrovina.cmtmsys.dto;
 import java.time.LocalDate;
 
 public class EmployeeDto {
+    private int employeeId;   // 🔥 thêm ID
     private int no;
     private String mscnId1;
     private String mscnId2;
     private String fullName;
     private String company;
     private String gender;
-    private LocalDate dateOfBirth;
+    private LocalDate birthDate;
     private LocalDate entryDate;
     private LocalDate exitDate;
     private String address;
@@ -22,23 +23,26 @@ public class EmployeeDto {
     private String note;
     private String status;
 
-    // ✅ Constructor mặc định
+    // ================= Constructor mặc định =================
     public EmployeeDto() {
     }
 
-    // ✅ Constructor đầy đủ
-    public EmployeeDto(int no, String mscnId1, String mscnId2, String fullName, String company,
-                       String gender, LocalDate dateOfBirth, LocalDate entryDate, LocalDate exitDate, String address,
-                       String phoneNumber, String departmentName, String positionName,
+    // ================= Constructor đầy đủ =================
+    public EmployeeDto(int employeeId, int no, String mscnId1, String mscnId2, String fullName, String company,
+                       String gender, LocalDate birthDate, LocalDate entryDate, LocalDate exitDate,
+                       String address, String phoneNumber, String departmentName, String positionName,
                        String shiftName, String managerName, String jobTitle, String note, String status) {
+
+        this.employeeId = employeeId;   // 🔥
         this.no = no;
         this.mscnId1 = mscnId1;
         this.mscnId2 = mscnId2;
         this.fullName = fullName;
         this.company = company;
         this.gender = gender;
-        this.dateOfBirth = dateOfBirth;
+        this.birthDate = birthDate;
         this.entryDate = entryDate;
+        this.exitDate = exitDate;
         this.address = address;
         this.phoneNumber = phoneNumber;
         this.departmentName = departmentName;
@@ -48,35 +52,16 @@ public class EmployeeDto {
         this.jobTitle = jobTitle;
         this.note = note;
         this.status = status;
-        this.exitDate = exitDate;
     }
 
-    // Getters & Setters
+    // ================= Getter & Setter =================
 
-    public LocalDate getExitDate() {
-        return exitDate;
-    }
-    public void setExitDate(LocalDate exitDate) {
-        this.exitDate = exitDate;
+    public int getEmployeeId() {      // 🔥
+        return employeeId;
     }
 
-    public String getJobTitle(){
-        return jobTitle;
-    }
-    public void setJobTitle(String jobTitle){
-        this.jobTitle = jobTitle;
-    }
-    public String getNote() {
-        return note;
-    }
-    public void setNote(String note) {
-        this.note = note;
-    }
-    public String getStatus() {
-        return status;
-    }
-    public void setStatus(String status) {
-        this.status = status;
+    public void setEmployeeId(int employeeId) {   // 🔥
+        this.employeeId = employeeId;
     }
 
     public int getNo() { return no; }
@@ -97,11 +82,14 @@ public class EmployeeDto {
     public String getGender() { return gender; }
     public void setGender(String gender) { this.gender = gender; }
 
-    public LocalDate getDateOfBirth() { return dateOfBirth; }
-    public void setDateOfBirth(LocalDate dateOfBirth) { this.dateOfBirth = dateOfBirth; }
+    public LocalDate getBirthDate() { return birthDate; }
+    public void setBirthDate(LocalDate birthDate) { this.birthDate = birthDate; }
 
     public LocalDate getEntryDate() { return entryDate; }
     public void setEntryDate(LocalDate entryDate) { this.entryDate = entryDate; }
+
+    public LocalDate getExitDate() { return exitDate; }
+    public void setExitDate(LocalDate exitDate) { this.exitDate = exitDate; }
 
     public String getAddress() { return address; }
     public void setAddress(String address) { this.address = address; }
@@ -121,26 +109,37 @@ public class EmployeeDto {
     public String getManagerName() { return managerName; }
     public void setManagerName(String managerName) { this.managerName = managerName; }
 
+    public String getJobTitle() { return jobTitle; }
+    public void setJobTitle(String jobTitle) { this.jobTitle = jobTitle; }
+
+    public String getNote() { return note; }
+    public void setNote(String note) { this.note = note; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+
     @Override
     public String toString() {
-        return "EmployeeDTO{" +
-                "no=" + no +
+        return "EmployeeDto{" +
+                "employeeId=" + employeeId +    // 🔥
+                ", no=" + no +
                 ", mscnId1='" + mscnId1 + '\'' +
                 ", mscnId2='" + mscnId2 + '\'' +
                 ", fullName='" + fullName + '\'' +
                 ", company='" + company + '\'' +
                 ", gender='" + gender + '\'' +
-                ", dateOfBirth=" + dateOfBirth +
+                ", birthDate=" + birthDate +
                 ", entryDate=" + entryDate +
+                ", exitDate=" + exitDate +
                 ", address='" + address + '\'' +
                 ", phoneNumber='" + phoneNumber + '\'' +
                 ", departmentName='" + departmentName + '\'' +
                 ", positionName='" + positionName + '\'' +
                 ", shiftName='" + shiftName + '\'' +
                 ", managerName='" + managerName + '\'' +
-                ", status='" + status + '\'' +
                 ", jobTitle='" + jobTitle + '\'' +
                 ", note='" + note + '\'' +
+                ", status='" + status + '\'' +
                 '}';
     }
 }

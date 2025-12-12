@@ -62,7 +62,10 @@ public class MaterialConsumeDetailLogRepositoryImpl implements MaterialConsumeDe
     }
 
     @Override
-    public void consumeMaterialByLog(PcbPerformanceLog log) {
+    public List<String> consumeByAoiLog(PcbPerformanceLog log) {
+
+        List<String> shortages = new ArrayList<>();
+
         int goodQty = Math.max(0, log.getTotalModules());
         int productId = log.getProductId();
         int warehouseId = log.getWarehouseId();
@@ -71,140 +74,120 @@ public class MaterialConsumeDetailLogRepositoryImpl implements MaterialConsumeDe
         // 1️⃣ Lấy RunID đang chạy
         Integer runId = null;
         try {
-            String getRunIdSql = """
+            runId = jdbcTemplate.queryForObject("""
             SELECT TOP 1 r.RunID
             FROM ModelLineRuns r
             JOIN ModelLines ml ON r.ModelLineID = ml.ModelLineID
             WHERE ml.ProductID = ? AND ml.WarehouseID = ? AND r.Status = 'Running'
-        """;
-            runId = jdbcTemplate.queryForObject(getRunIdSql, Integer.class, productId, warehouseId);
+        """, Integer.class, productId, warehouseId);
         } catch (Exception ignored) {}
 
         if (runId == null) {
-            String warnMsg = String.format(
-                    "⚠️ Không có phiên (Run) nào đang RUNNING cho ProductID=%d tại WarehouseID=%d → Bỏ qua trừ liệu.",
-                    productId, warehouseId
-            );
-
-            // ⚠️ Ghi ra console
-            System.err.println("[consumeMaterialByLog] " + warnMsg);
-
-            // ⚠️ Báo lên UI log nếu controller có callback (ví dụ: appendLog)
-            try {
-                // Nếu logService hoặc tiêu chuẩn hóa callback
-                if (log.getLogFileName() != null) {
-                    jdbcTemplate.update("""
-                    INSERT INTO MaterialConsumeDetailLog 
-                    (PlanItemID, RunDate, MaterialID, ConsumedQty, CreatedAt, SourceLogId, Note)
-                    VALUES (NULL, ?, NULL, 0, GETDATE(), ?, ?)
-                """, log.getCreatedAt().toLocalDate(), logId, warnMsg);
-                }
-            } catch (Exception e) {
-                System.err.println("[consumeMaterialByLog] ❌ Không thể ghi note cảnh báo: " + e.getMessage());
-            }
-
-            return; // ✅ Dừng tại đây, không trừ vật tư
+            shortages.add("⚠️ Không có RUNNING cho Product " + productId + " tại Warehouse " + warehouseId);
+            return shortages;
         }
 
-        // 2️⃣ Lấy BOM
-        String getBomSql = "SELECT SapPN, Quantity FROM ProductBOM WHERE ProductID = ?";
-        List<Map<String, Object>> bomList = jdbcTemplate.queryForList(getBomSql, productId);
-        if (bomList.isEmpty()) return;
-
-        // 3️⃣ Lấy feeders thuộc line đó
-        String getFeedersSql = """
-        SELECT f.FeederID, f.SapCode
+        // 2️⃣ Lấy feeders của line → Dùng feeder.qty thay cho BOM
+        List<Map<String, Object>> feeders = jdbcTemplate.queryForList("""
+        SELECT f.FeederID, f.SapCode, f.Qty
         FROM Feeders f
         JOIN ModelLines ml ON f.ModelLineID = ml.ModelLineID
         WHERE ml.ProductID = ? AND ml.WarehouseID = ?
-    """;
-        List<Map<String, Object>> feeders = jdbcTemplate.queryForList(getFeedersSql, productId, warehouseId);
-        Map<String, List<Map<String, Object>>> feedersBySap = feeders.stream()
-                .collect(Collectors.groupingBy(f -> ((String) f.get("SapCode")).trim().toUpperCase()));
+    """, productId, warehouseId);
 
-        // 4️⃣ Duyệt BOM
-        for (Map<String, Object> bom : bomList) {
-            String sapCode = ((String) bom.get("SapPN")).trim().toUpperCase();
-            double qtyPerBoard = ((Number) bom.get("Quantity")).doubleValue();
-            int needQty = (int) Math.ceil(qtyPerBoard * goodQty);
+        if (feeders.isEmpty()) {
+            shortages.add("❌ Không có FEEDER nào được khai báo cho line");
+            return shortages;
+        }
+
+
+        // 3️⃣ Duyệt từng FEEDER để trừ liệu
+        for (Map<String, Object> feeder : feeders) {
+
+            int feederId = (int) feeder.get("FeederID");
+            int qtyPerBoard = (int) feeder.get("Qty");     // dùng số lượng của feeder
+            String sapCode = ((String) feeder.get("SapCode")).trim().toUpperCase();
+
+            int needQty = qtyPerBoard * goodQty;
             if (needQty <= 0) continue;
 
-            List<Map<String, Object>> sapFeeders = feedersBySap.getOrDefault(sapCode, List.of());
-            if (sapFeeders.isEmpty()) {
-                System.err.printf("[consumeMaterialByLog] ⚠️ Không có feeder gắn SAP %s%n", sapCode);
-                insertShortageNote(logId, log.getCreatedAt(), sapCode, needQty);
+
+            // 4️⃣ Lấy danh sách cuộn đang active gắn vào feeder
+            List<Map<String, Object>> rolls = jdbcTemplate.queryForList("""
+            SELECT m.MaterialID, m.Quantity
+            FROM FeederAssignmentMaterials fam
+            JOIN Materials m ON fam.MaterialID = m.MaterialID
+            JOIN FeederAssignments fa ON fam.AssignmentID = fa.AssignmentID
+            WHERE fa.FeederID = ?
+              AND fa.RunID = ?
+              AND fam.IsActive = 1
+            ORDER BY fam.AttachedAt ASC
+        """, feederId, runId);
+
+            if (rolls.isEmpty()) {
+                shortages.add("⚠️ Feeder " + feederId + " (SAP " + sapCode + ") chưa gắn cuộn nào.");
                 continue;
             }
 
-            for (Map<String, Object> feeder : sapFeeders) {
+            // 5️⃣ Trừ liệu từ các cuộn theo FIFO
+            for (Map<String, Object> roll : rolls) {
+
                 if (needQty <= 0) break;
 
-                int feederId = (int) feeder.get("FeederID");
+                int materialId = (int) roll.get("MaterialID");
+                int availableQty = (int) roll.get("Quantity");
 
-                // ✅ Chỉ lấy cuộn thuộc RunID đang chạy
-                String getRollsSql = """
-                SELECT m.MaterialID, m.Quantity
-                FROM FeederAssignmentMaterials fam
-                JOIN Materials m ON fam.MaterialID = m.MaterialID
-                JOIN FeederAssignments fa ON fam.AssignmentID = fa.AssignmentID
-                WHERE fa.FeederID = ?
-                  AND fa.RunID = ?       -- ✅ chỉ run hiện tại
-                  AND fam.IsActive = 1
-                ORDER BY fam.AttachedAt ASC
-            """;
+                int consumeNow = Math.min(availableQty, needQty);
 
-                List<Map<String, Object>> rolls = jdbcTemplate.queryForList(getRollsSql, feederId, runId);
-                if (rolls.isEmpty()) {
-                    System.err.printf("[consumeMaterialByLog] ⚠️ Feeder %d chưa gắn cuộn cho SAP %s trong run #%d%n",
-                            feederId, sapCode, runId);
-                    continue;
+                // Trừ trong DB
+                int updated = jdbcTemplate.update(
+                        "UPDATE Materials SET Quantity = Quantity - ? WHERE MaterialID = ? AND Quantity >= ?",
+                        consumeNow, materialId, consumeNow
+                );
+
+                if (updated == 0) continue;  // cuộn này hết
+
+                // Nếu cuộn cạn → disable
+                if (consumeNow == availableQty) {
+                    jdbcTemplate.update("UPDATE FeederAssignmentMaterials SET IsActive = 0 WHERE MaterialID = ?", materialId);
                 }
 
-                for (Map<String, Object> roll : rolls) {
-                    if (needQty <= 0) break;
+                // Ghi log tiêu thụ
+                jdbcTemplate.update("""
+                INSERT INTO MaterialConsumeDetailLog
+                (PlanItemID, RunDate, MaterialID, ConsumedQty, CreatedAt, SourceLogId)
+                VALUES (NULL, ?, ?, ?, GETDATE(), ?)
+            """, log.getCreatedAt().toLocalDate(), materialId, consumeNow, logId);
 
-                    int materialId = (int) roll.get("MaterialID");
-                    int availableQty = (int) roll.get("Quantity");
-                    int consumeNow = Math.min(availableQty, needQty);
-
-                    int updated = jdbcTemplate.update(
-                            "UPDATE Materials SET Quantity = Quantity - ? WHERE MaterialID = ? AND Quantity >= ?",
-                            consumeNow, materialId, consumeNow
-                    );
-                    if (updated == 0) continue;
-
-                    jdbcTemplate.update("""
-                    INSERT INTO MaterialConsumeDetailLog 
-                    (PlanItemID, RunDate, MaterialID, ConsumedQty, CreatedAt, SourceLogId)
-                    VALUES (NULL, ?, ?, ?, GETDATE(), ?)
-                """, log.getCreatedAt().toLocalDate(), materialId, consumeNow, logId);
-
-                    needQty -= consumeNow;
-                }
+                needQty -= consumeNow;
             }
 
-            // 5️⃣ Nếu vẫn thiếu → log note
+            // 6️⃣ Nếu vẫn thiếu → báo cảnh báo (không ghi DB)
             if (needQty > 0) {
-                insertShortageNote(logId, log.getCreatedAt(), sapCode, needQty);
+                shortages.add("❌ Thiếu SAP " + sapCode + " → còn thiếu " + needQty + " pcs");
             }
         }
 
-        System.out.printf("[consumeMaterialByLog] ✅ Đã trừ xong liệu cho log #%d (GOOD=%d, RunID=%d)%n",
-                logId, goodQty, runId);
+        System.out.printf("[consumeMaterial] ✔ DONE log #%d (GOOD=%d)\n", logId, goodQty);
+
+        return shortages;
     }
 
 
 
     // 🧩 Ghi chú thiếu vật tư
     private void insertShortageNote(int logId, LocalDateTime date, String sapCode, int missingQty) {
-        String noteSql = """
+
+        String note = "Thiếu " + missingQty + " pcs cho SAP " + sapCode;
+
+        jdbcTemplate.update("""
         INSERT INTO MaterialConsumeDetailLog 
         (PlanItemID, RunDate, MaterialID, ConsumedQty, CreatedAt, SourceLogId, Note)
-        VALUES (NULL, ?, NULL, 0, GETDATE(), ?, ?)
-    """;
-        String note = "Thiếu " + missingQty + " pcs cho SAP " + sapCode;
-        jdbcTemplate.update(noteSql, date.toLocalDate(), logId, note);
+        VALUES (NULL, ?, 0, 0, GETDATE(), ?, ?)
+    """, date.toLocalDate(), logId, note);
     }
+
+
 
     private static final RowMapper<MaterialUsage> USAGE_MAPPER = (rs, i) -> new MaterialUsage(
             rs.getString("SapCode"),

@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -26,11 +27,40 @@ public class PcbPerformanceLogRepositoryImpl implements PcbPerformanceLogReposit
 
     @Override
     public int add(PcbPerformanceLog log) {
+
+        // 1️⃣ Lấy log trước đó (cùng model + cùng line)
+        PcbPerformanceLog prev = findPrevLogForModelAndWarehouse(
+                log.getProductId(),
+                log.getWarehouseId(),
+                log.getCreatedAt()
+        );
+
+
+        double diffSeconds = 0.0;
+
+        if (prev != null) {
+
+            // Tính khoảng cách giữa 2 log
+            Duration duration = Duration.between(prev.getCreatedAt(), log.getCreatedAt());
+
+            // Nếu <= 1 ngày thì mới tính time diff
+            if (duration.toHours() < 24) {
+                diffSeconds = duration.toNanos() / 1_000_000_000.0;
+            } else {
+                // > 1 day = model chạy lại → reset
+                diffSeconds = 0.0;
+            }
+        }
+
+        log.setTimeDiffSeconds(diffSeconds);
+
+        // 2️⃣ Insert log + field TimeDiffSeconds
         String sql = """
         INSERT INTO PcbPerformanceLog
-        (ProductId, WarehouseId, CarrierId, AoiMachineCode, TotalModules, NgModules, Performance, LogFileName, CreatedAt)
+        (ProductId, WarehouseId, CarrierId, AoiMachineCode, TotalModules, NgModules,
+         Performance, LogFileName, CreatedAt, TimeDiffSeconds)
         OUTPUT INSERTED.LogId
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """;
 
         Integer id = jdbcTemplate.queryForObject(sql, Integer.class,
@@ -42,12 +72,36 @@ public class PcbPerformanceLogRepositoryImpl implements PcbPerformanceLogReposit
                 log.getNgModules(),
                 log.getPerformance(),
                 log.getLogFileName(),
-                Timestamp.valueOf(log.getCreatedAt())
+                Timestamp.valueOf(log.getCreatedAt()),
+                log.getTimeDiffSeconds()
         );
 
-        log.setLogId(id); // ✅ gán lại cho object luôn
+        log.setLogId(id);
         return id;
     }
+
+    public PcbPerformanceLog findPrevLogForModelAndWarehouse(int productId, int warehouseId, LocalDateTime beforeTime) {
+        String sql = """
+        SELECT TOP 1 *
+        FROM PcbPerformanceLog
+        WHERE ProductId = ?
+          AND WarehouseId = ?
+          AND CreatedAt < ?
+        ORDER BY CreatedAt DESC
+    """;
+
+        List<PcbPerformanceLog> results = jdbcTemplate.query(
+                sql,
+                new PcbPerformanceLogRowMapper(),
+                productId,
+                warehouseId,
+                Timestamp.valueOf(beforeTime)
+        );
+
+        return results.isEmpty() ? null : results.get(0);
+    }
+
+
 
 
     @Override
@@ -95,6 +149,7 @@ public class PcbPerformanceLogRepositoryImpl implements PcbPerformanceLogReposit
             l.Performance,
             l.LogFileName,
             l.CreatedAt,
+             l.TimeDiffSeconds,
             w.Name AS WarehouseName
         FROM PcbPerformanceLog l
         JOIN Products p ON l.ProductId = p.ProductId
@@ -141,6 +196,7 @@ public class PcbPerformanceLogRepositoryImpl implements PcbPerformanceLogReposit
             dto.setLogFileName(rs.getString("LogFileName"));
             dto.setCreatedAt(rs.getTimestamp("CreatedAt").toLocalDateTime());
             dto.setWarehouseName(rs.getString("WarehouseName"));
+            dto.setTimeDiffSeconds(rs.getDouble("TimeDiffSeconds"));
             return dto;
         });
     }
@@ -185,6 +241,7 @@ public class PcbPerformanceLogRepositoryImpl implements PcbPerformanceLogReposit
             p.Performance,
             p.LogFileName,
             p.CreatedAt,
+            p.TimeDiffSeconds,
             w.Name AS WarehouseName
         FROM PcbPerformanceLog p
         JOIN Warehouses w ON w.WarehouseId = p.WarehouseId
@@ -215,6 +272,7 @@ public class PcbPerformanceLogRepositoryImpl implements PcbPerformanceLogReposit
             dto.setLogFileName(rs.getString("LogFileName"));
             dto.setCreatedAt(rs.getTimestamp("CreatedAt").toLocalDateTime());
             dto.setWarehouseName(rs.getString("WarehouseName"));
+            dto.setTimeDiffSeconds(rs.getDouble("TimeDiffSeconds"));
             return dto;
         });
     }
@@ -291,6 +349,7 @@ public class PcbPerformanceLogRepositoryImpl implements PcbPerformanceLogReposit
             l.Performance,
             l.LogFileName,
             l.CreatedAt,
+            l.TimeDiffSeconds,
             w.Name AS WarehouseName
         FROM PcbPerformanceLog l
         JOIN Products p ON l.ProductId = p.ProductId
@@ -322,6 +381,8 @@ public class PcbPerformanceLogRepositoryImpl implements PcbPerformanceLogReposit
             dto.setLogFileName(rs.getString("LogFileName"));
             dto.setCreatedAt(rs.getTimestamp("CreatedAt").toLocalDateTime());
             dto.setWarehouseName(rs.getString("WarehouseName"));
+            dto.setTimeDiffSeconds(rs.getDouble("TimeDiffSeconds"));
+
             return dto;
         });
     }

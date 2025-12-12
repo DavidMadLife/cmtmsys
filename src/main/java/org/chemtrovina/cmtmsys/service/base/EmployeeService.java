@@ -18,4 +18,6 @@ public interface EmployeeService {
 
     Employee getByMscnId1(String mscnId1);
     Employee getByMscnId2(String mscnId2);
+
+    void updateManager(int employeeId, String managerName);
 }

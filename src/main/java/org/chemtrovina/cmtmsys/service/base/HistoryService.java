@@ -1,6 +1,7 @@
 package org.chemtrovina.cmtmsys.service.base;
 
 import org.chemtrovina.cmtmsys.dto.HistoryDetailViewDto;
+import org.chemtrovina.cmtmsys.dto.HistorySummary;
 import org.chemtrovina.cmtmsys.model.History;
 import org.chemtrovina.cmtmsys.model.MOQ;
 
@@ -44,6 +45,7 @@ public interface HistoryService {
 
     int getLastScannedQuantityBySapPN(String sapPN, int invoiceId);
 
+    Map<String, HistorySummary> getHistorySummaryByInvoiceId(int invoiceId);
 
 
 

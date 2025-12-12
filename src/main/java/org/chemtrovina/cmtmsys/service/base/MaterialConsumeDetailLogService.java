@@ -17,7 +17,7 @@ public interface MaterialConsumeDetailLogService {
     void deleteLogsByPlanItemAndDate(int planItemId, LocalDate runDate);
     List<MaterialConsumeDetailLog> getDetailsBySourceLog(int sourceLogId);
 
-    void consumeByAoiLog(PcbPerformanceLog log);
+    List<String> consumeByAoiLog(PcbPerformanceLog log);
 
     List<MaterialUsage> getMaterialUsageBySourceLog(int sourceLogId);
     List<MaterialUsage> getMaterialUsageByCarrier(String carrierId);

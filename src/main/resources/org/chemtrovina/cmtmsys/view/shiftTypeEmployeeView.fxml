@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import java.net.URL?>
+<BorderPane prefHeight="600" prefWidth="900"
+            xmlns="http://javafx.com/javafx/23.0.1"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="org.chemtrovina.cmtmsys.controller.ShiftTypeEmployeeController">
+    <stylesheets>
+        <URL value="@../css/app.css" />
+    </stylesheets>
+    <center>
+        <SplitPane dividerPositions="0.3">
+
+            <VBox spacing="10" style="-fx-padding: 15;">
+                <Label text="Quản Lý Loại Ca Làm Việc" style="-fx-font-size: 16px; -fx-font-weight: bold;"/>
+                <Separator/>
+
+                <GridPane hgap="10" vgap="10">
+                    <columnConstraints>
+                        <ColumnConstraints percentWidth="30.0" />
+                        <ColumnConstraints percentWidth="70.0" />
+                    </columnConstraints>
+
+                    <Label text="Mã Ca (Code):" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                    <TextField fx:id="txtShiftCode" promptText="VD: HC, NT" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+                    <Label text="Tên Ca (Name):" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                    <TextField fx:id="txtShiftName" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+                    <Label text="Mô tả:" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                    <TextArea fx:id="txtDescription" prefHeight="100" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+                </GridPane>
+
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <Button fx:id="btnSave" text="Lưu / Cập Nhật" style="-fx-background-color: #4CAF50; -fx-text-fill: white;"/>
+                    <Button fx:id="btnNew" text="Làm Mới" style="-fx-background-color: #2196F3; -fx-text-fill: white;"/>
+                    <Button fx:id="btnDelete" text="Xóa" disable="true" style="-fx-background-color: #F44336; -fx-text-fill: white;"/>
+                </HBox>
+            </VBox>
+
+            <VBox>
+                <TableView fx:id="tblShiftTypes" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="colShiftCode" prefWidth="100" text="Mã Ca"/>
+                        <TableColumn fx:id="colShiftName" prefWidth="150" text="Tên Ca"/>
+                        <TableColumn fx:id="colDescription" prefWidth="300" text="Mô Tả"/>
+                    </columns>
+                </TableView>
+            </VBox>
+        </SplitPane>
+    </center>
+</BorderPane>

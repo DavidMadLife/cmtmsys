@@ -47,4 +47,10 @@ public class PositionRepositoryImpl implements PositionRepository {
         String sql = "SELECT * FROM Position";
         return jdbcTemplate.query(sql, new PositionRowMapper());
     }
+
+    public String getName(int positionId) {
+        String sql = "SELECT PositionName FROM Position WHERE PositionId = ?";
+        return jdbcTemplate.queryForObject(sql, String.class, positionId);
+    }
+
 }

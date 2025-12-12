@@ -1,5 +1,6 @@
 package org.chemtrovina.cmtmsys.repository.Impl;
 
+import org.chemtrovina.cmtmsys.dto.HistorySummary;
 import org.chemtrovina.cmtmsys.model.History;
 import org.chemtrovina.cmtmsys.repository.base.HistoryRepository;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -11,7 +12,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Repository
 public class HistoryRepositoryImpl extends GenericRepositoryImpl<History> implements HistoryRepository {
@@ -207,14 +210,50 @@ public class HistoryRepositoryImpl extends GenericRepositoryImpl<History> implem
 
     public void deleteLastBySapPNAndInvoiceId(String sapPN, int invoiceId) {
         String sql = """
-        DELETE FROM History
-        WHERE Id = (
-            SELECT TOP 1 Id FROM History
+        WITH x AS (
+            SELECT TOP 1 *
+            FROM History
             WHERE SapPN = ? AND InvoiceId = ?
+            ORDER BY Id DESC
         )
+        DELETE FROM x;
     """;
+
         jdbcTemplate.update(sql, sapPN, invoiceId);
     }
+
+
+    @Override
+    public Map<String, HistorySummary> getHistorySummaryByInvoiceId(int invoiceId) {
+        String sql = """
+        SELECT 
+            SapPN,
+            SUM(Quantity) AS TotalScanned,
+            MAX(MakerPN) AS MakerPN,
+            MAX(Maker) AS Maker,
+            MAX(Spec) AS Spec
+        FROM History
+        WHERE InvoiceId = ?
+        GROUP BY SapPN
+    """;
+
+        List<HistorySummary> list = jdbcTemplate.query(sql, new Object[]{invoiceId}, (rs, rowNum) ->
+                new HistorySummary(
+                        rs.getString("SapPN"),
+                        rs.getInt("TotalScanned"),
+                        rs.getString("MakerPN"),
+                        rs.getString("Maker"),
+                        rs.getString("Spec")
+                )
+        );
+
+        Map<String, HistorySummary> map = new HashMap<>();
+        for (HistorySummary s : list) {
+            map.put(s.getSapPN(), s);
+        }
+        return map;
+    }
+
 
 
     static class HistoryRowMapper implements RowMapper<History> {

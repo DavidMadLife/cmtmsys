@@ -7,6 +7,7 @@ import javafx.collections.ListChangeListener;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.VBox;
 import org.chemtrovina.cmtmsys.config.DataSourceConfig;
 import org.chemtrovina.cmtmsys.dto.DepartmentSummaryDto;
@@ -85,6 +86,9 @@ public class EmployeeManageController {
         loadEmployeeTable();
         setupActions();
         setupSummaryColumns();
+        FxClipboardUtils.enableCopyShortcut(tblEmployee);
+        FxClipboardUtils.enableCopyShortcut(tblSummary);
+        tblEmployee.setEditable(true);
     }
 
 
@@ -101,7 +105,7 @@ public class EmployeeManageController {
         colGender.setCellValueFactory(new PropertyValueFactory<>("gender"));
         colPosition.setCellValueFactory(new PropertyValueFactory<>("positionName"));
         colManager.setCellValueFactory(new PropertyValueFactory<>("managerName"));
-        colDateOfBirth.setCellValueFactory(new PropertyValueFactory<>("dateOfBirth"));
+        colDateOfBirth.setCellValueFactory(new PropertyValueFactory<>("birthDate"));
         colEntryDate.setCellValueFactory(new PropertyValueFactory<>("entryDate"));
         colShift.setCellValueFactory(new PropertyValueFactory<>("shiftName"));
         colPhoneNumber.setCellValueFactory(new PropertyValueFactory<>("phoneNumber"));
@@ -110,10 +114,21 @@ public class EmployeeManageController {
         colStatus.setCellValueFactory(new PropertyValueFactory<>("status")); // nếu có enum -> text
         colExitDate.setCellValueFactory(new PropertyValueFactory<>("exitDate"));
 
-        tblEmployee.getSelectionModel().setCellSelectionEnabled(true);
-        tblEmployee.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        tblSummary.getSelectionModel().setCellSelectionEnabled(true);
-        tblSummary.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+
+        colManager.setCellFactory(TextFieldTableCell.forTableColumn());
+
+        colManager.setOnEditCommit(event -> {
+            EmployeeDto dto = event.getRowValue();
+            String newManagerName = event.getNewValue();
+
+            dto.setManagerName(newManagerName);   // cập nhật DTO
+
+            // cập nhật DB
+            employeeService.updateManager(dto.getEmployeeId(), newManagerName);
+
+            tblEmployee.refresh();
+        });
+
 
     }
 
@@ -144,9 +159,7 @@ public class EmployeeManageController {
     private void setupActions() {
         btnFilter.setOnAction(event -> applyFilter());
         btnClearFilter.setOnAction(event -> clearFilter());
-        tblEmployee.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        tblSummary.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        tblSummary.setOnKeyPressed(event -> {
+       tblSummary.setOnKeyPressed(event -> {
             if (event.isControlDown() && event.getCode().toString().equals("C")) {
                 FxClipboardUtils.copySelectionToClipboard(tblSummary);
             }
@@ -160,8 +173,6 @@ public class EmployeeManageController {
 
 
     }
-
-
 
     private void setupStatusFilter() {
         cbStatusFilter.getItems().add(null); // default option
@@ -301,7 +312,7 @@ public class EmployeeManageController {
                                 selected.contains(e.getGender()) ||
                                 selected.contains(e.getPositionName()) ||
                                 selected.contains(e.getManagerName()) ||
-                                selected.contains(e.getDateOfBirth()) ||
+                                selected.contains(e.getBirthDate()) ||
                                 selected.contains(e.getEntryDate()) ||
                                 selected.contains(e.getExitDate()) ||
                                 selected.contains(e.getShiftName()) ||
@@ -407,7 +418,7 @@ public class EmployeeManageController {
         FxFilterUtils.setupFilterMenu(colGender, employees, EmployeeDto::getGender, this::filterGeneral);
         FxFilterUtils.setupFilterMenu(colPosition, employees, EmployeeDto::getPositionName, this::filterGeneral);
         FxFilterUtils.setupFilterMenu(colManager, employees, EmployeeDto::getManagerName, this::filterGeneral);
-        FxFilterUtils.setupFilterMenu(colDateOfBirth, employees, e -> String.valueOf(e.getDateOfBirth()), this::filterGeneral);
+        FxFilterUtils.setupFilterMenu(colDateOfBirth, employees, e -> String.valueOf(e.getBirthDate()), this::filterGeneral);
         FxFilterUtils.setupFilterMenu(colEntryDate, employees, e -> String.valueOf(e.getEntryDate()), this::filterGeneral);
         FxFilterUtils.setupFilterMenu(colExitDate, employees, e -> String.valueOf(e.getExitDate()), this::filterGeneral);
         FxFilterUtils.setupFilterMenu(colShift, employees, EmployeeDto::getShiftName, this::filterGeneral);

@@ -1,5 +1,6 @@
 package org.chemtrovina.cmtmsys.repository.base;
 
+import org.chemtrovina.cmtmsys.dto.HistorySummary;
 import org.chemtrovina.cmtmsys.model.History;
 
 import java.time.LocalDate;
@@ -13,4 +14,6 @@ public interface HistoryRepository extends GenericRepository<History>{
     int getTotalScannedQuantityBySapPN(String sapPN, int invoiceId);
     void deleteLastByMakerPNAndInvoiceId(String makerPN, int invoiceId);
     void deleteLastBySapPNAndInvoiceId(String sapPN, int invoiceId);
+    Map<String, HistorySummary> getHistorySummaryByInvoiceId(int invoiceId);
+
 }

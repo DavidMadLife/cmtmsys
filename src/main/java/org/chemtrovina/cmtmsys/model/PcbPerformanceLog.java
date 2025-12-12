@@ -17,9 +17,12 @@ public class PcbPerformanceLog {
     private String logFileName;       // Tên file log (trace)
     private LocalDateTime createdAt;  // Thời điểm xử lý
 
+    private double timeDiffSeconds;
+
+
     public PcbPerformanceLog() {}
 
-    public PcbPerformanceLog(int logId, int productId, int warehouseId, String carrierId, String aoiMachineCode, int totalModules, int ngModules, double performance, String logFileName, LocalDateTime createdAt) {
+    public PcbPerformanceLog(int logId, int productId, int warehouseId, String carrierId, String aoiMachineCode, int totalModules, int ngModules, double performance, String logFileName, LocalDateTime createdAt, double timeDiffSeconds) {
         this.logId = logId;
         this.productId = productId;
         this.warehouseId = warehouseId;
@@ -30,6 +33,7 @@ public class PcbPerformanceLog {
         this.performance = performance;
         this.logFileName = logFileName;
         this.createdAt = createdAt;
+        this.timeDiffSeconds = timeDiffSeconds;
     }
 
     // Getter & Setter 
@@ -110,5 +114,12 @@ public class PcbPerformanceLog {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public double getTimeDiffSeconds() {
+        return timeDiffSeconds;
+    }
+    public void setTimeDiffSeconds(double timeDiffSeconds) {
+        this.timeDiffSeconds = timeDiffSeconds;
     }
 }

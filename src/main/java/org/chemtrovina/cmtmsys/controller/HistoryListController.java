@@ -74,7 +74,7 @@ public class HistoryListController {
         historyDateTableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         historyDateTableView.getSelectionModel().setCellSelectionEnabled(true);
         historyDateTableView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        startAutoGC();
+        //startAutoGC();
 
         historyDateTableView.setOnKeyPressed(event -> {
             if (event.isControlDown() && event.getCode() == KeyCode.C) {
@@ -295,10 +295,10 @@ public class HistoryListController {
         alert.showAndWait();
     }
 
-    private void startAutoGC() {
+/*    private void startAutoGC() {
         scheduler.scheduleAtFixedRate(() -> {
             System.gc();
             System.out.println("Triggered GC at: " + java.time.LocalTime.now());
         }, 20, 20, TimeUnit.SECONDS);
-    }
+    }*/
 }

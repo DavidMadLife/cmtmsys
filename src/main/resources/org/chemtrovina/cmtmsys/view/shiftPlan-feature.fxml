@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane prefHeight="900" prefWidth="1600"
+            xmlns="http://javafx.com/javafx/23.0.1"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="org.chemtrovina.cmtmsys.controller.ShiftPlanController">
+
+    <!-- ========== THANH TRÊN: CÁC KHỐI CHỨC NĂNG ========== -->
+    <top>
+        <VBox spacing="8">
+            <padding>
+                <Insets top="10" left="10" right="10" bottom="10"/>
+            </padding>
+
+            <!-- 1) KHOẢNG NGÀY & LOAD DỮ LIỆU -->
+            <TitledPane text="Khoảng ngày vs dữ liệu" expanded="true" collapsible="false">
+                <content>
+                    <HBox spacing="12" alignment="CENTER_LEFT">
+                        <children>
+                            <Label text="Từ ngày:"/>
+                            <DatePicker fx:id="dpFrom"/>
+
+                            <Label text="Đến ngày:"/>
+                            <DatePicker fx:id="dpTo"/>
+
+                            <Label fx:id="txtYearInfo"
+                                   style="-fx-font-weight:bold;"
+                                   text="Năm: -"/>
+
+                            <Button fx:id="btnFilter" text="Lọc"/>
+
+                            <Button fx:id="btnClear" text="Xóa lọc"/>
+
+                            <!-- Đẩy Excel về cuối hàng -->
+                            <Pane HBox.hgrow="ALWAYS"/>
+
+                            <Button fx:id="btnChooseExcel" text="Chọn Excel"/>
+                            <Label fx:id="txtFileName" textFill="gray"/>
+                            <Button fx:id="btnImport" text="Import Excel"/>
+                        </children>
+                    </HBox>
+                </content>
+            </TitledPane>
+
+            <!-- 2) LỌC HIỂN THỊ (Ngày + Ca) -->
+            <TitledPane text="Lọc hiển thị" expanded="true" collapsible="false">
+                <content>
+                    <HBox spacing="12" alignment="CENTER_LEFT">
+                        <children>
+                            <Label text="Lọc ngày:"/>
+                            <ComboBox fx:id="cbFilterDay"
+                                      prefWidth="160"
+                                      promptText="Chọn ngày"/>
+
+                            <Label text="Lọc ca:"/>
+                            <ComboBox fx:id="cbFilterShift"
+                                      prefWidth="160"
+                                      promptText="Chọn ca"/>
+
+                            <Button fx:id="btnApplyFilter"
+                                    text="Lọc chi tiết"
+                                    style="-fx-background-color:#0078d7;
+                                           -fx-text-fill:white;
+                                           -fx-padding:6 14;"/>
+
+                            <Label text="(Chỉ hiển thị đúng ngày hoặc ca được chọn)"
+                                   style="-fx-text-fill: gray;"/>
+                        </children>
+                    </HBox>
+                </content>
+            </TitledPane>
+
+            <!-- 3) PHÂN CA HÀNG LOẠT -->
+            <TitledPane text="Phân ca hàng loạt" expanded="true" collapsible="false">
+                <content>
+                    <HBox spacing="12" alignment="CENTER_LEFT">
+                        <children>
+                            <Label text="Ca:"/>
+                            <ComboBox fx:id="cbShiftCode" prefWidth="120"/>
+
+                            <Label text="Ghi chú:"/>
+                            <TextField fx:id="txtNote" prefWidth="260"/>
+
+                            <Label text="Khoảng ngày:"/>
+                            <DatePicker fx:id="dpBatchFrom"/>
+                            <DatePicker fx:id="dpBatchTo"/>
+
+                            <Button fx:id="btnBatchAssign"
+                                    text="Phân ca hàng loạt"
+                                    style="-fx-padding: 6 14;
+                                           -fx-background-color: #1e90ff;
+                                           -fx-text-fill: white;
+                                           -fx-font-weight: bold;"/>
+                        </children>
+                    </HBox>
+                </content>
+            </TitledPane>
+
+        </VBox>
+    </top>
+
+    <!-- ========== BẢNG DỮ LIỆU ========== -->
+    <center>
+        <VBox>
+            <padding>
+                <Insets left="10" right="10" bottom="10"/>
+            </padding>
+            <children>
+                <TableView fx:id="tblShiftPlan" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="colSelect" prefWidth="40" text="✓"/>
+                        <TableColumn fx:id="colIndex" prefWidth="50" text="STT"/>
+                        <TableColumn fx:id="colMSCNID2" prefWidth="100" text="Mã cũ"/>
+                        <TableColumn fx:id="colMSCNID1" prefWidth="100" text="Mã NV"/>
+                        <TableColumn fx:id="colFullName2" prefWidth="180" text="Họ tên"/>
+                        <TableColumn fx:id="colManager2" prefWidth="120" text="Quản lý"/>
+                    </columns>
+                </TableView>
+            </children>
+        </VBox>
+    </center>
+
+</BorderPane>

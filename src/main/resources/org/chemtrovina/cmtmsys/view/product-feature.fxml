@@ -18,12 +18,18 @@
         <!-- Search area -->
         <HBox spacing="10">
             <Label text="Chọn model:" />
-            <TextField fx:id="txtProductCode" promptText="Nhập mã sản phẩm" prefWidth="200"/>
+            <TextField fx:id="txtProductCode" promptText="Nhập mã sản phẩm" prefWidth="150"/>
+
+            <Label text="Tên model:" />
+            <TextField fx:id="txtProductName" promptText="Nhập tên model" prefWidth="200"/>
+
             <ComboBox fx:id="cbModelTypeFilter" promptText="Loại model" prefWidth="120"/>
+
             <Button fx:id="btnLoad" text="Tải BOM" />
             <Button fx:id="btnUpdateProduct" text="Cập nhật sản phẩm" />
             <Button fx:id="btnDeleteProduct" text="Xóa sản phẩm" />
         </HBox>
+
 
         <!-- Create Product -->
         <!-- Create Product -->

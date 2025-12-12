@@ -51,6 +51,8 @@
                 <TableColumn fx:id="colPerformance" prefWidth="120" text="Hiệu suất (%)" />
                 <TableColumn fx:id="colFileName" prefWidth="200" text="Tên file" />
                 <TableColumn fx:id="colCreatedAt" prefWidth="160" text="Thời gian xử lý" />
+                <TableColumn fx:id="colTimeDiff" prefWidth="140" text="Time Diff (s)" />
+
             </columns>
         </TableView>
     </center>

@@ -60,7 +60,7 @@ public class AoiCsvLogParser {
             double performance = ((double) (total - ng) / total) * 100;
 
             return new PcbPerformanceLog(0, product.getProductId(), warehouseId, carrierId, aoi,
-                    total, ng, performance, file.getFileName().toString(), LocalDateTime.now());
+                    total, ng, performance, file.getFileName().toString(), LocalDateTime.now(), 0);
         }
     }
 

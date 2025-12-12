@@ -30,7 +30,10 @@ public class NavbarController {
     // ==== Employee Menu ====
     @FXML private MenuButton menuEmployee;
     @FXML private MenuItem btnEmployee;
-    @FXML private MenuItem btnShiftScheduling;
+    @FXML private MenuItem btnShiftPlanEmployee;
+    @FXML private MenuItem btnShiftType;
+    @FXML private MenuItem btnAttendanceLog;
+
 
     // ==== Inventory Menu ====
     @FXML private MenuButton menuInventory;
@@ -104,6 +107,9 @@ public class NavbarController {
 
         setPermission(menuEmployee, "menuEmployee", role);
         setPermission(btnEmployee, "btnEmployee", role);
+        setPermission(btnShiftPlanEmployee, "btnShiftPlanEmployee", role);
+        setPermission(btnShiftType, "btnShiftType", role);
+        setPermission(btnAttendanceLog, "btnAttendanceLog", role);
 
         setPermission(menuInventory, "menuInventory", role);
         setPermission(menuProduct, "menuProduct", role);
@@ -153,10 +159,6 @@ public class NavbarController {
     }
 
 
-
-
-
-
     private void setupMenuActions() {
         // Warehouse
         btnScan.setOnAction(e -> openTab("Scan", "/org/chemtrovina/cmtmsys/view/scan-feature.fxml"));
@@ -166,7 +168,16 @@ public class NavbarController {
 
         // Employee
         btnEmployee.setOnAction(e -> openTab("Employee", "/org/chemtrovina/cmtmsys/view/employee-feature.fxml"));
-        btnShiftScheduling.setOnAction(e -> openTab("Shift Scheduling", "/org/chemtrovina/cmtmsys/view/shiftScheduling-feature.fxml"));
+        btnShiftPlanEmployee.setOnAction(e ->
+                openTab("Shift Plan", "/org/chemtrovina/cmtmsys/view/shiftPlan-feature.fxml")
+        );
+        btnShiftType.setOnAction(e ->
+                openTab("Quản lý Loại Ca", "/org/chemtrovina/cmtmsys/view/ShiftTypeEmployeeView.fxml")
+        );
+        btnAttendanceLog.setOnAction(e ->
+                openTab("Log Chấm Công", "/org/chemtrovina/cmtmsys/view/timeAttendanceView.fxml")
+        );
+
 
         // Inventory
         menuInventoryCheck.setOnAction(e -> openTab("Inventory Check", "/org/chemtrovina/cmtmsys/view/inventoryCheck-feature.fxml"));
@@ -181,13 +192,9 @@ public class NavbarController {
 
 
         // Planning
-       /* menuPlanWeekly.setOnAction(e -> openTab("Planning Weekly", "/org/chemtrovina/cmtmsys/view/weekly_plan.fxml"));
-        menuTest.setOnAction(e -> openTab("Test View", "/org/chemtrovina/cmtmsys/view/daily_plan_view.fxml"));*/
         menuPlanAll.setOnAction(e -> openTab("Plan Weekly/Daily", "/org/chemtrovina/cmtmsys/view/production_plan.fxml"));
         menuFeeder.setOnAction(e -> openTab("Feeder List", "/org/chemtrovina/cmtmsys/view/feederListView-feature.fxml"));
         menuFeederRoll.setOnAction(e -> openTab("Attach Reel", "/org/chemtrovina/cmtmsys/view/feeder-multi-roll.fxml"));
-        //menuPlanDaily.setOnAction(e -> openTab("Kế hoạch ngày", "/org/chemtrovina/cmtmsys/view/daily_plan_view.fxml"));
-
 
         menuManageAccount.setOnAction(e -> openTab("Manage Account", "/org/chemtrovina/cmtmsys/view/user-management.fxml"));
 

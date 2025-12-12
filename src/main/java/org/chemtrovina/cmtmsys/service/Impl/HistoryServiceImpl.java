@@ -1,6 +1,7 @@
 package org.chemtrovina.cmtmsys.service.Impl;
 
 import org.chemtrovina.cmtmsys.dto.HistoryDetailViewDto;
+import org.chemtrovina.cmtmsys.dto.HistorySummary;
 import org.chemtrovina.cmtmsys.model.History;
 import org.chemtrovina.cmtmsys.model.Invoice;
 import org.chemtrovina.cmtmsys.model.InvoiceDetail;
@@ -237,6 +238,12 @@ public class HistoryServiceImpl implements HistoryService {
 
         return Optional.of(moqList.get(0));
     }
+
+    @Override
+    public Map<String, HistorySummary> getHistorySummaryByInvoiceId(int invoiceId) {
+        return historyRepository.getHistorySummaryByInvoiceId(invoiceId);
+    }
+
 
 
     @Override

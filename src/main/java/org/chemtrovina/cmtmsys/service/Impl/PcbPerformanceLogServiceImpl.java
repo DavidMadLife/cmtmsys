@@ -195,7 +195,7 @@ public class PcbPerformanceLogServiceImpl implements PcbPerformanceLogService {
        }
 
        // 2. Luôn cập nhật POR trước tiên (Production Output)
-       int porQty = log.getTotalModules() - log.getNgModules();
+       int porQty = log.getTotalModules();
        int porTimeSec = 0; // nếu chưa có prev thì chưa có khoảng thời gian
        if (porQty > 0) {
            var currentShift = shiftScheduleSMTRepository.findCurrentShift(

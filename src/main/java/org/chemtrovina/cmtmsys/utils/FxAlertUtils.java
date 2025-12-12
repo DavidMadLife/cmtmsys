@@ -1,6 +1,9 @@
 package org.chemtrovina.cmtmsys.utils;
 
 import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
+
+import java.util.Optional;
 
 public class FxAlertUtils {
 
@@ -22,5 +25,18 @@ public class FxAlertUtils {
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
+    }
+
+    public static boolean confirm(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+
+        // Chờ người dùng phản hồi
+        Optional<ButtonType> result = alert.showAndWait();
+
+        // Trả về true nếu lựa chọn là OK (hoặc ButtonType mặc định cho xác nhận)
+        return result.isPresent() && result.get() == ButtonType.OK;
     }
 }

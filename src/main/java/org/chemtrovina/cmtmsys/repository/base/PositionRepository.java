@@ -10,4 +10,5 @@ public interface PositionRepository {
     void deleteById(int positionId);
     Position findById(int positionId);
     List<Position> findAll();
+    String getName(int positionId);
 }

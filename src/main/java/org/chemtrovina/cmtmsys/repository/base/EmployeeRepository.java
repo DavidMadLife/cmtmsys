@@ -20,4 +20,9 @@ public interface EmployeeRepository {
 
     Employee findByMscnId1(String mscnId1);
     Employee findByMscnId2(String mscnId2);
+
+    void updateManager(int employeeId, String managerName);
+
+    List<Employee> findByIds(List<Integer> ids);
+    Employee findByCardId(String cardId);
 }

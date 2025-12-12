@@ -719,6 +719,13 @@ public class FeederMultiRollController {
         updateToggleRunButton();
     }
     private void handleAttachRollCode() {
+
+        if (currentRun == null || !"Running".equalsIgnoreCase(currentRun.getStatus())) {
+            txtStatusLog.appendText("⛔ Phiên chạy đã kết thúc – không thể gắn cuộn.\n");
+            SoundUtils.playSound("Wrong.mp3");
+            return;
+        }
+
         String rollCode = txtRollCode.getText().trim();
         if (rollCode.isEmpty()) return;
 
@@ -737,6 +744,17 @@ public class FeederMultiRollController {
     }
 
     private boolean attachRollToFeeder(String rollCode, FeederDisplayRow targetFeederRow) {
+        if (currentRun == null) {
+            txtStatusLog.appendText("⚠️ Vui lòng tạo phiên chạy trước khi gắn cuộn.\n");
+            return false;
+        }
+
+        if (!"Running".equalsIgnoreCase(currentRun.getStatus())) {
+            txtStatusLog.appendText("⛔ Phiên chạy [" + currentRun.getRunCode() + "] đã kết thúc – không thể gắn cuộn.\n");
+            SoundUtils.playSound("Wrong.mp3");
+            return false;
+        }
+
         if (currentRun == null) {
             txtStatusLog.appendText("⚠️ Vui lòng tạo phiên chạy trước khi gắn cuộn.\n");
             return false;

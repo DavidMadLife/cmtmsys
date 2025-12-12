@@ -1,0 +1,16 @@
+/* app.css */
+.root {
+    /* Đặt danh sách font ưu tiên. JavaFX sẽ dùng font đầu tiên nó tìm thấy */
+    -fx-font-family: "Segoe UI", "Arial", Tahoma, sans-serif;
+    -fx-font-size: 13px; /* Kích thước font tiêu chuẩn */
+}
+
+/* Đảm bảo các control nhập liệu và bảng cũng sử dụng font này */
+.table-view,
+.table-cell,
+.label,
+.button,
+.text-field,
+.text-area {
+    -fx-font-family: "Segoe UI", "Arial", Tahoma, sans-serif;
+}

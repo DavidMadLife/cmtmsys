@@ -56,9 +56,15 @@
 
         <Button fx:id="btnImportFromExcel" text="Import từ Excel" />
 
+
         <!-- Table: Transfer Log -->
         <VBox spacing="6" VBox.vgrow="ALWAYS">
             <Label style="-fx-font-weight: bold" text="Danh sách đã chuyển" />
+            <HBox spacing="10">
+                <Label text="Tìm kiếm:"/>
+                <TextField fx:id="txtSearchTransferred" promptText="Nhập Barcode hoặc SAP code..." prefWidth="250" />
+            </HBox>
+
             <TableView fx:id="tblTransferred">
                 <columns>
                     <TableColumn fx:id="colNoTransferred" text="NO" />

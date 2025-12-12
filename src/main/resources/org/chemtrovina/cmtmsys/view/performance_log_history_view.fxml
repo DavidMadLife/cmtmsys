@@ -54,6 +54,7 @@
                         <TableColumn fx:id="colFileName" text="File" />
                         <TableColumn fx:id="colWarehouse" text="Warehouse" />
                         <TableColumn fx:id="colCreatedAt" text="Created At" />
+                        <TableColumn fx:id="colTimeDiff" text="Time Diff (s)" />
                     </columns>
                 </TableView>
             </VBox>

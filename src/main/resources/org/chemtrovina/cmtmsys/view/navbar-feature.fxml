@@ -25,7 +25,9 @@
         <MenuButton fx:id="menuEmployee" text="Nhân sự (Employee)" style="-fx-font-weight: bold;" prefWidth="170">
             <items>
                 <MenuItem fx:id="btnEmployee" text="Danh sách (Employee)" />
-                <MenuItem fx:id="btnShiftScheduling" text="Xếp ca (Shift Scheduling)" />
+                <MenuItem fx:id="btnShiftPlanEmployee" text="Phân ca nhân sự (Shift Plan)" />
+                <MenuItem fx:id="btnShiftType" text="Quản lý Loại Ca (Shift Type)" />
+                <MenuItem fx:id="btnAttendanceLog" text="Log Chấm Công (Attendance Log)" />
             </items>
         </MenuButton>
 
@@ -49,24 +51,13 @@
         <!-- Menu: Kế hoạch / Plan -->
         <MenuButton fx:id="menuPlan" text="Kế hoạch (Plan)" style="-fx-font-weight: bold;" prefWidth="160">
             <items>
-                <!--<MenuItem fx:id="menuPlanWeekly" text="Kế hoạch tuần (Planning Weekly)" />
-                <MenuItem fx:id="menuTest" text="Kiểm tra (Test view)" />-->
                 <MenuItem fx:id="menuPlanAll" text="Kế hoạch tổng (Plan Weekly/Daily)" />
-
-                <!--<MenuItem fx:id="menuPlanDaily" text="Kế hoạch ngày (Plan Daily)" />-->
                 <MenuItem fx:id="menuFeeder" text="Danh sách Feeder" />
                 <MenuItem fx:id="menuFeederRoll" text="Gắn cuộn (Attach Reel)" />
             </items>
         </MenuButton>
 
-        <!-- Menu: Tài khoản / User -->
-        <MenuButton fx:id="menuUser" text="Tài khoản (User)" style="-fx-font-weight: bold;" prefWidth="140">
-            <items>
-                <MenuItem fx:id="menuManageAccount" text="QL tài khoản (Manage Account)" />
-                <MenuItem fx:id="menuChangePassword" text="Đổi mật khẩu (Change Password)" />
-                <MenuItem fx:id="menuLogout" text="Đăng xuất (Logout)" />
-            </items>
-        </MenuButton>
+
 
         <!-- Menu: Hiệu suất PCB -->
         <MenuButton fx:id="menuPerformance" text="Hiệu suất PCB" style="-fx-font-weight: bold;" prefWidth="160">
@@ -107,6 +98,15 @@
             <items>
                 <MenuItem fx:id="menuSparePartManager" text="Spare Part In (Input Spare part)"/>
                 <MenuItem fx:id="menuSparePartManagerOut" text="Spare Part Out (Output Spare part)"/>
+            </items>
+        </MenuButton>
+
+        <!-- Menu: Tài khoản / User -->
+        <MenuButton fx:id="menuUser" text="Tài khoản (User)" style="-fx-font-weight: bold;" prefWidth="140">
+            <items>
+                <MenuItem fx:id="menuManageAccount" text="QL tài khoản (Manage Account)" />
+                <MenuItem fx:id="menuChangePassword" text="Đổi mật khẩu (Change Password)" />
+                <MenuItem fx:id="menuLogout" text="Đăng xuất (Logout)" />
             </items>
         </MenuButton>
     </items>

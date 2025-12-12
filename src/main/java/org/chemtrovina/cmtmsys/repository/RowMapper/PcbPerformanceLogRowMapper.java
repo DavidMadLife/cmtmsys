@@ -29,6 +29,16 @@ public class PcbPerformanceLogRowMapper implements RowMapper<PcbPerformanceLog> 
             log.setCreatedAt(createdAt.toLocalDateTime());
         }
 
+        try {
+            double diff = rs.getDouble("TimeDiffSeconds");
+            if (!rs.wasNull()) {
+                log.setTimeDiffSeconds(diff);
+            }
+        } catch (SQLException ex) {
+            // Nếu DB chưa có cột hoặc query không select thì bỏ qua
+            log.setTimeDiffSeconds(0);
+        }
+
         return log;
     }
 }

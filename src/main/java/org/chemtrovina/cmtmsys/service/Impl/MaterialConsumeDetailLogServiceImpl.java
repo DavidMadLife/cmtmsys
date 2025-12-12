@@ -43,16 +43,19 @@ public class MaterialConsumeDetailLogServiceImpl implements MaterialConsumeDetai
     }
 
     @Override
-    public void consumeByAoiLog(PcbPerformanceLog log) {
-        if(log == null) return;
-        try
-        {
-            repository.consumeMaterialByLog(log);
+    public List<String> consumeByAoiLog(PcbPerformanceLog log) {
+        if (log == null) return List.of();
+
+        try {
+            return repository.consumeByAoiLog(log);
+            // ⚠ repository phải return List<String>
         }
         catch (Exception e) {
             System.err.println("[MaterialConsumeDetailLogService] ❌ Lỗi khi trừ liệu: " + e.getMessage());
+            return List.of("❌ Lỗi khi trừ liệu: " + e.getMessage());
         }
     }
+
 
     @Override
     public List<MaterialUsage> getMaterialUsageBySourceLog(int sourceLogId) {

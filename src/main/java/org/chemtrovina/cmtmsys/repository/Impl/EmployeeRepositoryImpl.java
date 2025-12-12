@@ -5,23 +5,27 @@ import org.chemtrovina.cmtmsys.model.Employee;
 import org.chemtrovina.cmtmsys.model.enums.EmployeeStatus;
 import org.chemtrovina.cmtmsys.repository.RowMapper.EmployeeRowMapper;
 import org.chemtrovina.cmtmsys.repository.base.EmployeeRepository;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Repository
 public class EmployeeRepositoryImpl extends GenericRepositoryImpl<Employee> implements EmployeeRepository {
 
+    private final BeanPropertyRowMapper<Employee> mapper =
+            new BeanPropertyRowMapper<>(Employee.class);
     public EmployeeRepositoryImpl(JdbcTemplate jdbcTemplate) {
         super(jdbcTemplate, new EmployeeRowMapper(), "Employee");
     }
 
     @Override
     public void add(Employee employee) {
-        String sql = "INSERT INTO Employee (MSCNID1, MSCNID2, FullName, Company, Gender, DateOfBirth, EntryDate, ExitDate, Address, PhoneNumber, DepartmentId, PositionId, ShiftId, ManagerId, JobTitle, Note, Status) " +
+        String sql = "INSERT INTO Employee (MSCNID1, MSCNID2, FullName, Company, Gender, BirthDate, EntryDate, ExitDate, Address, PhoneNumber, DepartmentId, PositionId, ShiftId, ManagerId, JobTitle, Note, Status) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         jdbcTemplate.update(sql,
                 employee.getMSCNID1(),
@@ -29,14 +33,14 @@ public class EmployeeRepositoryImpl extends GenericRepositoryImpl<Employee> impl
                 employee.getFullName(),
                 employee.getCompany(),
                 employee.getGender(),
-                employee.getDateOfBirth(),
+                employee.getBirthDate(),
                 employee.getEntryDate(),
                 employee.getExitDate(),
                 employee.getAddress(),
                 employee.getPhoneNumber(),
                 employee.getDepartmentId(),
                 employee.getPositionId(),
-                employee.getManagerId(),
+                employee.getManager(),
                 employee.getJobTitle(),
                 employee.getNote(),
                 employee.getStatus()
@@ -45,7 +49,7 @@ public class EmployeeRepositoryImpl extends GenericRepositoryImpl<Employee> impl
 
     @Override
     public void update(Employee employee) {
-        String sql = "UPDATE Employee SET MSCNID1 = ?, MSCNID2 = ?, FullName = ?, Company = ?, Gender = ?, DateOfBirth = ?, EntryDate = ?, ExitDate = ?, Address = ?, PhoneNumber = ?, DepartmentId = ?, PositionId = ?, ShiftId = ?, ManagerId = ?, JobTitle = ?, Note = ?, Status = ? " +
+        String sql = "UPDATE Employee SET MSCNID1 = ?, MSCNID2 = ?, FullName = ?, Company = ?, Gender = ?, BirthDate = ?, EntryDate = ?, ExitDate = ?, Address = ?, PhoneNumber = ?, DepartmentId = ?, PositionId = ?, ShiftId = ?, ManagerId = ?, JobTitle = ?, Note = ?, Status = ? " +
                 "WHERE EmployeeId = ?";
         jdbcTemplate.update(sql,
                 employee.getMSCNID1(),
@@ -53,14 +57,14 @@ public class EmployeeRepositoryImpl extends GenericRepositoryImpl<Employee> impl
                 employee.getFullName(),
                 employee.getCompany(),
                 employee.getGender(),
-                employee.getDateOfBirth(),
+                employee.getBirthDate(),
                 employee.getEntryDate(),
                 employee.getExitDate(),
                 employee.getAddress(),
                 employee.getPhoneNumber(),
                 employee.getDepartmentId(),
                 employee.getPositionId(),
-                employee.getManagerId(),
+                employee.getManager(),
                 employee.getJobTitle(),
                 employee.getNote(),
                 employee.getStatus(),
@@ -107,43 +111,43 @@ public class EmployeeRepositoryImpl extends GenericRepositoryImpl<Employee> impl
                 e.Status,
                 d.DepartmentName,
                 p.PositionName,
-                m.FullName AS ManagerName
+                e.Manager AS ManagerName
             FROM Employee e
             LEFT JOIN Department d ON e.DepartmentID = d.DepartmentID
             LEFT JOIN Position p ON e.PositionID = p.PositionID
-            LEFT JOIN Employee m ON e.ManagerID = m.EmployeeID
             ORDER BY e.EmployeeID
         """;
+
 
         return jdbcTemplate.query(sql, employeeDtoMapper);
     }
 
     public List<EmployeeDto> findFilteredEmployeeDtos(EmployeeStatus status, LocalDate entryDateFrom, LocalDate entryDateTo) {
         StringBuilder sql = new StringBuilder("""
-            SELECT 
-                e.EmployeeID,
-                e.MSCNID1,
-                e.MSCNID2,
-                e.FullName,
-                e.Company,
-                e.Gender,
-                e.BirthDate,
-                e.EntryDate,
-                e.ExitDate,
-                e.Address,
-                e.PhoneNumber,
-                e.JobTitle,
-                e.Note,
-                e.Status,
-                d.DepartmentName,
-                p.PositionName,
-                m.FullName AS ManagerName
-            FROM Employee e
-            LEFT JOIN Department d ON e.DepartmentID = d.DepartmentID
-            LEFT JOIN Position p ON e.PositionID = p.PositionID
-            LEFT JOIN Employee m ON e.ManagerID = m.EmployeeID
-            WHERE 1=1
-        """);
+                SELECT 
+                    e.EmployeeID,
+                    e.MSCNID1,
+                    e.MSCNID2,
+                    e.FullName,
+                    e.Company,
+                    e.Gender,
+                    e.BirthDate,
+                    e.EntryDate,
+                    e.ExitDate,
+                    e.Address,
+                    e.PhoneNumber,
+                    e.JobTitle,
+                    e.Note,
+                    e.Status,
+                    d.DepartmentName,
+                    p.PositionName,
+                    e.Manager AS ManagerName
+                FROM Employee e
+                LEFT JOIN Department d ON e.DepartmentID = d.DepartmentID
+                LEFT JOIN Position p ON e.PositionID = p.PositionID
+                WHERE 1=1
+            """);
+
 
         List<Object> params = new java.util.ArrayList<>();
 
@@ -168,13 +172,14 @@ public class EmployeeRepositoryImpl extends GenericRepositoryImpl<Employee> impl
     ////////////////////////////////////Mapper////////////////////////////////////////////
     private final RowMapper<EmployeeDto> employeeDtoMapper = (rs, rowNum) -> {
         EmployeeDto dto = new EmployeeDto();
+        dto.setEmployeeId(rs.getInt("EmployeeID"));
         dto.setNo(rowNum + 1);
         dto.setMscnId1(rs.getString("MSCNID1"));
         dto.setMscnId2(rs.getString("MSCNID2"));
         dto.setFullName(rs.getString("FullName"));
         dto.setCompany(rs.getString("Company"));
         dto.setGender(rs.getString("Gender"));
-        dto.setDateOfBirth(rs.getDate("BirthDate") != null ? rs.getDate("BirthDate").toLocalDate() : null);
+        dto.setBirthDate(rs.getDate("BirthDate") != null ? rs.getDate("BirthDate").toLocalDate() : null);
         dto.setEntryDate(rs.getDate("EntryDate") != null ? rs.getDate("EntryDate").toLocalDate() : null);
         dto.setExitDate(rs.getDate("ExitDate") != null ? rs.getDate("ExitDate").toLocalDate() : null);
         dto.setAddress(rs.getString("Address"));
@@ -204,6 +209,39 @@ public class EmployeeRepositoryImpl extends GenericRepositoryImpl<Employee> impl
         String sql = "SELECT TOP 1 * FROM Employee WHERE MSCNID2 = ?";
         var list = jdbcTemplate.query(sql, new EmployeeRowMapper(), mscnId2.trim());
         return list.isEmpty() ? null : list.get(0);
+    }
+
+    // Trong EmployeeRepositoryImpl
+    public Employee findByCardId(String cardId) {
+        String sql = "SELECT * FROM Employee WHERE MSCNID1 = ? OR MSCNID2 = ?";
+        List<Employee> results = jdbcTemplate.query(sql, mapper, cardId, cardId);
+        return results.isEmpty() ? null : results.get(0);
+    }
+
+    @Override
+    public void updateManager(int employeeId, String managerName) {
+        String sql = "UPDATE Employee SET Manager = ? WHERE EmployeeId = ?";
+        jdbcTemplate.update(sql, managerName, employeeId);
+    }
+
+    @Override
+    public List<Employee> findByIds(List<Integer> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+
+        // Tạo chuỗi tham số cho mệnh đề IN (?, ?, ?)
+        String inSql = ids.stream()
+                .map(id -> "?")
+                .collect(Collectors.joining(", "));
+
+        String sql = String.format("""
+            SELECT *                
+            FROM Employee
+            WHERE EmployeeId IN (%s)
+        """, inSql);
+
+        return jdbcTemplate.query(sql, mapper, ids.toArray());
     }
 
 }

@@ -19,6 +19,9 @@ public class RolePermissionConfig {
         // Employee module
         PERMISSIONS.put("menuEmployee", List.of(UserRole.ADMIN, UserRole.EMPLOYEE));
         PERMISSIONS.put("btnEmployee", List.of(UserRole.ADMIN, UserRole.EMPLOYEE));
+        PERMISSIONS.put("btnShiftPlanEmployee", List.of(UserRole.ADMIN, UserRole.EMPLOYEE));
+        PERMISSIONS.put("btnShiftType", List.of(UserRole.ADMIN, UserRole.EMPLOYEE));
+        PERMISSIONS.put("btnAttendanceLog", List.of(UserRole.ADMIN, UserRole.EMPLOYEE));
 
         // Inventory
         PERMISSIONS.put("menuInventory", List.of(UserRole.ADMIN, UserRole.INVENTORY, UserRole.SUBLEEDER));
@@ -42,6 +45,8 @@ public class RolePermissionConfig {
         PERMISSIONS.put("menuSparePart", List.of(UserRole.ADMIN, UserRole.INVENTORY));
 
         // === Stencil Manager ===
+        PERMISSIONS.put("menuStencil", List.of(UserRole.ADMIN, UserRole.INVENTORY));
+
         PERMISSIONS.put("menuStencilManager", List.of(UserRole.ADMIN, UserRole.INVENTORY));
         PERMISSIONS.put("menuStencilTransferLog", List.of(UserRole.ADMIN, UserRole.INVENTORY));
 

@@ -11,45 +11,55 @@ public class Employee {
     private String fullName;
     private String company;
     private String gender;
-    private LocalDate dateOfBirth;
+    private LocalDate birthDate;
     private LocalDate entryDate;
     private String address;
     private String phoneNumber;
     private int departmentId;
     private int positionId;
-    private int managerId;
+
+    // 🔥 Đổi từ int managerId → String manager
+    private String manager;
+
     private String jobTitle;
     private String note;
     private EmployeeStatus status;
     private LocalDate exitDate;
 
-    // Constructor mặc định
-    public Employee() {
+    public Employee() {}
 
-    }
-
-    // Constructor với tất cả các tham số
     public Employee(int employeeId, String MSCNID1, String MSCNID2, String fullName, String company,
-                    String gender, LocalDate dateOfBirth, String address, String phoneNumber,LocalDate exitDate,
-                    int departmentId, int positionId, int managerId, LocalDate entryDate, String jobTitle
-    , String note, EmployeeStatus status) {
+                    String gender, LocalDate birthDate, String address, String phoneNumber, LocalDate exitDate,
+                    int departmentId, int positionId, String manager, LocalDate entryDate,
+                    String jobTitle, String note, EmployeeStatus status) {
+
         this.employeeId = employeeId;
         this.MSCNID1 = MSCNID1;
         this.MSCNID2 = MSCNID2;
         this.fullName = fullName;
         this.company = company;
         this.gender = gender;
-        this.dateOfBirth = dateOfBirth;
+        this.birthDate = birthDate;
         this.address = address;
         this.phoneNumber = phoneNumber;
         this.departmentId = departmentId;
         this.positionId = positionId;
-        this.managerId = managerId;
+
+        this.manager = manager; // 🔥 changed
+
         this.entryDate = entryDate;
+
         this.jobTitle = jobTitle;
         this.note = note;
         this.status = status;
         this.exitDate = exitDate;
+    }
+
+    public String getManager() {
+        return manager;
+    }
+    public void setManager(String manager) {
+        this.manager = manager;
     }
 
     public LocalDate getExitDate() {
@@ -65,6 +75,7 @@ public class Employee {
     public void setJobTitle(String jobTitle) {
         this.jobTitle = jobTitle;
     }
+
     public String getNote() {
         return note;
     }
@@ -72,26 +83,23 @@ public class Employee {
         this.note = note;
     }
 
-    public EmployeeStatus getStatus(){
+    public EmployeeStatus getStatus() {
         return status;
     }
-    public void setStatus(EmployeeStatus status){
+    public void setStatus(EmployeeStatus status) {
         this.status = status;
     }
 
     public LocalDate getEntryDate() {
         return entryDate;
     }
-
     public void setEntryDate(LocalDate entryDate) {
         this.entryDate = entryDate;
     }
 
-    // Getters and Setters
     public int getEmployeeId() {
         return employeeId;
     }
-
     public void setEmployeeId(int employeeId) {
         this.employeeId = employeeId;
     }
@@ -99,7 +107,6 @@ public class Employee {
     public String getMSCNID1() {
         return MSCNID1;
     }
-
     public void setMSCNID1(String MSCNID1) {
         this.MSCNID1 = MSCNID1;
     }
@@ -107,7 +114,6 @@ public class Employee {
     public String getMSCNID2() {
         return MSCNID2;
     }
-
     public void setMSCNID2(String MSCNID2) {
         this.MSCNID2 = MSCNID2;
     }
@@ -115,7 +121,6 @@ public class Employee {
     public String getFullName() {
         return fullName;
     }
-
     public void setFullName(String fullName) {
         this.fullName = fullName;
     }
@@ -123,7 +128,6 @@ public class Employee {
     public String getCompany() {
         return company;
     }
-
     public void setCompany(String company) {
         this.company = company;
     }
@@ -131,23 +135,20 @@ public class Employee {
     public String getGender() {
         return gender;
     }
-
     public void setGender(String gender) {
         this.gender = gender;
     }
 
-    public LocalDate getDateOfBirth() {
-        return dateOfBirth;
+    public LocalDate getBirthDate() {
+        return birthDate;
     }
-
-    public void setDateOfBirth(LocalDate dateOfBirth) {
-        this.dateOfBirth = dateOfBirth;
+    public void setBirthDate(LocalDate birthDate) {
+        this.birthDate = birthDate;
     }
 
     public String getAddress() {
         return address;
     }
-
     public void setAddress(String address) {
         this.address = address;
     }
@@ -155,7 +156,6 @@ public class Employee {
     public String getPhoneNumber() {
         return phoneNumber;
     }
-
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
     }
@@ -163,7 +163,6 @@ public class Employee {
     public int getDepartmentId() {
         return departmentId;
     }
-
     public void setDepartmentId(int departmentId) {
         this.departmentId = departmentId;
     }
@@ -171,19 +170,10 @@ public class Employee {
     public int getPositionId() {
         return positionId;
     }
-
     public void setPositionId(int positionId) {
         this.positionId = positionId;
     }
 
-
-    public int getManagerId() {
-        return managerId;
-    }
-
-    public void setManagerId(int managerId) {
-        this.managerId = managerId;
-    }
 
     @Override
     public String toString() {
@@ -194,12 +184,12 @@ public class Employee {
                 ", fullName='" + fullName + '\'' +
                 ", company='" + company + '\'' +
                 ", gender='" + gender + '\'' +
-                ", dateOfBirth=" + dateOfBirth +
+                ", birthDate=" + birthDate +
                 ", address='" + address + '\'' +
                 ", phoneNumber='" + phoneNumber + '\'' +
                 ", departmentId=" + departmentId +
                 ", positionId=" + positionId +
-                ", managerId=" + managerId +
+                ", manager='" + manager + '\'' +     // 🔥 updated
                 '}';
     }
 }
