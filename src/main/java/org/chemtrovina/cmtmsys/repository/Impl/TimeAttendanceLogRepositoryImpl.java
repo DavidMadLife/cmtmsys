@@ -1,6 +1,7 @@
 package org.chemtrovina.cmtmsys.repository.Impl;
 
 import org.chemtrovina.cmtmsys.model.TimeAttendanceLog;
+import org.chemtrovina.cmtmsys.model.enums.ScanAction;
 import org.chemtrovina.cmtmsys.repository.base.TimeAttendanceLogRepository;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -145,4 +146,37 @@ public class TimeAttendanceLogRepositoryImpl implements TimeAttendanceLogReposit
         """;
         return jdbc.query(sql, mapper, employeeId, date);
     }
+
+
+    @Override
+    public TimeAttendanceLog findByEmployeeIdDateAndAction(
+            int employeeId,
+            LocalDate date,
+            ScanAction action
+    ) {
+        String sql = """
+        SELECT 
+            LogId,
+            EmployeeId, 
+            ScanDateTime,
+            ScanAction,
+            ScanMethod,
+            CreatedAt
+        FROM TimeAttendanceLog
+        WHERE EmployeeId = ?
+          AND CAST(ScanDateTime AS DATE) = ?
+          AND ScanAction = ?
+    """;
+
+        List<TimeAttendanceLog> list = jdbc.query(
+                sql,
+                mapper,
+                employeeId,
+                date,
+                action.name() // IN / OUT
+        );
+
+        return list.isEmpty() ? null : list.get(0);
+    }
+
 }

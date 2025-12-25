@@ -12,6 +12,8 @@
 <?import javafx.scene.layout.VBox?>
 
 <?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.control.ScrollPane?>
 <BorderPane prefHeight="650.0" prefWidth="1200.0"
             stylesheets="@../css/timeLog.css"
             xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
@@ -26,12 +28,8 @@
             <HBox alignment="CENTER_LEFT" spacing="10.0">
                 <children>
                     <Label text="Lọc theo ngày:" style="-fx-font-weight: bold;" />
-                    <Label text="Từ ngày:" />
-                    <DatePicker fx:id="dpFromDate" promptText="YYYY-MM-DD" />
-
-                    <Label text="Đến ngày:" />
-                    <DatePicker fx:id="dpToDate" promptText="YYYY-MM-DD" />
-
+                    <Label text="Ngày:" />
+                    <DatePicker fx:id="dpScanDate" promptText="YYYY-MM-DD" />
                     <Button fx:id="btnFilterDate" text="Lọc" />
                     <Button fx:id="btnClearDateFilter" text="Xóa lọc" />
                 </children>
@@ -58,8 +56,6 @@
                     </HBox>
 
 
-
-
                     <Label fx:id="lblScanStatus" text="Sẵn sàng" style="-fx-text-fill: green; -fx-font-weight: bold;" />
                 </children>
             </HBox>
@@ -67,55 +63,141 @@
     </top>
 
     <center>
-        <AnchorPane>
+        <VBox spacing="10.0">
             <padding>
-                <Insets bottom="10.0" left="10.0" right="10.0" top="0.0" />
+                <Insets top="10" right="10" bottom="10" left="10"/>
             </padding>
-            <TableView fx:id="tblTimeAttendanceLog"
-                       AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
-                       AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-                <columns>
-                    <TableColumn text="No">
-                        <columns>
-                            <TableColumn fx:id="colNo" prefWidth="40.0" text="STT" />
-                        </columns>
-                    </TableColumn>
+            <!-- PANE 1: BẢNG ĐIỂM DANH -->
+            <TitledPane text="Danh sách điểm danh" expanded="true" VBox.vgrow="ALWAYS">
+                <content>
+                    <ScrollPane
+                            fitToHeight="true"
+                            fitToWidth="false"
+                            pannable="true"
+                            hbarPolicy="AS_NEEDED"
+                            vbarPolicy="AS_NEEDED">
 
-                    <TableColumn fx:id="colInput" id="colVang" styleClass="header-yellow" text="CỘT NHẬP" />
+                        <TableView fx:id="tblTimeAttendanceLog"
+                                   prefWidth="1800"
+                                   VBox.vgrow="ALWAYS">
+                            <columns>
 
-                    <TableColumn text="Full Name">
-                        <columns>
-                            <TableColumn fx:id="colFullName" prefWidth="150.0" text="HỌ VÀ TÊN" />
-                        </columns>
-                    </TableColumn>
+                                <TableColumn text="No">
+                                    <columns>
+                                        <TableColumn fx:id="colNo" prefWidth="40.0" text="STT" />
+                                    </columns>
+                                </TableColumn>
 
-                    <TableColumn fx:id="colCompany" text="Công Ty" />
-                    <TableColumn fx:id="colDepartment" text="Bộ phận" />
-                    <TableColumn fx:id="colGender" text="Giới tính" />
-                    <TableColumn fx:id="colPosition" text="Chức vụ" />
+                                <TableColumn fx:id="colInput"
+                                             id="colVang"
+                                             styleClass="header-yellow"
+                                             text="CỘT NHẬP" />
 
-                    <TableColumn fx:id="colNote" prefWidth="250.0" id="colVang" styleClass="header-yellow" text=" LÝ DO VẮNG/TRỄ/CẮT TÊN" />
+                                <TableColumn text="Full Name">
+                                    <columns>
+                                        <TableColumn fx:id="colFullName"
+                                                     prefWidth="150.0"
+                                                     text="HỌ VÀ TÊN" />
+                                    </columns>
+                                </TableColumn>
 
-                    <TableColumn fx:id="colJobTitle" text="Công việc" />
-                    <TableColumn fx:id="colManager" id="colVang" styleClass="header-yellow" text="Quản lý" />
-                    <TableColumn fx:id="colDateOfBirth" text="Ngày sinh" />
-                    <TableColumn fx:id="colEntryDate" text="Ngày vào" />
-                    <TableColumn fx:id="colShift" text="Ca chuyển đổi" />
-                    <TableColumn fx:id="colX" prefWidth="30.0" text="Điểm danh" />
+                                <TableColumn fx:id="colCompany" text="Công Ty" />
+                                <TableColumn fx:id="colDepartment" text="Bộ phận" />
+                                <TableColumn fx:id="colGender" text="Giới tính" />
+                                <TableColumn fx:id="colPosition" text="Chức vụ" />
 
-                    <TableColumn fx:id="colPhoneNumber" text="Số điện thoại" />
+                                <TableColumn fx:id="colNote"
+                                             prefWidth="250.0"
+                                             id="colVang"
+                                             styleClass="header-yellow"
+                                             text="LÝ DO VẮNG/TRỄ/CẮT TÊN" />
 
-                    <TableColumn fx:id="colY" prefWidth="30.0" text="Ca" />
+                                <TableColumn fx:id="colJobTitle" text="Công việc" />
+                                <TableColumn fx:id="colManager"
+                                             id="colVang"
+                                             styleClass="header-yellow"
+                                             text="Quản lý" />
 
-                    <TableColumn fx:id="colIn" id="colVang" styleClass="header-yellow" text="IN" />
-                    <TableColumn fx:id="colOut" id="colVang" styleClass="header-yellow" text="OUT" />
+                                <TableColumn fx:id="colDateOfBirth" text="Ngày sinh" />
+                                <TableColumn fx:id="colEntryDate" text="Ngày vào" />
+                                <TableColumn fx:id="colShift" text="Ca chuyển đổi" />
+                                <TableColumn fx:id="colPhoneNumber" text="Số điện thoại" />
 
-                    <!--<TableColumn fx:id="colCodeNow" text="CODE NOW" />-->
-                    <TableColumn fx:id="colScanDate" text="Ngày" />
-                    <!--<TableColumn fx:id="colScanTime" text="Giờ" />-->
+                                <TableColumn fx:id="colY" prefWidth="30.0" text="Ca" />
+                                <TableColumn fx:id="colIn"  id="colVang" styleClass="header-yellow" text="IN" />
+                                <TableColumn fx:id="colOut" id="colVang" styleClass="header-yellow" text="OUT" />
+                                <TableColumn fx:id="colScanDate" text="Ngày" />
 
-                </columns>
-            </TableView>
-        </AnchorPane>
+                            </columns>
+                        </TableView>
+
+                    </ScrollPane>
+                </content>
+            </TitledPane>
+
+            <!-- PANE 2: SUMMARY (DÙNG SAU) -->
+            <TitledPane text="Tổng hợp / Thống kê" expanded="true">
+                <content>
+                    <HBox spacing="25" alignment="CENTER_LEFT">
+                        <padding>
+                            <Insets top="10" right="10" bottom="10" left="10"/>
+                        </padding>
+
+                        <Label text="Tổng nhân sự:"/>
+                        <Label fx:id="lblTotalEmployee"
+                               text="0"
+                               style="-fx-font-weight: bold"/>
+
+                        <Label text="Đã đi làm:"/>
+                        <Label fx:id="lblTotalIn"
+                               text="0"
+                               style="-fx-font-weight: bold; -fx-text-fill: green"/>
+
+                        <Label text="Không đi làm:"/>
+                        <!-- CLICKABLE -->
+                        <Label fx:id="lblAbsentCount"
+                               text="0"
+                               style="-fx-font-weight: bold;
+                          -fx-text-fill: red;
+                          -fx-underline: true;
+                          -fx-cursor: hand"/>
+                    </HBox>
+                </content>
+            </TitledPane>
+
+            <TitledPane fx:id="tpAbsentList"
+                        text="Danh sách không đi làm"
+                        expanded="false">
+
+                <content>
+                    <VBox spacing="10">
+                        <padding>
+                            <Insets top="10" right="10" bottom="10" left="10"/>
+                        </padding>
+
+                        <TableView fx:id="tblAbsentEmployees"
+                                   editable="true"
+                                   prefHeight="300">
+
+                            <columns>
+                                <TableColumn fx:id="colAbsentNo" text="No" />
+                                <TableColumn fx:id="colAbsentCode" text="Code" />
+                                <TableColumn fx:id="colAbsentName" text="Name" />
+                                <TableColumn fx:id="colAbsentDept" text="Department" />
+                                <TableColumn fx:id="colAbsentShift" text="Shift" />
+                                <TableColumn fx:id="colAbsentNote" text="Note" />
+                            </columns>
+                        </TableView>
+
+                        <HBox alignment="CENTER_RIGHT" spacing="10">
+                            <Button fx:id="btnSaveAbsentNote"
+                                    text="💾 Lưu lý do nghỉ"/>
+                        </HBox>
+                    </VBox>
+                </content>
+            </TitledPane>
+
+        </VBox>
     </center>
+
 </BorderPane>

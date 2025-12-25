@@ -112,7 +112,6 @@ public class StencilManagerController {
         loadFromDatabase();
 
         setupSearchFilters();
-        setupClipboardSupport();
         setupRowContextMenu();
 
         setupNewForm();
@@ -120,6 +119,7 @@ public class StencilManagerController {
 
         btnAddNew.setOnAction(e -> handleAddNew());
         btnImportExcel.setOnAction(e -> handleImportExcel());
+        FxClipboardUtils.enableCopyShortcut(tblStencils);
     }
 
     // =======================
@@ -190,15 +190,6 @@ public class StencilManagerController {
     // =======================
     // UI: Clipboard & Context Menu
     // =======================
-    private void setupClipboardSupport() {
-        tblStencils.getSelectionModel().setCellSelectionEnabled(true);
-        tblStencils.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        tblStencils.setOnKeyPressed(e -> {
-            if (e.isControlDown() && "C".equals(e.getCode().toString())) {
-                FxClipboardUtils.copySelectionToClipboard(tblStencils);
-            }
-        });
-    }
 
     private void setupRowContextMenu() {
         tblStencils.setRowFactory(tv -> {

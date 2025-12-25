@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import javafx.geometry.Insets?>
+<VBox spacing="12"
+      xmlns="http://javafx.com/javafx/23.0.1"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="org.chemtrovina.cmtmsys.controller.ProductCreateController"
+      >
+    <padding>
+        <Insets top="20" right="20" bottom="20" left="20"/>
+    </padding>
+    <Label text="➕ Tạo sản phẩm mới"
+           style="-fx-font-size: 16px; -fx-font-weight: bold;" />
+
+    <GridPane hgap="10" vgap="10">
+        <Label text="Mã sản phẩm:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+        <TextField fx:id="txtProductCode"
+                   GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+        <Label text="Tên sản phẩm:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+        <TextField fx:id="txtProductName"
+                   GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+        <Label text="Loại model:" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+        <ComboBox fx:id="cbModelType"
+                  GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+    </GridPane>
+
+    <HBox spacing="10" alignment="CENTER_RIGHT">
+        <Button text="Tạo" fx:id="btnCreate"/>
+        <Button text="Huỷ" fx:id="btnCancel"/>
+    </HBox>
+
+</VBox>

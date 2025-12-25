@@ -22,13 +22,17 @@ public class RolePermissionConfig {
         PERMISSIONS.put("btnShiftPlanEmployee", List.of(UserRole.ADMIN, UserRole.EMPLOYEE));
         PERMISSIONS.put("btnShiftType", List.of(UserRole.ADMIN, UserRole.EMPLOYEE));
         PERMISSIONS.put("btnAttendanceLog", List.of(UserRole.ADMIN, UserRole.EMPLOYEE));
+        PERMISSIONS.put(
+                "btnEmployeeLeave",
+                List.of(UserRole.ADMIN, UserRole.EMPLOYEE)
+        );
 
         // Inventory
         PERMISSIONS.put("menuInventory", List.of(UserRole.ADMIN, UserRole.INVENTORY, UserRole.SUBLEEDER));
         PERMISSIONS.put("menuProduct", List.of(UserRole.ADMIN, UserRole.INVENTORY));
         PERMISSIONS.put("menuWorkOrder", List.of(UserRole.ADMIN, UserRole.INVENTORY));
         PERMISSIONS.put("menuMaterialCart", List.of(UserRole.ADMIN, UserRole.INVENTORY, UserRole.SUBLEEDER));
-
+        PERMISSIONS.put("menuCreateProduct", List.of(UserRole.ADMIN, UserRole.INVENTORY, UserRole.SUBLEEDER));
         // PCB Performance
         PERMISSIONS.put("menuPerformance", List.of(UserRole.ADMIN, UserRole.SUBLEEDER));
         PERMISSIONS.put("menuPcbPerformanceLog", List.of(UserRole.ADMIN, UserRole.SUBLEEDER));

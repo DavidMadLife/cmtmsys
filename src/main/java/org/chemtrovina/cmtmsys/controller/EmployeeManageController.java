@@ -5,20 +5,20 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 import org.chemtrovina.cmtmsys.config.DataSourceConfig;
 import org.chemtrovina.cmtmsys.dto.DepartmentSummaryDto;
 import org.chemtrovina.cmtmsys.dto.EmployeeDto;
 import org.chemtrovina.cmtmsys.model.enums.EmployeeStatus;
-import org.chemtrovina.cmtmsys.repository.Impl.EmployeeRepositoryImpl;
-import org.chemtrovina.cmtmsys.repository.Impl.MOQRepositoryImpl;
-import org.chemtrovina.cmtmsys.repository.base.EmployeeRepository;
-import org.chemtrovina.cmtmsys.repository.base.MOQRepository;
-import org.chemtrovina.cmtmsys.service.Impl.EmployeeServiceImpl;
-import org.chemtrovina.cmtmsys.service.Impl.MOQServiceImpl;
 import org.chemtrovina.cmtmsys.service.base.EmployeeService;
 import org.chemtrovina.cmtmsys.utils.FxClipboardUtils;
 import org.chemtrovina.cmtmsys.utils.FxFilterUtils;
@@ -27,6 +27,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
+import java.io.File;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -62,6 +63,8 @@ public class EmployeeManageController {
     @FXML private ComboBox<String> cbStatusFilter;
     @FXML private DatePicker dpEntryDateFrom, dpEntryDateTo;
     @FXML private Button btnFilter, btnClearFilter;
+    @FXML private Button btnImportExcel;
+
 
     //private final ContextMenu departmentFilterMenu = new ContextMenu();
     private final Map<String, CheckBox> departmentCheckItems = new HashMap<>();
@@ -88,7 +91,8 @@ public class EmployeeManageController {
         setupSummaryColumns();
         FxClipboardUtils.enableCopyShortcut(tblEmployee);
         FxClipboardUtils.enableCopyShortcut(tblSummary);
-        tblEmployee.setEditable(true);
+        setupContextMenu();
+        //tblEmployee.setEditable(true);
     }
 
 
@@ -121,13 +125,15 @@ public class EmployeeManageController {
             EmployeeDto dto = event.getRowValue();
             String newManagerName = event.getNewValue();
 
-            dto.setManagerName(newManagerName);   // cập nhật DTO
+            if (newManagerName == null) return;
 
-            // cập nhật DB
+            newManagerName = newManagerName.trim();
+            dto.setManagerName(newManagerName);
+
             employeeService.updateManager(dto.getEmployeeId(), newManagerName);
-
             tblEmployee.refresh();
         });
+
 
 
     }
@@ -159,6 +165,9 @@ public class EmployeeManageController {
     private void setupActions() {
         btnFilter.setOnAction(event -> applyFilter());
         btnClearFilter.setOnAction(event -> clearFilter());
+
+        btnImportExcel.setOnAction(event -> importExcel());
+
        tblSummary.setOnKeyPressed(event -> {
             if (event.isControlDown() && event.getCode().toString().equals("C")) {
                 FxClipboardUtils.copySelectionToClipboard(tblSummary);
@@ -175,117 +184,48 @@ public class EmployeeManageController {
     }
 
     private void setupStatusFilter() {
-        cbStatusFilter.getItems().add(null); // default option
+        cbStatusFilter.getItems().add("Tất cả");
         for (EmployeeStatus status : EmployeeStatus.values()) {
             cbStatusFilter.getItems().add(status.getLabel());
         }
+        cbStatusFilter.setValue("Tất cả");
+
     }
 
-    /*private void setupDepartmentFilterMenu(List<EmployeeDto> employees) {
-        departmentFilterMenu.getItems().clear();
-        departmentCheckItems.clear();
-        selectedDepartments.clear();
+    private void setupContextMenu() {
+        ContextMenu menu = new ContextMenu();
 
-        Button btnSelectAll = new Button("✓ Chọn tất cả");
-        btnSelectAll.setOnAction(e -> departmentCheckItems.values().forEach(cb -> cb.setSelected(true)));
-        CustomMenuItem selectAllItem = new CustomMenuItem(btnSelectAll);
-        selectAllItem.setHideOnClick(false);
+        MenuItem updateItem = new MenuItem("✏ Update");
+        MenuItem deleteItem = new MenuItem("🗑 Delete");
 
-        Button btnDeselectAll = new Button("✗ Bỏ chọn tất cả");
-        btnDeselectAll.setOnAction(e -> departmentCheckItems.values().forEach(cb -> cb.setSelected(false)));
-        CustomMenuItem deselectAllItem = new CustomMenuItem(btnDeselectAll);
-        deselectAllItem.setHideOnClick(false);
+        updateItem.setOnAction(e -> openUpdateDialog());
+        deleteItem.setOnAction(e -> deleteSelectedEmployee());
 
+        menu.getItems().addAll(updateItem, deleteItem);
 
-        departmentFilterMenu.getItems().addAll(selectAllItem, deselectAllItem, new SeparatorMenuItem());
+        tblEmployee.setContextMenu(menu);
 
-        // CheckBox theo bộ phận
-        employees.stream()
-                .map(EmployeeDto::getDepartmentName)
-                .filter(dep -> dep != null && !dep.isBlank())
-                .distinct()
-                .sorted()
-                .forEach(dep -> {
-                    CheckBox checkBox = new CheckBox(dep);
-                    checkBox.setSelected(true);
-                    CustomMenuItem item = new CustomMenuItem(checkBox);
-                    item.setHideOnClick(false);
-                    departmentFilterMenu.getItems().add(item);
-                    departmentCheckItems.put(dep, checkBox);
-                });
+        /*// Disable menu nếu không chọn dòng
+        tblEmployee.getSelectionModel().selectedItemProperty().addListener(
+                (obs, oldVal, newVal) -> menu.setDisable(newVal == null)
+        );*/
+    }
 
-        departmentFilterMenu.getItems().add(new SeparatorMenuItem());
-
-        MenuItem applyFilterItem = new MenuItem("✓ Áp dụng lọc");
-        applyFilterItem.setStyle("-fx-font-weight: bold;");
-        applyFilterItem.setOnAction(e -> {
-            applyDepartmentFilter();
-            departmentFilterMenu.hide();
-        });
-
-        departmentFilterMenu.getItems().add(applyFilterItem);
-        colDepartment.setContextMenu(departmentFilterMenu);
-    }*/
-
-
-    /*private void setupSummaryFilterMenu(List<DepartmentSummaryDto> summaryList) {
-        summaryFilterMenu.getItems().clear();
-        summaryCheckItems.clear();
-
-        Button btnSelectAll = new Button("✓ Chọn tất cả");
-        btnSelectAll.setOnAction(e -> departmentCheckItems.values().forEach(cb -> cb.setSelected(true)));
-        CustomMenuItem selectAllItem = new CustomMenuItem(btnSelectAll);
-        selectAllItem.setHideOnClick(false);
-
-        Button btnDeselectAll = new Button("✗ Bỏ chọn tất cả");
-        btnDeselectAll.setOnAction(e -> departmentCheckItems.values().forEach(cb -> cb.setSelected(false)));
-        CustomMenuItem deselectAllItem = new CustomMenuItem(btnDeselectAll);
-        deselectAllItem.setHideOnClick(false);
-
-
-        summaryFilterMenu.getItems().addAll(selectAllItem, deselectAllItem, new SeparatorMenuItem());
-
-        summaryList.stream()
-                .map(DepartmentSummaryDto::getDepartment)
-                .distinct()
-                .sorted()
-                .forEach(dep -> {
-                    CheckBox checkBox = new CheckBox(dep);
-                    checkBox.setSelected(true);
-                    CustomMenuItem item = new CustomMenuItem(checkBox);
-                    item.setHideOnClick(false);
-                    summaryFilterMenu.getItems().add(item);
-                    summaryCheckItems.put(dep, checkBox);
-                });
-
-        summaryFilterMenu.getItems().add(new SeparatorMenuItem());
-
-        MenuItem apply = new MenuItem("✓ Áp dụng lọc");
-        apply.setStyle("-fx-font-weight: bold;");
-        apply.setOnAction(e -> {
-            filterEmployeeBySummarySelection();
-            summaryFilterMenu.hide();
-        });
-
-        summaryFilterMenu.getItems().add(apply);
-        colSummaryDepartment.setContextMenu(summaryFilterMenu);
-    }*/
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
 
     private void applyFilter() {
+
         String selectedLabel = cbStatusFilter.getValue();
         EmployeeStatus selectedStatus = null;
 
-        if (selectedLabel != null) {
-            for (EmployeeStatus s : EmployeeStatus.values()) {
-                if (s.getLabel().equals(selectedLabel)) {
-                    selectedStatus = s;
-                    break;
-                }
-            }
+        if (selectedLabel != null && !"Tất cả".equals(selectedLabel)) {
+            selectedStatus = Arrays.stream(EmployeeStatus.values())
+                    .filter(s -> s.getLabel().equals(selectedLabel))
+                    .findFirst()
+                    .orElse(null);
         }
 
         LocalDate from = dpEntryDateFrom.getValue();
@@ -293,7 +233,9 @@ public class EmployeeManageController {
 
         var filtered = employeeService.filterEmployeeDtos(selectedStatus, from, to);
         tblEmployee.setItems(FXCollections.observableArrayList(filtered));
+        loadSummaryTable(filtered);
     }
+
 
     private void clearFilter() {
         cbStatusFilter.setValue(null);
@@ -303,29 +245,28 @@ public class EmployeeManageController {
     }
 
     private void filterGeneral(List<String> selected) {
+
         List<EmployeeDto> all = employeeService.getAllEmployeeDtos();
+
         List<EmployeeDto> filtered = all.stream()
-                .filter(e ->
-                        selected.contains(e.getMscnId1()) ||
-                                selected.contains(e.getMscnId2()) ||
-                                selected.contains(e.getFullName()) ||
-                                selected.contains(e.getGender()) ||
-                                selected.contains(e.getPositionName()) ||
-                                selected.contains(e.getManagerName()) ||
-                                selected.contains(e.getBirthDate()) ||
-                                selected.contains(e.getEntryDate()) ||
-                                selected.contains(e.getExitDate()) ||
-                                selected.contains(e.getShiftName()) ||
-                                selected.contains(e.getPhoneNumber()) ||
-                                selected.contains(e.getJobTitle()) ||
-                                selected.contains(e.getNote()) ||
-                                selected.contains(e.getStatus())
+                .filter(e -> selected.contains(
+                                Objects.toString(e.getMscnId1(), "")
+                        ) ||
+                                selected.contains(Objects.toString(e.getMscnId2(), "")) ||
+                                selected.contains(Objects.toString(e.getFullName(), "")) ||
+                                selected.contains(Objects.toString(e.getGender(), "")) ||
+                                selected.contains(Objects.toString(e.getPositionName(), "")) ||
+                                selected.contains(Objects.toString(e.getManagerName(), "")) ||
+                                selected.contains(Objects.toString(e.getPhoneNumber(), "")) ||
+                                selected.contains(Objects.toString(e.getJobTitle(), "")) ||
+                                selected.contains(Objects.toString(e.getStatus(), ""))
                 )
                 .toList();
 
         tblEmployee.setItems(FXCollections.observableArrayList(filtered));
         loadSummaryTable(filtered);
     }
+
 
 
     private void applyDepartmentFilter(List<String> selectedDepartments) {
@@ -359,6 +300,10 @@ public class EmployeeManageController {
 
         for (EmployeeDto emp : employeeList) {
             String department = emp.getDepartmentName();
+            if (department == null || department.isBlank()) {
+                department = "UNKNOWN";
+            }
+
             String company = emp.getCompany();
             if (company == null || company.isBlank()) continue;
 
@@ -430,6 +375,97 @@ public class EmployeeManageController {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
+    private void importExcel() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Chọn file Excel nhân viên");
+        fileChooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("Excel Files", "*.xlsx", "*.xls")
+        );
+
+        File file = fileChooser.showOpenDialog(tblEmployee.getScene().getWindow());
+        if (file == null) return;
+
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Xác nhận import");
+        confirm.setHeaderText("Import nhân viên từ Excel");
+        confirm.setContentText("Dữ liệu trùng MSCNID1 sẽ được cập nhật.\nBạn có chắc muốn tiếp tục?");
+
+        Optional<ButtonType> result = confirm.showAndWait();
+        if (result.isEmpty() || result.get() != ButtonType.OK) return;
+
+        try {
+            employeeService.importEmployeeFromExcel(file);
+
+            Alert success = new Alert(Alert.AlertType.INFORMATION);
+            success.setTitle("Thành công");
+            success.setHeaderText(null);
+            success.setContentText("Import Excel thành công!");
+            success.showAndWait();
+
+            // reload table + summary
+            loadEmployeeTable();
+
+        } catch (Exception ex) {
+
+            // ✅ LOG FULL STACKTRACE
+            ex.printStackTrace();
+
+            Alert error = new Alert(Alert.AlertType.ERROR);
+            error.setTitle("Lỗi import");
+            error.setHeaderText("Import Excel thất bại");
+
+            // UI chỉ hiện thông báo ngắn gọn
+            error.setContentText(
+                    ex.getCause() != null
+                            ? ex.getCause().getMessage()
+                            : ex.getMessage()
+            );
+
+            error.showAndWait();
+        }
+
+    }
+
+    private void deleteSelectedEmployee() {
+        EmployeeDto dto = tblEmployee.getSelectionModel().getSelectedItem();
+        if (dto == null) return;
+
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Xác nhận xoá");
+        confirm.setHeaderText("Xoá nhân viên");
+        confirm.setContentText("Bạn có chắc muốn xoá nhân viên này?");
+
+        if (confirm.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) return;
+
+        employeeService.deleteEmployeeById(dto.getEmployeeId());
+        loadEmployeeTable();
+    }
+
+    private void openUpdateDialog() {
+        EmployeeDto dto = tblEmployee.getSelectionModel().getSelectedItem();
+        if (dto == null) return;
+
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/org/chemtrovina/cmtmsys/view/EmployeeUpdateDialog.fxml")
+            );
+            Parent root = loader.load();
+
+            EmployeeUpdateDialogController controller = loader.getController();
+            controller.setEmployee(dto);
+
+            Stage stage = new Stage();
+            stage.setTitle("Cập nhật nhân viên");
+            stage.setScene(new Scene(root));
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.showAndWait();
+
+            loadEmployeeTable();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
 
 }

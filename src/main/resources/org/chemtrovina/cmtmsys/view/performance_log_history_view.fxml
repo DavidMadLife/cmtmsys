@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.chart.LineChart?>
-<?import javafx.scene.chart.CategoryAxis?>
-<?import javafx.scene.chart.NumberAxis?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
@@ -11,7 +8,7 @@
             xmlns:fx="http://javafx.com/fxml/1"
             prefHeight="800.0" prefWidth="1000.0">
 
-    <!-- Bộ lọc -->
+    <!-- ================= FILTER ================= -->
     <top>
         <VBox spacing="10" style="-fx-padding: 10;">
             <HBox spacing="10">
@@ -33,56 +30,90 @@
                 <Button fx:id="btnSearch" text="Tìm kiếm" />
                 <Button fx:id="btnClearFilter" text="Xóa lọc" />
             </HBox>
-
-
         </VBox>
     </top>
 
-    <!-- Trung tâm -->
+    <!-- ================= CENTER ================= -->
     <center>
         <SplitPane orientation="VERTICAL" dividerPositions="0.55">
-            <VBox>
-                <Label text="Danh sách PCB Logs" style="-fx-font-weight: bold; -fx-padding: 5;" />
-                <TableView fx:id="tblLogs">
-                    <columns>
-                        <TableColumn fx:id="colModelCode" text="Model" />
-                        <TableColumn fx:id="colCarrierId" text="Carrier ID" />
-                        <TableColumn fx:id="colAoi" text="AOI" />
-                        <TableColumn fx:id="colTotal" text="Total" />
-                        <TableColumn fx:id="colNg" text="NG" />
-                        <TableColumn fx:id="colPerformance" text="Performance (%)" />
-                        <TableColumn fx:id="colFileName" text="File" />
-                        <TableColumn fx:id="colWarehouse" text="Warehouse" />
-                        <TableColumn fx:id="colCreatedAt" text="Created At" />
-                        <TableColumn fx:id="colTimeDiff" text="Time Diff (s)" />
-                    </columns>
-                </TableView>
-            </VBox>
+            <items>
 
-            <!-- 🆕 Khu tra cứu Carrier ID -->
-            <HBox spacing="10" style="-fx-padding: 5; -fx-border-color: #cccccc; -fx-border-width: 0 0 1 0;">
-                <Label text="Tra cứu Carrier ID:" style="-fx-font-weight: bold;" />
-                <TextField fx:id="txtCarrierLookup" promptText="Nhập Carrier ID..." prefWidth="200"/>
-                <Button fx:id="btnLookupCarrier" text="🔍 Tra cứu" />
-                <Label fx:id="lblCarrierInfo" text="" style="-fx-text-fill: #2a5; -fx-font-style: italic;"/>
-            </HBox>
+                <!-- ===== TOP: PCB LOGS ===== -->
+                <VBox VBox.vgrow="ALWAYS">
+                    <TitledPane text="Danh sách PCB Logs"
+                                expanded="true"
+                                collapsible="true">
+                        <content>
+                            <TableView fx:id="tblLogs" >
+                                <columns>
+                                    <TableColumn fx:id="colModelCode" text="Model" />
+                                    <TableColumn fx:id="colCarrierId" text="Carrier ID" />
+                                    <TableColumn fx:id="colAoi" text="AOI" />
+                                    <TableColumn fx:id="colTotal" text="Total" />
+                                    <TableColumn fx:id="colNg" text="NG" />
+                                    <TableColumn fx:id="colPerformance" text="Performance (%)" />
+                                    <TableColumn fx:id="colFileName" text="File" />
+                                    <TableColumn fx:id="colWarehouse" text="Warehouse" />
+                                    <TableColumn fx:id="colCreatedAt" text="Created At" />
+                                    <TableColumn fx:id="colTimeDiff" text="Time Diff (s)" />
+                                </columns>
+                            </TableView>
+                        </content>
+                    </TitledPane>
+                </VBox>
 
-            <VBox>
-                <Label text="Vật tư đã sử dụng cho PCB được chọn hoặc tra cứu" style="-fx-font-weight: bold; -fx-padding: 5;" />
-                <TableView fx:id="tblMaterials">
-                    <columns>
-                        <TableColumn fx:id="colSapCode" text="SAP Code" prefWidth="120" />
-                        <TableColumn fx:id="colRollCode" text="Reel Code" prefWidth="120" />
-                        <TableColumn fx:id="colQuantity" text="Quantity Used" prefWidth="100" />
-                        <TableColumn fx:id="colWarehouseName" text="Line" prefWidth="120" />
-                        <TableColumn fx:id="colSpec" text="Spec" prefWidth="150" />
-                        <TableColumn fx:id="colLot" text="Lot" prefWidth="150" />
-                        <TableColumn fx:id="colMaker" text="Cust_Name" prefWidth="150" />
-                        <TableColumn fx:id="colCreated" text="Consume Time" prefWidth="150" />
-                    </columns>
-                </TableView>
-            </VBox>
+                <!-- ===== BOTTOM: ONE SCROLL ===== -->
+                <ScrollPane fitToWidth="true"
+                            hbarPolicy="NEVER"
+                            vbarPolicy="AS_NEEDED">
+
+                    <content>
+                        <TitledPane text="Tra cứu Carrier và  Vật tư sử dụng"
+                                    expanded="true"
+                                    collapsible="true">
+
+                            <content>
+                                <VBox spacing="10" style="-fx-padding: 10;">
+
+                                    <!-- ===== Carrier Lookup ===== -->
+                                    <HBox spacing="10">
+                                        <Label text="Carrier ID:" />
+                                        <TextField fx:id="txtCarrierLookup"
+                                                   promptText="Nhập Carrier ID..."
+                                                   prefWidth="200"/>
+                                        <Button fx:id="btnLookupCarrier" text="🔍 Tra cứu" />
+                                        <Label fx:id="lblCarrierInfo"
+                                               style="-fx-text-fill: #2a5; -fx-font-style: italic;"/>
+                                    </HBox>
+
+                                    <Separator/>
+
+                                    <!-- ===== Materials Table ===== -->
+                                    <TableView fx:id="tblMaterials" prefHeight="350">
+                                        <columns>
+                                            <TableColumn fx:id="colSapCode" text="SAP Code" prefWidth="120" />
+                                            <TableColumn fx:id="colRollCode" text="Reel Code" prefWidth="120" />
+                                            <TableColumn fx:id="colQuantity" text="Quantity Used" prefWidth="100" />
+                                            <TableColumn fx:id="colWarehouseName" text="Line" prefWidth="120" />
+                                            <TableColumn fx:id="colSpec" text="Spec" prefWidth="150" />
+                                            <TableColumn fx:id="colLot" text="Lot" prefWidth="150" />
+                                            <TableColumn fx:id="colMaker" text="Cust_Name" prefWidth="150" />
+                                            <TableColumn fx:id="colCreated" text="Consume Time" prefWidth="150" />
+                                        </columns>
+                                    </TableView>
+
+                                </VBox>
+                            </content>
+
+                        </TitledPane>
+                    </content>
+
+                </ScrollPane>
+
+
+
+            </items>
         </SplitPane>
     </center>
-</BorderPane>
 
+</BorderPane>

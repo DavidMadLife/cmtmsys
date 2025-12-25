@@ -26,6 +26,8 @@
 
                 <Button fx:id="btnFilter" text="Lọc" />
                 <Button fx:id="btnClearFilter" text="Xoá lọc" />
+
+                <Button fx:id="btnImportExcel" text="Import Excel" />
             </children>
         </HBox>
 

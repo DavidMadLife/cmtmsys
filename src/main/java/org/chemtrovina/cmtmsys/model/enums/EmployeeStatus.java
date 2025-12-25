@@ -28,4 +28,16 @@ public enum EmployeeStatus {
         }
         return null;
     }
+
+    public static EmployeeStatus fromLabel(String label) {
+        if (label == null) return null;
+
+        for (EmployeeStatus status : values()) {
+            if (status.label.equalsIgnoreCase(label)) {
+                return status;
+            }
+        }
+        throw new IllegalArgumentException("Invalid EmployeeStatus label: " + label);
+    }
+
 }

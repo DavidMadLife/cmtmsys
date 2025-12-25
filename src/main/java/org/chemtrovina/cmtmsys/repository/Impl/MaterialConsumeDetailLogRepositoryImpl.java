@@ -101,7 +101,11 @@ public class MaterialConsumeDetailLogRepositoryImpl implements MaterialConsumeDe
         }
 
 
+
         // 3️⃣ Duyệt từng FEEDER để trừ liệu
+        int feederNoRollCount = 0;
+        List<String> feederNoRollSapCodes = new ArrayList<>();
+
         for (Map<String, Object> feeder : feeders) {
 
             int feederId = (int) feeder.get("FeederID");
@@ -125,9 +129,11 @@ public class MaterialConsumeDetailLogRepositoryImpl implements MaterialConsumeDe
         """, feederId, runId);
 
             if (rolls.isEmpty()) {
-                shortages.add("⚠️ Feeder " + feederId + " (SAP " + sapCode + ") chưa gắn cuộn nào.");
+                feederNoRollCount++;
+                feederNoRollSapCodes.add(sapCode);
                 continue;
             }
+
 
             // 5️⃣ Trừ liệu từ các cuộn theo FIFO
             for (Map<String, Object> roll : rolls) {
@@ -162,11 +168,20 @@ public class MaterialConsumeDetailLogRepositoryImpl implements MaterialConsumeDe
                 needQty -= consumeNow;
             }
 
-            // 6️⃣ Nếu vẫn thiếu → báo cảnh báo (không ghi DB)
+           /* // 6️⃣ Nếu vẫn thiếu → báo cảnh báo (không ghi DB)
             if (needQty > 0) {
                 shortages.add("❌ Thiếu SAP " + sapCode + " → còn thiếu " + needQty + " pcs");
-            }
+            }*/
         }
+
+        if (feederNoRollCount > 0) {
+            shortages.add(
+                    "⚠️ Có " + feederNoRollCount +
+                            " feeder chưa gắn cuộn (SAP: " +
+                            String.join(", ", feederNoRollSapCodes) + ")"
+            );
+        }
+
 
         System.out.printf("[consumeMaterial] ✔ DONE log #%d (GOOD=%d)\n", logId, goodQty);
 
@@ -230,7 +245,7 @@ public class MaterialConsumeDetailLogRepositoryImpl implements MaterialConsumeDe
                    w.Name AS WarehouseName,
                    m.Spec,
                    m.Lot,
-                   m.Maker,                     -- 🆕 thêm Maker
+                   m.Maker,                    
                    d.CreatedAt AS Created
             FROM MaterialConsumeDetailLog d
             JOIN Materials m ON m.MaterialID = d.MaterialID

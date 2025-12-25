@@ -142,6 +142,11 @@ public class WorkOrderServiceImpl implements WorkOrderService {
 
     @Override
     public void createWorkOrderWithItems(String description, Map<Integer, Integer> productIdToQuantity) {
+
+        for (Integer productId : productIdToQuantity.keySet()) {
+            validateProductHasBom(productId);
+        }
+
         String code = generateNewWorkOrderCode(LocalDate.now());
         WorkOrder wo = new WorkOrder();
         wo.setWorkOrderCode(code);
@@ -193,6 +198,10 @@ public class WorkOrderServiceImpl implements WorkOrderService {
     @Override
     public void updateWorkOrderWithItems(int workOrderId, String description, Map<Integer, Integer> productMap) {
         // 1. Cập nhật mô tả + thời gian
+        for (Integer productId : productMap.keySet()) {
+            validateProductHasBom(productId);
+        }
+
         WorkOrder wo = repository.findById(workOrderId);
         wo.setDescription(description);
         wo.setUpdatedDate(LocalDateTime.now());
@@ -203,6 +212,8 @@ public class WorkOrderServiceImpl implements WorkOrderService {
 
         // 3. Thêm lại item mới
         for (Map.Entry<Integer, Integer> entry : productMap.entrySet()) {
+
+            //validateProductHasBom(entry.getKey());
             WorkOrderItem item = new WorkOrderItem();
             item.setWorkOrderId(workOrderId);
             item.setProductId(entry.getKey());
@@ -210,6 +221,21 @@ public class WorkOrderServiceImpl implements WorkOrderService {
             item.setCreatedDate(LocalDateTime.now());
             item.setUpdatedDate(LocalDateTime.now());
             workOrderItemRepository.add(item);
+        }
+    }
+
+    private void validateProductHasBom(int productId) {
+
+        Integer count = jdbcTemplate.queryForObject("""
+        SELECT COUNT(*)
+        FROM ProductBOM
+        WHERE ProductID = ?
+    """, Integer.class, productId);
+
+        System.out.println("DEBUG BOM CHECK - productId=" + productId + ", count=" + count);
+
+        if (count == null || count == 0) {
+            throw new RuntimeException("❌ Product chưa có BOM");
         }
     }
 

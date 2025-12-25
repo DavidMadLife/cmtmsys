@@ -27,5 +27,12 @@ public interface ShiftPlanEmployeeRepository {
 
     int saveOrUpdate(int employeeId, LocalDate date, String shiftCode, String note);
 
+    String findShiftCodeByEmployeeAndDate(int employeeId, LocalDate date);
+
+    List<ShiftPlanEmployee> findByShiftDate(LocalDate date);
+
+    int updateNote(int employeeId, LocalDate date, String note);
+
+
 }
 

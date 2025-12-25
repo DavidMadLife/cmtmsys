@@ -33,6 +33,8 @@ public class NavbarController {
     @FXML private MenuItem btnShiftPlanEmployee;
     @FXML private MenuItem btnShiftType;
     @FXML private MenuItem btnAttendanceLog;
+    @FXML private MenuItem btnEmployeeLeave;
+
 
 
     // ==== Inventory Menu ====
@@ -41,6 +43,7 @@ public class NavbarController {
     @FXML private MenuItem menuInventoryTransfer, menuTransferMaterialReturn;
     @FXML private MenuItem menuTransferLog;
     @FXML private MenuItem menuProduct;
+    @FXML private MenuItem menuCreateProduct;
     @FXML private MenuItem menuWorkOrder;
     @FXML private MenuItem menuMaterialCart;
     @FXML private MenuItem menuMaterialCartCreate;
@@ -110,12 +113,16 @@ public class NavbarController {
         setPermission(btnShiftPlanEmployee, "btnShiftPlanEmployee", role);
         setPermission(btnShiftType, "btnShiftType", role);
         setPermission(btnAttendanceLog, "btnAttendanceLog", role);
+        setPermission(btnEmployeeLeave, "btnEmployeeLeave", role);
+
 
         setPermission(menuInventory, "menuInventory", role);
         setPermission(menuProduct, "menuProduct", role);
+        setPermission(menuCreateProduct, "menuCreateProduct", role);
+
         setPermission(menuWorkOrder, "menuWorkOrder", role);
         setPermission(menuMaterialCart, "menuMaterialCart", role);
-        setPermission(menuMaterialCartCreate, "menuMaterialCart", role);
+        setPermission(menuMaterialCartCreate, "menuMaterialCartCreate", role);
 
         setPermission(menuPlan, "menuPlan", role);
 
@@ -177,6 +184,13 @@ public class NavbarController {
         btnAttendanceLog.setOnAction(e ->
                 openTab("Log Chấm Công", "/org/chemtrovina/cmtmsys/view/timeAttendanceView.fxml")
         );
+        btnEmployeeLeave.setOnAction(e ->
+                openTab(
+                        "Nghỉ phép",
+                        "/org/chemtrovina/cmtmsys/view/employeeLeaveView.fxml"
+                )
+        );
+
 
 
         // Inventory
@@ -189,6 +203,10 @@ public class NavbarController {
         menuCheckNG.setOnAction(e -> openTab("Check NG", "/org/chemtrovina/cmtmsys/view/rejected_material_history.fxml"));
         menuMaterialCart.setOnAction(e -> openTab("Material Cart", "/org/chemtrovina/cmtmsys/view/material_cart_view.fxml"));
         menuMaterialCartCreate.setOnAction(e -> openTab("Create Cart", "/org/chemtrovina/cmtmsys/view/material_cart_create.fxml"));
+        menuCreateProduct.setOnAction(e ->
+                openTab("Create Product",
+                        "/org/chemtrovina/cmtmsys/view/product-create.fxml")
+        );
 
 
         // Planning

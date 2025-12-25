@@ -31,4 +31,9 @@ public interface ShiftPlanEmployeeService {
     void importFromExcel(File excelFile, String importedBy);
 
     int saveOrUpdate(int employeeId, LocalDate date, String shiftCode, String note);
+
+    List<ShiftPlanEmployee> findByShiftDate(LocalDate date);
+
+    void updateNote(int employeeId, LocalDate date, String note);
+
 }

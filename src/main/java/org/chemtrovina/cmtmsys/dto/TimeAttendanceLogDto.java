@@ -1,6 +1,7 @@
 package org.chemtrovina.cmtmsys.dto;
 
 import lombok.Data;
+import org.chemtrovina.cmtmsys.model.enums.AttendanceTimeStatus;
 import org.chemtrovina.cmtmsys.model.enums.ScanAction;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -10,6 +11,7 @@ public class TimeAttendanceLogDto {
 
     private int logId;
     private int no;
+    private int employeeId;
 
     private String mscnId1;
     private String input;           // NEW
@@ -36,6 +38,9 @@ public class TimeAttendanceLogDto {
 
     private String in;
     private String out;
+
+    private AttendanceTimeStatus inStatus;   // ⭐
+    private AttendanceTimeStatus outStatus;  // ⭐
 
     private String codeNow;
     private LocalDate scanDate;

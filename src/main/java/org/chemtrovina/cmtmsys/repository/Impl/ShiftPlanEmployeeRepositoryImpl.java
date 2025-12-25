@@ -132,6 +132,48 @@ public class ShiftPlanEmployeeRepositoryImpl implements ShiftPlanEmployeeReposit
         });
     }
 
+    @Override
+    public String findShiftCodeByEmployeeAndDate(int employeeId, LocalDate date) {
+
+        String sql = """
+        SELECT ShiftCode
+        FROM ShiftPlanEmployee
+        WHERE EmployeeId = ?
+          AND ShiftDate = ?
+    """;
+
+        List<String> result = jdbc.query(
+                sql,
+                (rs, rowNum) -> rs.getString("ShiftCode"),
+                employeeId,
+                date
+        );
+
+        return result.isEmpty() ? null : result.get(0);
+    }
+
+    @Override
+    public List<ShiftPlanEmployee> findByShiftDate(LocalDate date) {
+
+        String sql = """
+        SELECT 
+            ShiftPlanId AS shiftPlanId,
+            EmployeeId AS employeeId,
+            ShiftDate AS shiftDate,
+            ShiftCode AS shiftCode,
+            Note AS note,
+            ImportedBy AS importedBy,
+            ImportedAt AS importedAt
+        FROM ShiftPlanEmployee
+        WHERE ShiftDate = ?
+        ORDER BY ShiftCode, EmployeeId
+    """;
+
+        return jdbc.query(sql, mapper, date);
+    }
+
+
+
     // ============================================================
     @Override
     public int delete(int shiftPlanId) {
@@ -199,5 +241,19 @@ public class ShiftPlanEmployeeRepositoryImpl implements ShiftPlanEmployeeReposit
                 note,
                 "system"
         );
+
+
     }
+    @Override
+    public int updateNote(int employeeId, LocalDate date, String note) {
+        String sql = """
+        UPDATE ShiftPlanEmployee
+        SET Note = ?
+        WHERE EmployeeId = ?
+          AND ShiftDate = ?
+    """;
+
+        return jdbc.update(sql, note, employeeId, date);
+    }
+
 }

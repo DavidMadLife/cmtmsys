@@ -22,10 +22,7 @@ public class ShiftTypeEmployeeRepositoryImpl implements ShiftTypeEmployeeReposit
     @Override
     public List<ShiftTypeEmployee> findAll() {
         String sql = """
-            SELECT 
-                ShiftCode AS shiftCode, 
-                ShiftName AS shiftName, 
-                Description AS description 
+            SELECT *
             FROM ShiftTypeEmployee
         """;
         return jdbc.query(sql, mapper);
@@ -34,10 +31,7 @@ public class ShiftTypeEmployeeRepositoryImpl implements ShiftTypeEmployeeReposit
     @Override
     public ShiftTypeEmployee findByCode(String code) {
         String sql = """
-            SELECT 
-                ShiftCode AS shiftCode, 
-                ShiftName AS shiftName, 
-                Description AS description 
+            SELECT *
             FROM ShiftTypeEmployee
             WHERE ShiftCode = ?
         """;

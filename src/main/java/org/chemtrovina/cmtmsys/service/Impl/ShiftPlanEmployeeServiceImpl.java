@@ -120,4 +120,15 @@ public class ShiftPlanEmployeeServiceImpl implements ShiftPlanEmployeeService {
     public int saveOrUpdate(int employeeId, LocalDate date, String shiftCode, String note) {
         return repo.saveOrUpdate(employeeId, date, shiftCode, note);
     }
+
+    @Override
+    public List<ShiftPlanEmployee> findByShiftDate(LocalDate date) {
+        return repo.findByShiftDate(date);
+    }
+
+    @Override
+    @Transactional
+    public void updateNote(int employeeId, LocalDate date, String note) {
+        repo.updateNote(employeeId, date, note);
+    }
 }

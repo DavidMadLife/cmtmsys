@@ -15,6 +15,7 @@ import org.chemtrovina.cmtmsys.model.enums.ModelType;
 import org.chemtrovina.cmtmsys.service.base.ProductService;
 import org.chemtrovina.cmtmsys.service.base.WorkOrderService;
 import org.chemtrovina.cmtmsys.utils.AutoCompleteUtils;
+import org.chemtrovina.cmtmsys.utils.FxClipboardUtils;
 import org.chemtrovina.cmtmsys.utils.TableUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -52,7 +53,7 @@ public class WorkOrderCreateController {
     public void initialize() {
         setupTable();
         setupActions();
-        tblItems.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        FxClipboardUtils.enableCopyShortcut(tblItems);
         TableUtils.centerAlignAllColumns(tblItems);
     }
 
@@ -189,19 +190,27 @@ public class WorkOrderCreateController {
 
         String desc = txtDescription.getText();
 
-        if (editingWorkOrderId != null) {
-            workOrderService.updateWorkOrderWithItems(editingWorkOrderId, desc, productMap);
-            showAlert("Cập nhật Work Order thành công!");
-        } else {
-            workOrderService.createWorkOrderWithItems(desc, productMap);
-            showAlert("Tạo Work Order thành công!");
+        try {
+            if (editingWorkOrderId != null) {
+                workOrderService.updateWorkOrderWithItems(editingWorkOrderId, desc, productMap);
+                showAlert("Cập nhật Work Order thành công!");
+            } else {
+                workOrderService.createWorkOrderWithItems(desc, productMap);
+                showAlert("Tạo Work Order thành công!");
+            }
+
+            ((Stage) btnCreate.getScene().getWindow()).close();
+
+        } catch (RuntimeException ex) {
+            showAlert(ex.getMessage());
         }
 
-        txtDescription.clear();
+
+        /*txtDescription.clear();
         itemList.clear();
         editingWorkOrderId = null;
         btnCreate.setText("Tạo Work Order");
-        ((Stage) btnCreate.getScene().getWindow()).close();
+        //((Stage) btnCreate.getScene().getWindow()).close();*/
     }
 
     public void loadWorkOrder(WorkOrder workOrder) {

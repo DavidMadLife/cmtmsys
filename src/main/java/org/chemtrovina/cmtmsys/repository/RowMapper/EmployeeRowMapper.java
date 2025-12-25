@@ -9,27 +9,32 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 
 public class EmployeeRowMapper implements RowMapper<Employee> {
+
     @Override
     public Employee mapRow(ResultSet rs, int rowNum) throws SQLException {
-        return new Employee(
-                rs.getInt("EmployeeId"),
-                rs.getString("MSCNID1"),
-                rs.getString("MSCNID2"),
-                rs.getString("FullName"),
-                rs.getString("Company"),
-                rs.getString("Gender"),
-                rs.getObject("BirthDate", LocalDate.class),
-                rs.getString("Address"),
-                rs.getString("PhoneNumber"),
-                rs.getObject("ExitDate", LocalDate.class),
-                rs.getInt("DepartmentId"),
-                rs.getInt("PositionId"),
-                rs.getString("Manager"),
-                rs.getObject("EntryDate", LocalDate.class),
-                rs.getString("JobTitle"),
-                rs.getString("Note"),
-                EmployeeStatus.fromCode(rs.getInt("Status"))
+        Employee emp = new Employee();
 
-        );
+        emp.setEmployeeId(rs.getInt("EmployeeId"));
+        emp.setMSCNID1(rs.getString("MSCNID1"));
+        emp.setMSCNID2(rs.getString("MSCNID2"));
+        emp.setFullName(rs.getString("FullName"));
+        emp.setCompany(rs.getString("Company"));
+        emp.setGender(rs.getString("Gender"));
+        emp.setBirthDate(rs.getObject("BirthDate", LocalDate.class));
+        emp.setEntryDate(rs.getObject("EntryDate", LocalDate.class));
+        emp.setExitDate(rs.getObject("ExitDate", LocalDate.class));
+        emp.setAddress(rs.getString("Address"));
+        emp.setPhoneNumber(rs.getString("PhoneNumber"));
+
+        emp.setDepartmentName(rs.getString("DepartmentName")); // ✅ NEW
+        emp.setPositionName(rs.getString("PositionName"));     // ✅ NEW
+
+        emp.setManager(rs.getString("Manager"));
+        emp.setJobTitle(rs.getString("JobTitle"));
+        emp.setNote(rs.getString("Note"));
+        emp.setStatus(EmployeeStatus.fromCode(rs.getInt("Status")));
+
+        return emp;
     }
+
 }

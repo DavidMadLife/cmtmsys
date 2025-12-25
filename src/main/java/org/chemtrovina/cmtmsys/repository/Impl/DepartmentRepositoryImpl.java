@@ -48,9 +48,23 @@ public class DepartmentRepositoryImpl implements DepartmentRepository {
         return jdbcTemplate.query(sql, new DepartmentRowMapper());
     }
 
-    public String getName(int departmentId) {
+    @Override
+    public String getName(Integer departmentId) {
+
+        if (departmentId == null) {
+            return "N/A";
+        }
+
         String sql = "SELECT DepartmentName FROM Department WHERE DepartmentId = ?";
-        return jdbcTemplate.queryForObject(sql, String.class, departmentId);
+
+        List<String> result = jdbcTemplate.query(
+                sql,
+                (rs, rowNum) -> rs.getString("DepartmentName"),
+                departmentId
+        );
+
+        return result.isEmpty() ? "N/A" : result.get(0);
     }
+
 
 }

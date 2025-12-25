@@ -1,9 +1,11 @@
 package org.chemtrovina.cmtmsys.service.base;
 
 import org.chemtrovina.cmtmsys.dto.EmployeeDto;
+import org.chemtrovina.cmtmsys.dto.EmployeeExcelDto;
 import org.chemtrovina.cmtmsys.model.Employee;
 import org.chemtrovina.cmtmsys.model.enums.EmployeeStatus;
 
+import java.io.File;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -20,4 +22,9 @@ public interface EmployeeService {
     Employee getByMscnId2(String mscnId2);
 
     void updateManager(int employeeId, String managerName);
+    void importEmployeeFromExcel(File file);
+    List<EmployeeDto> getWorkingEmployees(LocalDate date);
+
+    Employee findByFullName(String fullName);
+
 }

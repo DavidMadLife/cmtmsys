@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/23.0.1"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="org.chemtrovina.cmtmsys.controller.EmployeeLeaveController">
+
+    <!-- ================================================= -->
+    <!-- CENTER : SPLIT 50 / 50 -->
+    <!-- ================================================= -->
+    <center>
+        <SplitPane fx:id="splitPane" dividerPositions="0.5">
+
+            <!-- ================================================= -->
+            <!-- LEFT : CREATE + LIST -->
+            <!-- ================================================= -->
+            <VBox fx:id="leftContainer"
+                  spacing="10"
+                  minWidth="0">
+                <padding>
+                    <Insets top="10" right="10" bottom="10" left="10"/>
+                </padding>
+
+                <!-- CREATE FORM -->
+                <Label text="Tạo nghỉ phép"
+                       style="-fx-font-weight: bold; -fx-font-size: 14"/>
+
+                <GridPane hgap="10" vgap="8">
+                    <columnConstraints>
+                        <ColumnConstraints percentWidth="20"/>
+                        <ColumnConstraints percentWidth="30"/>
+                        <ColumnConstraints percentWidth="20"/>
+                        <ColumnConstraints percentWidth="30"/>
+                    </columnConstraints>
+
+                    <Label text="Nhân viên"/>
+                    <TextField fx:id="txtEmployeeName"
+                               GridPane.columnIndex="1"
+                               promptText="Tên / Mã NV"/>
+
+                    <Label text="Loại nghỉ" GridPane.columnIndex="2"/>
+                    <ComboBox fx:id="cbLeaveType"
+                              GridPane.columnIndex="3"/>
+
+                    <Label text="Từ ngày" GridPane.rowIndex="1"/>
+                    <DatePicker fx:id="dpFromDate"
+                                GridPane.columnIndex="1"
+                                GridPane.rowIndex="1"/>
+
+                    <Label text="Đến ngày"
+                           GridPane.columnIndex="2"
+                           GridPane.rowIndex="1"/>
+                    <DatePicker fx:id="dpToDate"
+                                GridPane.columnIndex="3"
+                                GridPane.rowIndex="1"/>
+                </GridPane>
+
+                <HBox spacing="10">
+                    <Label text="Lý do" minWidth="80"/>
+                    <TextField fx:id="txtReason" HBox.hgrow="ALWAYS"/>
+                </HBox>
+
+                <HBox spacing="10">
+                    <Label text="Chi tiết" minWidth="80"/>
+                    <TextArea fx:id="txtDescription"
+                              prefRowCount="2"
+                              HBox.hgrow="ALWAYS"/>
+                </HBox>
+
+                <HBox spacing="10">
+                    <Button fx:id="btnSave" text="Lưu"/>
+                    <Button fx:id="btnClear" text="Làm mới"/>
+                </HBox>
+
+                <Separator/>
+
+                <!-- LIST -->
+                <Label text="Danh sách nghỉ phép"
+                       style="-fx-font-weight: bold; -fx-font-size: 13"/>
+
+                <TableView fx:id="tblLeave"
+                           VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="colNo" text="STT" prefWidth="50"/>
+                        <TableColumn fx:id="colEmployee" text="Nhân viên" prefWidth="160"/>
+                        <TableColumn fx:id="colFrom" text="Từ ngày" prefWidth="100"/>
+                        <TableColumn fx:id="colTo" text="Đến ngày" prefWidth="100"/>
+                        <TableColumn fx:id="colType" text="Loại nghỉ" prefWidth="120"/>
+                        <TableColumn fx:id="colReason" text="Lý do" prefWidth="150"/>
+                        <TableColumn fx:id="colDescription" text="Chi tiết" prefWidth="200"/>
+                    </columns>
+                </TableView>
+
+            </VBox>
+
+            <!-- ================================================= -->
+            <!-- RIGHT : STATISTIC (ALL) -->
+            <!-- ================================================= -->
+            <VBox fx:id="rightContainer"
+                  spacing="10"
+                  minWidth="0">
+                <padding>
+                    <Insets top="10" right="10" bottom="10" left="10"/>
+                </padding>
+
+                <Label text="Thống kê nghỉ phép (ALL)"
+                       style="-fx-font-weight: bold; -fx-font-size: 14"/>
+
+                <!-- FILTER -->
+                <GridPane hgap="10" vgap="8">
+                    <columnConstraints>
+                        <ColumnConstraints percentWidth="30"/>
+                        <ColumnConstraints percentWidth="70"/>
+                    </columnConstraints>
+
+                    <Label text="Từ ngày"/>
+                    <DatePicker fx:id="dpStatFrom"
+                                GridPane.columnIndex="1"/>
+
+                    <Label text="Đến ngày" GridPane.rowIndex="1"/>
+                    <DatePicker fx:id="dpStatTo"
+                                GridPane.columnIndex="1"
+                                GridPane.rowIndex="1"/>
+                </GridPane>
+
+                <Button fx:id="btnFilterStatistic"
+                        text="Lọc thống kê"
+                        maxWidth="150"/>
+
+                <!-- STAT TABLE -->
+                <TableView fx:id="tblLeaveStatistic" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="colDept" text="Bộ phận" prefWidth="200"/>
+                        <TableColumn fx:id="colLeavePermit" text="Nghỉ phép" prefWidth="120"/>
+                        <TableColumn fx:id="colLeaveNoPermit" text="Không phép" prefWidth="120"/>
+                        <TableColumn fx:id="colLeaveSick" text="Nghỉ bệnh" prefWidth="120"/>
+                        <TableColumn fx:id="colLeavePrivate" text="Việc riêng" prefWidth="120"/>
+                        <TableColumn fx:id="colLeaveOther" text="Khác" prefWidth="120"/>
+                        <TableColumn fx:id="colTotal" text="Tổng" prefWidth="100"/>
+                    </columns>
+                </TableView>
+
+
+            </VBox>
+
+        </SplitPane>
+    </center>
+
+</BorderPane>

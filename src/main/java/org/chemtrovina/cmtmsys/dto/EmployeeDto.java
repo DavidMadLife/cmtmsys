@@ -1,5 +1,8 @@
 package org.chemtrovina.cmtmsys.dto;
 
+import org.chemtrovina.cmtmsys.model.Employee;
+import org.chemtrovina.cmtmsys.model.enums.EmployeeStatus;
+
 import java.time.LocalDate;
 
 public class EmployeeDto {
@@ -142,4 +145,19 @@ public class EmployeeDto {
                 ", status='" + status + '\'' +
                 '}';
     }
+
+    public Employee toEntity() {
+        Employee e = new Employee();
+        e.setEmployeeId(employeeId);
+        e.setFullName(fullName);
+        e.setCompany(company);
+        e.setGender(gender);
+        e.setPhoneNumber(phoneNumber);
+        e.setJobTitle(jobTitle);
+        e.setNote(note);
+        e.setManager(managerName);
+        e.setStatus(EmployeeStatus.fromLabel(status));
+        return e;
+    }
+
 }
