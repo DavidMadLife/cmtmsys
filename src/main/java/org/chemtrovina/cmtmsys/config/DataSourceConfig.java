@@ -14,8 +14,6 @@ public class DataSourceConfig {
         dataSource.setUsername("sa");
         dataSource.setPassword("1");
 
-
-
         /*dataSource.setUrl("jdbc:sqlserver://localhost:1433;databaseName=IOM;encrypt=true;trustServerCertificate=true");
         dataSource.setUsername("sa");
         dataSource.setPassword("123");*/

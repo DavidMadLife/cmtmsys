@@ -9,6 +9,8 @@ import javafx.scene.layout.GridPane;
 import org.chemtrovina.cmtmsys.model.User;
 import org.chemtrovina.cmtmsys.model.enums.UserRole;
 import org.chemtrovina.cmtmsys.service.base.UserService;
+import org.chemtrovina.cmtmsys.utils.FxAlertUtils;
+import org.chemtrovina.cmtmsys.utils.FxClipboardUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -52,9 +54,7 @@ public class UserController {
         btnEdit.setOnAction(e -> onEditUser());
         btnResetPassword.setOnAction(e -> onResetPassword());
 
-        tblUsers.getSelectionModel().setCellSelectionEnabled(true);
-        tblUsers.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        tblUsers.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        FxClipboardUtils.enableCopyShortcut(tblUsers);
         refreshUserList();
     }
 
@@ -69,26 +69,26 @@ public class UserController {
         UserRole role = cbRole.getValue();
 
         if (username.isEmpty() || password.isEmpty() || role == null) {
-            showAlert("Vui lòng nhập đầy đủ thông tin.");
+            FxAlertUtils.warning("Vui lòng nhập đầy đủ thông tin.");
             return;
         }
 
         try {
             userService.createUser(username, password, role);
-            showAlert("✅ Đã thêm người dùng mới.");
+            FxAlertUtils.info("✅ Đã thêm người dùng mới.");
             txtUsername.clear();
             txtPassword.clear();
             cbRole.getSelectionModel().clearSelection();
             refreshUserList();
         } catch (Exception e) {
-            showAlert("❌ Lỗi khi thêm người dùng: " + e.getMessage());
+            FxAlertUtils.error("❌ Lỗi khi thêm người dùng: " + e.getMessage());
         }
     }
 
     private void onDeleteUser() {
         User selected = tblUsers.getSelectionModel().getSelectedItem();
         if (selected == null) {
-            showAlert("Vui lòng chọn người dùng để xóa.");
+            FxAlertUtils.warning("Vui lòng chọn người dùng để xóa.");
             return;
         }
 
@@ -100,7 +100,7 @@ public class UserController {
         Optional<ButtonType> result = confirm.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
             userService.deleteUser(selected.getUserId());
-            showAlert("✅ Đã xóa người dùng.");
+            FxAlertUtils.info("✅ Đã xóa người dùng.");
             refreshUserList();
         }
     }
@@ -108,7 +108,7 @@ public class UserController {
     private void onEditUser() {
         User selected = tblUsers.getSelectionModel().getSelectedItem();
         if (selected == null) {
-            showAlert("Vui lòng chọn người dùng để sửa.");
+            FxAlertUtils.warning("Vui lòng chọn người dùng để sửa.");
             return;
         }
 
@@ -134,7 +134,7 @@ public class UserController {
                 selected.setUsername(txtNewUsername.getText().trim());
                 selected.setRole(cbNewRole.getValue());
                 userService.updateUser(selected);
-                showAlert("✅ Đã cập nhật thông tin người dùng.");
+                FxAlertUtils.info("✅ Đã cập nhật thông tin người dùng.");
                 refreshUserList();
             }
         });
@@ -143,7 +143,7 @@ public class UserController {
     private void onResetPassword() {
         User selected = tblUsers.getSelectionModel().getSelectedItem();
         if (selected == null) {
-            showAlert("Vui lòng chọn người dùng để đặt lại mật khẩu.");
+            FxAlertUtils.warning("Vui lòng chọn người dùng để đặt lại mật khẩu.");
             return;
         }
 
@@ -154,15 +154,8 @@ public class UserController {
 
         dialog.showAndWait().ifPresent(newPass -> {
             userService.updatePassword(selected.getUserId(), newPass);
-            showAlert("✅ Đã cập nhật mật khẩu.");
+            FxAlertUtils.info("✅ Đã cập nhật mật khẩu.");
         });
     }
 
-    private void showAlert(String message) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Thông báo");
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
-    }
 }

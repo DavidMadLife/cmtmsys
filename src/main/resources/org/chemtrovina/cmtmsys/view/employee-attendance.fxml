@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<HBox prefHeight="600" prefWidth="1000" spacing="15" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.chemtrovina.cmtmsys.controller.EmployeeAttendanceController">
+
+    <!-- ================= LEFT PANEL ================= -->
+    <VBox prefWidth="350" spacing="20" style="-fx-padding: 20; -fx-background-color: #f5f5f5;">
+
+        <!-- Date / Time -->
+        <Label fx:id="lblDate" style="-fx-font-size: 20px; -fx-font-weight: bold;" text="2026-01-06 08:30" />
+
+        <!-- IN / OUT Buttons -->
+        <HBox spacing="10">
+            <Button fx:id="btnIn" onAction="#switchToIn" prefWidth="150" style="-fx-font-size: 18px; -fx-background-color: #4CAF50; -fx-text-fill: white;" text="IN" />
+
+            <Button fx:id="btnOut" onAction="#switchToOut" prefWidth="150" style="-fx-font-size: 18px; -fx-background-color: #F44336; -fx-text-fill: white;" text="OUT" />
+        </HBox>
+
+        <!-- Scan Type -->
+        <Label fx:id="lblScanType"
+               alignment="CENTER"
+               maxWidth="Infinity"
+               prefHeight="262.0"
+               prefWidth="310.0"
+               style="
+            -fx-font-size: 42px;
+            -fx-font-weight: bold;
+            -fx-text-fill: white;
+            -fx-background-radius: 20;
+       "/>
+
+
+
+        <!-- Scan Input -->
+        <TextField fx:id="txtScanInput" prefHeight="50" promptText="Scan thẻ / mã nhân viên" style="-fx-font-size: 18px;" />
+
+        <!-- Scan Status (VERY IMPORTANT) -->
+        <Label fx:id="lblStatus" alignment="CENTER" prefHeight="80" style="
+                    -fx-font-size: 28px;
+                    -fx-font-weight: bold;
+                    -fx-background-color: #2196F3;
+                    -fx-text-fill: white;
+                    -fx-background-radius: 10;
+            " text="SẴN SÀNG SCAN" />
+
+    </VBox>
+
+    <!-- ================= RIGHT PANEL ================= -->
+    <VBox VBox.vgrow="ALWAYS"
+          HBox.hgrow="ALWAYS"
+          style="-fx-padding: 10;">
+
+
+    <Label style="-fx-font-size: 18px; -fx-font-weight: bold;" text="KẾT QUẢ ĐIỂM DANH" />
+
+        <TableView fx:id="tblScanned"
+                   VBox.vgrow="ALWAYS"
+                   HBox.hgrow="ALWAYS"
+                   maxWidth="Infinity"
+                   maxHeight="Infinity">
+
+
+        <columns>
+                <TableColumn fx:id="colNo" prefWidth="50" text="No" />
+                <TableColumn fx:id="colCode" prefWidth="120" text="Mã NV" />
+                <TableColumn fx:id="colName" prefWidth="200" text="Họ tên" />
+                <TableColumn fx:id="colTime" prefWidth="120" text="Giờ" />
+                <TableColumn fx:id="colScanType" prefWidth="100" text="IN/OUT" />
+            </columns>
+
+        </TableView>
+
+    </VBox>
+
+</HBox>

@@ -72,13 +72,12 @@
                 <content>
                     <ScrollPane
                             fitToHeight="true"
-                            fitToWidth="false"
+                            fitToWidth="true"
                             pannable="true"
                             hbarPolicy="AS_NEEDED"
                             vbarPolicy="AS_NEEDED">
 
                         <TableView fx:id="tblTimeAttendanceLog"
-                                   prefWidth="1800"
                                    VBox.vgrow="ALWAYS">
                             <columns>
 
@@ -126,7 +125,6 @@
                                 <TableColumn fx:id="colY" prefWidth="30.0" text="Ca" />
                                 <TableColumn fx:id="colIn"  id="colVang" styleClass="header-yellow" text="IN" />
                                 <TableColumn fx:id="colOut" id="colVang" styleClass="header-yellow" text="OUT" />
-                                <TableColumn fx:id="colScanDate" text="Ngày" />
 
                             </columns>
                         </TableView>
@@ -188,11 +186,6 @@
                                 <TableColumn fx:id="colAbsentNote" text="Note" />
                             </columns>
                         </TableView>
-
-                        <HBox alignment="CENTER_RIGHT" spacing="10">
-                            <Button fx:id="btnSaveAbsentNote"
-                                    text="💾 Lưu lý do nghỉ"/>
-                        </HBox>
                     </VBox>
                 </content>
             </TitledPane>

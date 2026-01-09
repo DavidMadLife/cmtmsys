@@ -95,7 +95,8 @@ public class TimeAttendanceController {
     @FXML private TableColumn<TimeAttendanceLogDto, String> colOut;
     @FXML private TableColumn<TimeAttendanceLogDto, LocalDate> colDateOfBirth;
     @FXML private TableColumn<TimeAttendanceLogDto, LocalDate> colEntryDate;
-    @FXML private TableColumn<TimeAttendanceLogDto, LocalDate> colScanDate;
+
+
     @FXML private TableColumn<TimeAttendanceLogDto, String> colY;
 
     @FXML private TableColumn<TimeAttendanceLogDto, String> colJobTitle;
@@ -150,7 +151,7 @@ public class TimeAttendanceController {
         colPhoneNumber.setCellValueFactory(new PropertyValueFactory<>("phoneNumber"));
 
 
-        colScanDate.setCellValueFactory(new PropertyValueFactory<>("scanDate"));
+
         colY.setCellValueFactory(new PropertyValueFactory<>("shiftName"));
 
         tblTimeAttendanceLog.setEditable(true);
@@ -194,6 +195,10 @@ public class TimeAttendanceController {
                 );
 
                 dto.setOut(newTime);
+
+                // ⭐ TÍNH LẠI STATUS
+                logService.recalculateStatus(dto);
+
                 tblTimeAttendanceLog.refresh();
 
             } catch (Exception e) {
@@ -201,6 +206,7 @@ public class TimeAttendanceController {
                 tblTimeAttendanceLog.refresh();
             }
         });
+
 
 
         colIn.setEditable(true);
@@ -231,7 +237,7 @@ public class TimeAttendanceController {
             """);
                 } else {
                     setStyle("""
-                -fx-background-color: #43bc43;
+                -fx-background-color: #54ed54;
                 -fx-text-fill: black;
             """);
                 }
@@ -346,6 +352,7 @@ public class TimeAttendanceController {
         txtScanInput.setOnKeyPressed(e -> {
             if (e.getCode() == KeyCode.ENTER) {
                 handleScanInput();
+                handleDateFilter();
                 e.consume();
             }
         });

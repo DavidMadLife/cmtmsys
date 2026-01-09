@@ -26,6 +26,21 @@ public class RolePermissionConfig {
                 "btnEmployeeLeave",
                 List.of(UserRole.ADMIN, UserRole.EMPLOYEE)
         );
+        // ===== Employee Mini =====
+        PERMISSIONS.put(
+                "btnEmployeeAttendance",
+                List.of(UserRole.ADMIN, UserRole.EMPLOYEE, UserRole.EMPLOYEE_MINI)
+        );
+        PERMISSIONS.put(
+                "btnAttendanceKiosk",
+                List.of(
+                        UserRole.ADMIN,
+                        UserRole.EMPLOYEE,
+                        UserRole.EMPLOYEE_MINI
+                )
+        );
+
+
 
         // Inventory
         PERMISSIONS.put("menuInventory", List.of(UserRole.ADMIN, UserRole.INVENTORY, UserRole.SUBLEEDER));

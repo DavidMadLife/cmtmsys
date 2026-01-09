@@ -1,6 +1,8 @@
 package org.chemtrovina.cmtmsys.service.base;
 
 import org.chemtrovina.cmtmsys.dto.AbsentEmployeeDto;
+import org.chemtrovina.cmtmsys.dto.AttendanceSummaryDto;
+import org.chemtrovina.cmtmsys.dto.EmployeeScanViewDto;
 import org.chemtrovina.cmtmsys.dto.TimeAttendanceLogDto;
 import org.chemtrovina.cmtmsys.model.ShiftTypeEmployee;
 import org.chemtrovina.cmtmsys.model.TimeAttendanceLog;
@@ -17,7 +19,12 @@ public interface TimeAttendanceLogService {
     void update(TimeAttendanceLog log);
     void delete(int id);
     List<TimeAttendanceLogDto> getLogDtosByDateRange(LocalDate from, LocalDate to);
+
+
     TimeAttendanceLogDto processScan(String input, String type);
+    TimeAttendanceLogDto processScanAuto(String input);
+
+
     List<AbsentEmployeeDto> getAbsentEmployees(LocalDate date);
 
     void manualFixAttendance(
@@ -31,6 +38,12 @@ public interface TimeAttendanceLogService {
             TimeAttendanceLogDto dto,
             ShiftTypeEmployee shift
     );
+
+    void recalculateStatus(TimeAttendanceLogDto dto);
+
+    List<EmployeeScanViewDto> getTodayScannedForEmployeeView();
+
+    AttendanceSummaryDto getAttendanceSummary(LocalDate date);
 
 
 

@@ -6,4 +6,5 @@ public enum UserRole {
     EMPLOYEE, //ROle này chỉ được quản lý employee
     SUBLEEDER, //Role này chỉ vào được lập kế hoạch
     GENERALWAREHOUSE,
+    EMPLOYEE_MINI
 }

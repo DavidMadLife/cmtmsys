@@ -151,32 +151,35 @@ public class TimeAttendanceLogRepositoryImpl implements TimeAttendanceLogReposit
     @Override
     public TimeAttendanceLog findByEmployeeIdDateAndAction(
             int employeeId,
-            LocalDate date,
+            LocalDate scanDate,
             ScanAction action
     ) {
         String sql = """
-        SELECT 
+        SELECT TOP 1
             LogId,
-            EmployeeId, 
+            EmployeeId,
             ScanDateTime,
             ScanAction,
             ScanMethod,
             CreatedAt
         FROM TimeAttendanceLog
         WHERE EmployeeId = ?
-          AND CAST(ScanDateTime AS DATE) = ?
           AND ScanAction = ?
+          AND CAST(ScanDateTime AS DATE) = ?
+        ORDER BY ScanDateTime
     """;
 
         List<TimeAttendanceLog> list = jdbc.query(
                 sql,
                 mapper,
                 employeeId,
-                date,
-                action.name() // IN / OUT
+                action.name(),
+                scanDate
         );
 
         return list.isEmpty() ? null : list.get(0);
     }
+
+
 
 }

@@ -11,8 +11,6 @@ import org.chemtrovina.cmtmsys.utils.FxClipboardUtils;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory; // 👈 Đảm bảo bạn đã thêm dependency SLF4J/Logback
 
 @Component
 public class ShiftTypeEmployeeController {
@@ -32,8 +30,6 @@ public class ShiftTypeEmployeeController {
     // === Dependencies ===
     private final ShiftTypeEmployeeService shiftTypeEmployeeService;
 
-    // 🔥 ĐÃ THÊM: Khai báo Logger
-    private static final Logger logger = LoggerFactory.getLogger(ShiftTypeEmployeeController.class);
 
 
     // === State ===
@@ -102,9 +98,6 @@ public class ShiftTypeEmployeeController {
             clearForm();
 
         } catch (Exception ex) {
-            // 🔥 ĐÃ THÊM: Ghi lỗi chi tiết vào file log (cùng với Stack Trace)
-            logger.error("Lỗi khi lưu/cập nhật loại ca {}: {}", type.getShiftCode(), ex.getMessage(), ex);
-
             // Thông báo lỗi cho người dùng
             FxAlertUtils.error("Lỗi thao tác dữ liệu: Không thể lưu dữ liệu - " + ex.getMessage());
         }
@@ -125,8 +118,6 @@ public class ShiftTypeEmployeeController {
                 clearForm();
                 FxAlertUtils.info("Xóa thành công!");
             } catch (Exception ex) {
-                // 🔥 ĐÃ THÊM: Ghi lỗi chi tiết vào file log (cùng với Stack Trace)
-                logger.error("Lỗi khi xóa loại ca {}: {}", selectedShiftType.getShiftCode(), ex.getMessage(), ex);
 
                 // Thông báo lỗi cho người dùng
                 FxAlertUtils.error("Lỗi xóa dữ liệu: Không thể xóa dữ liệu - " + ex.getMessage());

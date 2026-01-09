@@ -93,14 +93,6 @@ public class EmployeeLeaveServiceImpl implements EmployeeLeaveService {
             LocalDate toDate
     ) {
 
-        if (fromDate == null || toDate == null) {
-            throw new IllegalArgumentException("Vui lòng chọn đủ từ ngày và đến ngày");
-        }
-
-        if (fromDate.isAfter(toDate)) {
-            throw new IllegalArgumentException("Từ ngày không được lớn hơn đến ngày");
-        }
-
         return leaveRepo.statisticByDepartment(fromDate, toDate);
     }
 

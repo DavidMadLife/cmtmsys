@@ -22,14 +22,9 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory; // 👈 Import cần thiết cho logging
-
 @Component
 public class ShiftPlanController {
 
-    // 🔥 KHAI BÁO LOGGER
-    private static final Logger logger = LoggerFactory.getLogger(ShiftPlanController.class);
 
     // ================= FILTER =================
     @FXML private DatePicker dpFrom;
@@ -98,7 +93,7 @@ public class ShiftPlanController {
             shiftCodes = shiftTypeEmployeeService.getAll()
                     .stream().map(ShiftTypeEmployee::getShiftCode).toList();
         } catch (Exception ex) {
-            logger.error("Lỗi khi tải danh sách Mã Ca: {}", ex.getMessage(), ex); // 🔥 Ghi lỗi tải data ban đầu
+            FxAlertUtils.error("Lỗi khi tải danh sách Mã Ca: {}"); // 🔥 Ghi lỗi tải data ban đầu
         }
 
 
@@ -218,7 +213,6 @@ public class ShiftPlanController {
         LocalDate to = dpTo.getValue();
 
         if (from == null || to == null || to.isBefore(from)) {
-            logger.warn("Lỗi Validate: Khoảng ngày không hợp lệ. Từ: {}, Đến: {}", from, to); // 🔥 Ghi WARN cho lỗi Validate
             FxAlertUtils.warning("Lỗi ngày khoảng ngày không hợp lệ.");
             return;
         }
@@ -248,7 +242,7 @@ public class ShiftPlanController {
         String filterShift = cbFilterShift.getValue();
 
         if (filterDay == null) {
-            logger.warn("Lỗi Validate: Ngày lọc chi tiết không được chọn."); // 🔥 Ghi WARN cho lỗi Validate
+            FxAlertUtils.warning("Lỗi Validate: Ngày lọc chi tiết không được chọn."); // 🔥 Ghi WARN cho lỗi Validate
             FxAlertUtils.warning("Vui lòng chọn ngày.");
             return;
         }
@@ -316,7 +310,6 @@ public class ShiftPlanController {
                         null
                 );
             } catch (Exception ex) {
-                logger.error("Lỗi cập nhật ca đơn lẻ cho NV ID {} vào ngày {}: {}", row.getEmployeeId(), date, ex.getMessage(), ex); // 🔥 Ghi lỗi
                 FxAlertUtils.error("Lỗi cập nhật ca: " + ex.getMessage());
                 // Refresh để revert lại giá trị cũ
                 tblShiftPlan.refresh();
@@ -387,7 +380,6 @@ public class ShiftPlanController {
                             null
                     );
                 } catch (Exception ex) {
-                    logger.error("Lỗi cập nhật ca đơn lẻ cho NV ID {} vào ngày {}: {}", row.getEmployeeId(), date, ex.getMessage(), ex); // 🔥 Ghi lỗi
                     FxAlertUtils.error("Lỗi cập nhật ca: " + ex.getMessage());
                     // Refresh để revert lại giá trị cũ
                     tblShiftPlan.refresh();
@@ -442,7 +434,7 @@ public class ShiftPlanController {
 
                 rows.add(new ShiftPlanRow(emp, displayedDates, plans));
             } catch (Exception ex) {
-                logger.error("Lỗi tải lịch ca cho NV ID {}: {}", emp.getEmployeeId(), ex.getMessage(), ex); // 🔥 Ghi lỗi
+                FxAlertUtils.error("Lỗi tải lịch ca cho NV ID {}: {}"); // 🔥 Ghi lỗi
             }
         }
 
@@ -462,13 +454,11 @@ public class ShiftPlanController {
         String note = txtNote.getText();
 
         if (shiftCode == null || shiftCode.isEmpty()) {
-            logger.warn("Lỗi Validate: Mã ca hàng loạt bị thiếu."); // 🔥 Ghi WARN cho lỗi Validate
             FxAlertUtils.warning("Thiếu ca vui lòng chọn ca.");
             return;
         }
 
         if (from == null || to == null || to.isBefore(from)) {
-            logger.warn("Lỗi Validate: Khoảng ngày hàng loạt không hợp lệ. Từ: {}, Đến: {}", from, to); // 🔥 Ghi WARN cho lỗi Validate
             FxAlertUtils.warning("Ngày không hợp lệ vui lòng chọn khoảng ngày đúng.");
             return;
         }
@@ -485,8 +475,7 @@ public class ShiftPlanController {
                     if (displayedDates.contains(d))
                         row.setShiftForDate(d, shiftCode);
                 } catch (Exception ex) {
-                    logger.error("Lỗi phân ca hàng loạt cho NV ID {} vào ngày {}: {}", empId, d, ex.getMessage(), ex); // 🔥 Ghi lỗi
-                    // Tiếp tục vòng lặp để cố gắng phân ca cho các ngày/nhân viên khác
+                    FxAlertUtils.error("Lỗi phân ca hàng loạt cho NV ID {} vào ngày {}: {}"); // 🔥 Ghi lỗi
                 }
             }
         }

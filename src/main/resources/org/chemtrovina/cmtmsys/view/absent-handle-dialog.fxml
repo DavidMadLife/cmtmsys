@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/24"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="org.chemtrovina.cmtmsys.controller.AbsentHandleDialogController"
+            prefWidth="520" prefHeight="520">
+
+    <!-- ===== HEADER ===== -->
+    <top>
+        <VBox spacing="8" style="-fx-background-color: #f6f7fb;">
+            <padding>
+                <Insets top="14" right="14" bottom="12" left="14"/>
+            </padding>
+
+            <Label text="XỬ LÝ CHẤM CÔNG"
+                   style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
+            <Label fx:id="lblEmp"
+                   text="NV045 - Lê C"
+                   style="-fx-font-size: 14px; -fx-text-fill: #333;"/>
+        </VBox>
+    </top>
+
+    <!-- ===== BODY ===== -->
+    <center>
+        <VBox spacing="12">
+            <padding>
+                <Insets top="14" right="14" bottom="14" left="14"/>
+            </padding>
+
+            <Label text="Chọn lý do xử lý:" style="-fx-font-size: 14px; -fx-font-weight: bold;"/>
+
+            <VBox spacing="8"
+                  style="-fx-background-color: white; -fx-background-radius: 12; -fx-border-radius: 12; -fx-border-color: #e7e7e7;">
+                <padding>
+                    <Insets top="12" right="12" bottom="12" left="12"/>
+                </padding>
+
+                <RadioButton fx:id="rbLateAlreadyScanned" text="Đi trễ (đã scan)  → Đã tính sĩ số"/>
+                <RadioButton fx:id="rbForgotScan" text="Quên scan  → Tự gán giờ IN đúng giờ theo ca  → Tính sĩ số"/>
+
+                <Separator/>
+
+                <RadioButton fx:id="rbAnnual" text="Phép năm"/>
+                <RadioButton fx:id="rbNoPlan" text="No plan"/>
+                <RadioButton fx:id="rbSick" text="Bệnh"/>
+                <RadioButton fx:id="rbNoPermission" text="Không phép (không liên lạc/không duyệt)"/>
+                <RadioButton fx:id="rbPrivateWork" text="Việc riêng"/>
+
+                <Label text="Mô tả chi tiết (tuỳ chọn):" style="-fx-text-fill: #666;"/>
+                <TextArea fx:id="txtDetail"
+                          promptText="Nhập mô tả chi tiết..."
+                          wrapText="true"
+                          prefRowCount="3"/>
+            </VBox>
+
+        </VBox>
+    </center>
+
+    <!-- ===== FOOTER BUTTONS ===== -->
+    <bottom>
+        <HBox spacing="10" alignment="CENTER_RIGHT">
+            <padding>
+                <Insets top="10" right="14" bottom="12" left="14"/>
+            </padding>
+
+            <Button fx:id="btnCancel" text="HỦY"
+                    style="-fx-background-color: #e5e5e5; -fx-font-weight: bold;"/>
+
+            <Button fx:id="btnConfirm" text="XÁC NHẬN"
+                    style="-fx-background-color: #2d7ff9; -fx-text-fill: white; -fx-font-weight: bold;"/>
+        </HBox>
+    </bottom>
+
+</BorderPane>

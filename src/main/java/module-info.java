@@ -14,7 +14,6 @@ module org.chemtrovina.cmtmsys {
     requires spring.context;
     requires spring.beans;
     requires javafx.media;
-    requires org.slf4j;
     requires static lombok;
 
     opens org.chemtrovina.cmtmsys to javafx.fxml;

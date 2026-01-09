@@ -8,6 +8,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import org.chemtrovina.cmtmsys.dto.ShiftSummaryDTO;
 import org.chemtrovina.cmtmsys.service.base.ShiftSummaryService;
+import org.chemtrovina.cmtmsys.utils.FxClipboardUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -74,6 +75,7 @@ public class ShiftSummaryController {
 
         // Thiết lập event handlers
         setupEventHandlers();
+        FxClipboardUtils.enableCopyShortcut(tblSummary);
     }
 
     private void initializeLineCheckboxes() {

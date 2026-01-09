@@ -28,6 +28,12 @@
                 <MenuItem fx:id="btnShiftPlanEmployee" text="Phân ca nhân sự (Shift Plan)" />
                 <MenuItem fx:id="btnShiftType" text="Quản lý Loại Ca (Shift Type)" />
                 <MenuItem fx:id="btnAttendanceLog" text="Log Chấm Công (Attendance Log)" />
+                <MenuItem fx:id="btnEmployeeAttendance"
+                          text="Điểm danh nhân viên (Employee Scan)" />
+
+                <MenuItem fx:id="btnAttendanceKiosk"
+                          text="Điểm danh Kiosk (Attendance Kiosk)" />
+
                 <MenuItem fx:id="btnEmployeeLeave" text="Nghỉ phép (Employee Leave)" />
             </items>
         </MenuButton>

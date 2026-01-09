@@ -34,6 +34,12 @@ public class NavbarController {
     @FXML private MenuItem btnShiftType;
     @FXML private MenuItem btnAttendanceLog;
     @FXML private MenuItem btnEmployeeLeave;
+    @FXML
+    private MenuItem btnEmployeeAttendance;
+    @FXML
+    private MenuItem btnAttendanceKiosk;
+
+
 
 
 
@@ -114,6 +120,7 @@ public class NavbarController {
         setPermission(btnShiftType, "btnShiftType", role);
         setPermission(btnAttendanceLog, "btnAttendanceLog", role);
         setPermission(btnEmployeeLeave, "btnEmployeeLeave", role);
+        setPermission(btnAttendanceKiosk, "btnAttendanceKiosk", role);
 
 
         setPermission(menuInventory, "menuInventory", role);
@@ -145,9 +152,47 @@ public class NavbarController {
         setPermission(menuEBoardLog, "menuEBoardLog", role);
         setPermission(menuEBoardHistory, "menuEBoardHistory", role);
 
+        // 🔥 FIX cho EMPLOYEE_MINI
+        if (role == UserRole.EMPLOYEE_MINI) {
+
+            // Ẩn toàn bộ menu
+            hideAllMenus();
+
+            // Chỉ bật menuEmployee + btnEmployeeAttendance
+            menuEmployee.setVisible(true);
+            menuEmployee.setManaged(true);
+
+            btnEmployeeAttendance.setVisible(true);
+            btnAttendanceKiosk.setVisible(true);
+        }
+
+
 
         System.out.println("✅ Role applied: " + role);
     }
+
+    private void hideAllMenus() {
+        MenuButton[] menus = {
+                menuWarehouse,
+                menuEmployee,
+                menuInventory,
+                menuPlan,
+                menuPerformance,
+                menuEBoard,
+                menuStencil,
+                menuSolder,
+                menuSparePart,
+                menuUser
+        };
+
+        for (MenuButton m : menus) {
+            if (m != null) {
+                m.setVisible(false);
+                m.setManaged(false);
+            }
+        }
+    }
+
 
     private void setPermission(Object node, String menuId, UserRole role) {
         boolean canAccess = RolePermissionConfig.canAccess(menuId, role);
@@ -190,6 +235,21 @@ public class NavbarController {
                         "/org/chemtrovina/cmtmsys/view/employeeLeaveView.fxml"
                 )
         );
+
+        btnEmployeeAttendance.setOnAction(e ->
+                openTab(
+                        "Employee Attendance",
+                        "/org/chemtrovina/cmtmsys/view/employee-attendance.fxml"
+                )
+        );
+        btnAttendanceKiosk.setOnAction(e ->
+                openTab(
+                        "Attendance Kiosk",
+                        "/org/chemtrovina/cmtmsys/view/attendance_scan_view.fxml"
+                )
+        );
+
+
 
 
 

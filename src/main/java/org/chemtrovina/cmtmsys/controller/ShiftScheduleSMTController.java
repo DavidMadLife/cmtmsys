@@ -10,6 +10,7 @@ import org.chemtrovina.cmtmsys.model.Warehouse;
 import org.chemtrovina.cmtmsys.service.base.ShiftScheduleSMTService;
 import org.chemtrovina.cmtmsys.service.base.WarehouseService;
 import org.chemtrovina.cmtmsys.utils.FxAlertUtils;
+import org.chemtrovina.cmtmsys.utils.FxClipboardUtils;
 import org.chemtrovina.cmtmsys.utils.TableColumnUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -54,6 +55,7 @@ public class ShiftScheduleSMTController {
 
         loadShifts();
         btnAddShift.setOnAction(e -> onAddShift());
+        FxClipboardUtils.enableCopyShortcut(tblShifts );
     }
 
     // ========================= SETUP =========================

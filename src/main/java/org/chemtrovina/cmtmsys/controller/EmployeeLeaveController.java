@@ -243,10 +243,10 @@ public class EmployeeLeaveController {
         LocalDate from = dpStatFrom.getValue();
         LocalDate to   = dpStatTo.getValue();
 
-        if (from == null || to == null) {
+/*        if (from == null || to == null) {
             FxAlertUtils.warning("Vui lòng chọn từ ngày và đến ngày");
             return;
-        }
+        }*/
 
         var data = employeeLeaveService.statisticByDepartment(from, to);
         tblLeaveStatistic.getItems().setAll(data);

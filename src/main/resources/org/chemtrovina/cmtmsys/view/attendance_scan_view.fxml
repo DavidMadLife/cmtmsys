@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns="http://javafx.com/javafx/24"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="org.chemtrovina.cmtmsys.controller.AttendanceScanController"
+            prefWidth="1000" prefHeight="650">
+
+    <!-- ===== TOP BAR ===== -->
+    <top>
+        <HBox spacing="12" BorderPane.alignment="CENTER_LEFT" styleClass="top-bar">
+            <padding>
+                <Insets top="10" right="14" bottom="10" left="14"/>
+            </padding>
+
+            <Label fx:id="lblCurrentShift"
+                   text="CA HIỆN TẠI: CA NGÀY (08:00 – 17:00)"
+                   styleClass="shift-label"/>
+
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <!-- Clock lớn hơn -->
+            <Label text="⏰"
+                   styleClass="clock-icon"
+                   style="-fx-font-size: 28px; -fx-font-weight: bold;"/>
+            <Label fx:id="lblClock"
+                   text="09:12"
+                   styleClass="clock-label"
+                   style="-fx-font-size: 28px; -fx-font-weight: bold;"/>
+        </HBox>
+    </top>
+
+    <!-- ===== CENTER CONTENT ===== -->
+    <center>
+        <SplitPane dividerPositions="0.62" BorderPane.alignment="CENTER">
+            <items>
+
+                <!-- ================= LEFT: SCAN AREA (CÂN LẠI) ================= -->
+                <VBox spacing="12" styleClass="panel">
+                    <padding>
+                        <Insets top="14" right="14" bottom="14" left="14"/>
+                    </padding>
+
+                    <Label text="Ô SCAN MÃ VẠCH / QR (AUTO FOCUS)"
+                           styleClass="section-title"/>
+
+                    <!-- Scan box: cố định chiều cao để không quá bự -->
+                    <StackPane fx:id="scanBox"
+                               styleClass="scan-box"
+                               prefHeight="160" minHeight="160" maxHeight="160">
+                        <TextField fx:id="txtScanInput"
+                                   promptText="Đưa mã vạch/QR vào máy scan..."
+                                   styleClass="scan-input"
+                                   maxWidth="1.7976931348623157E308"
+                                   prefHeight="56"/>
+                    </StackPane>
+
+                    <!-- Hàng trạng thái -->
+                    <HBox spacing="10" alignment="CENTER_LEFT">
+                        <Label text="Trạng thái:" styleClass="muted"/>
+                        <Label fx:id="lblScanStatus"
+                               text="Chờ quét..."
+                               styleClass="status-text"/>
+                    </HBox>
+
+                    <Separator/>
+
+                    <!-- Lịch sử quét để cân layout -->
+                    <Label text="LỊCH SỬ QUÉT HÔM NAY"
+                           styleClass="section-title"/>
+
+                    <TableView fx:id="tblScanned" VBox.vgrow="ALWAYS">
+                        <columns>
+                            <TableColumn fx:id="colNo" text="#" prefWidth="55"/>
+                            <TableColumn fx:id="colEmployeeCode" text="MSCN" prefWidth="140"/>
+                            <TableColumn fx:id="colFullName" text="Họ tên" prefWidth="280"/>
+                            <TableColumn fx:id="colScanTime" text="Giờ" prefWidth="120"/>
+                        </columns>
+                    </TableView>
+                </VBox>
+
+                <!-- ================= RIGHT: HEADCOUNT SUMMARY ================= -->
+                <VBox spacing="12" styleClass="panel">
+                    <padding>
+                        <Insets top="14" right="14" bottom="14" left="14"/>
+                    </padding>
+
+                    <Label text="TỔNG SĨ SỐ" styleClass="section-title"/>
+
+                    <VBox spacing="6" styleClass="summary-card">
+                        <Label text="CA NGÀY" styleClass="summary-title"/>
+                        <HBox spacing="10">
+                            <Label text="• Đi làm:"/>
+                            <Label fx:id="lblDayPresent" text="0" styleClass="summary-number"/>
+                        </HBox>
+                        <HBox spacing="10">
+                            <Label text="• Vắng:"/>
+                            <Label fx:id="lblDayAbsent" text="0" styleClass="summary-number"/>
+                        </HBox>
+                    </VBox>
+
+                    <VBox spacing="6" styleClass="summary-card">
+                        <Label text="CA ĐÊM" styleClass="summary-title"/>
+                        <HBox spacing="10">
+                            <Label text="• Đi làm:"/>
+                            <Label fx:id="lblNightPresent" text="0" styleClass="summary-number"/>
+                        </HBox>
+                        <HBox spacing="10">
+                            <Label text="• Vắng:"/>
+                            <Label fx:id="lblNightAbsent" text="0" styleClass="summary-number"/>
+                        </HBox>
+                    </VBox>
+
+                    <VBox spacing="6" styleClass="summary-card">
+                        <Label text="CHƯA CÓ CA" styleClass="summary-title"/>
+                        <HBox spacing="10">
+                            <Label text="• Đi làm:"/>
+                            <Label fx:id="lblNaPresent" text="0" styleClass="summary-number"/>
+                        </HBox>
+                        <HBox spacing="10">
+                            <Label text="• Vắng:"/>
+                            <Label fx:id="lblNaAbsent" text="0" styleClass="summary-number"/>
+                        </HBox>
+                    </VBox>
+
+                    <Button fx:id="btnViewAbsent"
+                            text="Xem DS vắng"
+                            styleClass="primary-btn"
+                            maxWidth="1.7976931348623157E308"/>
+
+                    <Region VBox.vgrow="ALWAYS"/>
+                </VBox>
+
+            </items>
+        </SplitPane>
+    </center>
+
+    <!-- ===== FOOTER: LAST RESULT ===== -->
+    <bottom>
+        <VBox spacing="6" styleClass="footer">
+            <padding>
+                <Insets top="10" right="14" bottom="12" left="14"/>
+            </padding>
+
+            <Label text="KẾT QUẢ SCAN CUỐI CÙNG" styleClass="footer-title"/>
+            <Label fx:id="lblLastResult"
+                   text="Chưa có dữ liệu"
+                   styleClass="footer-result"/>
+        </VBox>
+    </bottom>
+
+</BorderPane>

@@ -136,74 +136,63 @@ public class EmployeeLeaveRepositoryImpl implements EmployeeLeaveRepository {
         System.out.println("ToDate   = " + toDate);
 
         String sql = """
-        SELECT
-            e.DepartmentName AS departmentName,
-
-            COUNT(DISTINCT CASE
-                WHEN l.LeaveType = N'Nghỉ_phép'
-                THEN l.EmployeeId END) AS leavePermit,
-
-            COUNT(DISTINCT CASE
-                WHEN l.LeaveType = N'Nghỉ_không_phép'
-                THEN l.EmployeeId END) AS leaveNoPermit,
-
-            COUNT(DISTINCT CASE
-                WHEN l.LeaveType = N'Nghỉ_bệnh'
-                THEN l.EmployeeId END) AS leaveSick,
-            COUNT(DISTINCT CASE
-                WHEN l.LeaveType = N'Việc_riêng'
-                THEN l.EmployeeId END) AS leavePrivate,
-            COUNT(DISTINCT CASE
-                WHEN l.LeaveType = N'Khác'
-                THEN l.EmployeeId END) AS leaveOther
-        
-        FROM Employee e
-        LEFT JOIN EmployeeLeave l
-               ON l.EmployeeId = e.EmployeeId
-              AND l.FromDate <= ?
-              AND l.ToDate   >= ?
-
-        WHERE e.DepartmentName IS NOT NULL
-          AND e.DepartmentName <> ''
-
-        GROUP BY e.DepartmentName
-        ORDER BY e.DepartmentName
-    """;
+            SELECT
+                e.DepartmentName AS departmentName,
+            
+                COUNT(DISTINCT CASE
+                    WHEN l.LeaveType = N'Nghỉ_phép'
+                    THEN l.EmployeeId END) AS leavePermit,
+            
+                COUNT(DISTINCT CASE
+                    WHEN l.LeaveType = N'Nghỉ_không_phép'
+                    THEN l.EmployeeId END) AS leaveNoPermit,
+            
+                COUNT(DISTINCT CASE
+                    WHEN l.LeaveType = N'Nghỉ_bệnh'
+                    THEN l.EmployeeId END) AS leaveSick,
+            
+                COUNT(DISTINCT CASE
+                    WHEN l.LeaveType = N'Việc_riêng'
+                    THEN l.EmployeeId END) AS leavePrivate,
+            
+                COUNT(DISTINCT CASE
+                    WHEN l.LeaveType = N'Khác'
+                    THEN l.EmployeeId END) AS leaveOther
+            
+            FROM Employee e
+            LEFT JOIN EmployeeLeave l
+                   ON l.EmployeeId = e.EmployeeId
+                  AND ( ? IS NULL OR l.FromDate <= ? )
+                  AND ( ? IS NULL OR l.ToDate   >= ? )
+            
+            WHERE e.DepartmentName IS NOT NULL
+              AND e.DepartmentName <> ''
+            
+            GROUP BY e.DepartmentName
+            ORDER BY e.DepartmentName
+            """;
 
         return jdbc.query(
                 sql,
                 (rs, i) -> {
                     LeaveStatisticDeptDto dto = new LeaveStatisticDeptDto();
-
                     dto.setDepartmentName(rs.getString("departmentName"));
                     dto.setLeavePermit(rs.getInt("leavePermit"));
                     dto.setLeaveNoPermit(rs.getInt("leaveNoPermit"));
                     dto.setLeaveSick(rs.getInt("leaveSick"));
                     dto.setLeavePrivate(rs.getInt("leavePrivate"));
                     dto.setLeaveOther(rs.getInt("leaveOther"));
-
-                    // 🔥 SOUT TỪNG DÒNG
-                    System.out.println(
-                            "Dept=" + dto.getDepartmentName()
-                                    + " | permit=" + dto.getLeavePermit()
-                                    + " | noPermit=" + dto.getLeaveNoPermit()
-                                    + " | sick=" + dto.getLeaveSick()
-                                    + " | private=" + dto.getLeavePrivate()
-                                    + " | other=" + dto.getLeaveOther()
-                                    + " | total=" + dto.getTotal()
-                    );
-
                     return dto;
                 },
-                toDate,
-                fromDate
+                toDate, toDate,   // <= toDate
+                fromDate, fromDate // >= fromDate
         );
+
     }
 
-    @Override
     public List<EmployeeLeave> findByFilter(EmployeeLeaveFilter f) {
 
-        String sql = """
+        StringBuilder sql = new StringBuilder("""
         SELECT
             LeaveId,
             EmployeeId,
@@ -215,44 +204,54 @@ public class EmployeeLeaveRepositoryImpl implements EmployeeLeaveRepository {
             CreatedAt
         FROM EmployeeLeave
         WHERE 1=1
-    """;
+    """);
 
         List<Object> params = new ArrayList<>();
 
         if (f.getEmployeeId() != null) {
-            sql += " AND EmployeeId = ?";
+            sql.append(" AND EmployeeId = ?");
             params.add(f.getEmployeeId());
         }
 
         if (f.getLeaveType() != null) {
-            sql += " AND LeaveType = ?";
+            sql.append(" AND LeaveType = ?");
             params.add(f.getLeaveType().name());
         }
 
-        if (f.getFromDate() != null) {
-            sql += " AND ToDate >= ?";
+        // ✅ lọc theo khoảng ngày (chỉ khi có)
+        if (f.getFromDate() != null && f.getToDate() != null) {
+            sql.append(" AND FromDate <= ? AND ToDate >= ?");
+            params.add(f.getToDate());
             params.add(f.getFromDate());
-        }
 
-        if (f.getToDate() != null) {
-            sql += " AND FromDate <= ?";
+        } else if (f.getFromDate() != null) {
+            sql.append(" AND ToDate >= ?");
+            params.add(f.getFromDate());
+
+        } else if (f.getToDate() != null) {
+            sql.append(" AND FromDate <= ?");
             params.add(f.getToDate());
         }
 
-        sql += " ORDER BY FromDate DESC";
+        sql.append(" ORDER BY FromDate DESC");
 
-        return jdbc.query(sql, (rs, i) -> {
-            EmployeeLeave l = new EmployeeLeave();
-            l.setLeaveId(rs.getInt("LeaveId"));
-            l.setEmployeeId(rs.getInt("EmployeeId"));
-            l.setFromDate(rs.getDate("FromDate").toLocalDate());
-            l.setToDate(rs.getDate("ToDate").toLocalDate());
-            l.setLeaveType(LeaveType.valueOf(rs.getString("LeaveType")));
-            l.setReason(rs.getString("Reason"));
-            l.setDescription(rs.getString("Description"));
-            return l;
-        }, params.toArray());
+        return jdbc.query(
+                sql.toString(),
+                (rs, i) -> {
+                    EmployeeLeave l = new EmployeeLeave();
+                    l.setLeaveId(rs.getInt("LeaveId"));
+                    l.setEmployeeId(rs.getInt("EmployeeId"));
+                    l.setFromDate(rs.getDate("FromDate").toLocalDate());
+                    l.setToDate(rs.getDate("ToDate").toLocalDate());
+                    l.setLeaveType(LeaveType.valueOf(rs.getString("LeaveType")));
+                    l.setReason(rs.getString("Reason"));
+                    l.setDescription(rs.getString("Description"));
+                    return l;
+                },
+                params.toArray()
+        );
     }
+
 
 
     @Override
