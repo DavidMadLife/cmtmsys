@@ -6,6 +6,7 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.input.KeyCode;
+import javafx.stage.FileChooser;
 import javafx.util.converter.DefaultStringConverter;
 import org.chemtrovina.cmtmsys.dto.AbsentEmployeeDto;
 import org.chemtrovina.cmtmsys.dto.TimeAttendanceLogDto;
@@ -20,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 
+import java.io.File;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
@@ -50,6 +52,14 @@ public class TimeAttendanceController {
     @FXML private DatePicker dpScanDate;
     @FXML private Button btnFilterDate;
     @FXML private Button btnClearDateFilter;
+    @FXML private DatePicker dpImportDate;
+    @FXML private Button btnChooseExcel;
+    @FXML private Button btnImportExcel;
+    @FXML private Label lblExcelFile;
+    @FXML private Label lblImportStatus;
+
+    private java.io.File selectedExcelFile;
+
 
     // =========================================================
     // SCAN AREA
@@ -150,15 +160,9 @@ public class TimeAttendanceController {
 
         colPhoneNumber.setCellValueFactory(new PropertyValueFactory<>("phoneNumber"));
 
-
-
         colY.setCellValueFactory(new PropertyValueFactory<>("shiftName"));
 
         tblTimeAttendanceLog.setEditable(true);
-
-
-
-
 
         tblTimeAttendanceLog.setEditable(true);
         colIn.setOnEditCommit(event -> {
@@ -206,8 +210,6 @@ public class TimeAttendanceController {
                 tblTimeAttendanceLog.refresh();
             }
         });
-
-
 
         colIn.setEditable(true);
 
@@ -309,6 +311,14 @@ public class TimeAttendanceController {
             }
         });
 
+        dpImportDate.valueProperty().addListener((obs, oldV, newV) -> {
+            boolean ok = (newV != null && selectedExcelFile != null);
+            btnImportExcel.setDisable(!ok);
+        });
+
+        dpImportDate.setValue(dpScanDate.getValue() != null ? dpScanDate.getValue() : LocalDate.now());
+
+
     }
     private void setupAbsentTableColumns() {
         colAbsentNo.setCellValueFactory(new PropertyValueFactory<>("no"));
@@ -359,6 +369,9 @@ public class TimeAttendanceController {
 
         btnIn.setOnAction(e -> switchScanType("IN"));
         btnOut.setOnAction(e -> switchScanType("OUT"));
+        btnChooseExcel.setOnAction(e -> chooseExcelFile());
+        btnImportExcel.setOnAction(e -> importExcel()); // hàm này bước sau làm tiếp
+
     }
 
     // =========================================================
@@ -399,8 +412,6 @@ public class TimeAttendanceController {
 
         lblAbsentCount.setText(String.valueOf(absents.size()));
     }
-
-
     // =========================================================
     // FILTER
     // =========================================================
@@ -492,5 +503,96 @@ public class TimeAttendanceController {
         lblTotalIn.setText(String.valueOf(totalIn));
         lblAbsentCount.setText(String.valueOf(employees.size() - totalIn));
     }
+
+    private void chooseExcelFile() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Chọn file Excel chấm công");
+        fileChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("Excel Files", "*.xlsx", "*.xls")
+        );
+
+        File file = fileChooser.showOpenDialog(btnChooseExcel.getScene().getWindow());
+        if (file == null) return;
+
+        selectedExcelFile = file;
+        lblExcelFile.setText(file.getName());
+        lblExcelFile.setStyle("-fx-text-fill: #1b5e20; -fx-font-weight: bold;");
+
+        // bật nút Import khi đủ điều kiện
+        btnImportExcel.setDisable(dpImportDate.getValue() == null);
+    }
+
+    private void importExcel() {
+        if (selectedExcelFile == null) {
+            FxAlertUtils.warning("Vui lòng chọn file Excel.");
+            return;
+        }
+        if (dpImportDate.getValue() == null) {
+            FxAlertUtils.warning("Vui lòng chọn ngày import.");
+            return;
+        }
+
+        LocalDate importDate = dpImportDate.getValue();
+
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Xác nhận import");
+        confirm.setHeaderText("Import chấm công theo ngày: " + importDate);
+        confirm.setContentText("Nếu đã có dữ liệu trong ngày sẽ UPDATE, chưa có sẽ CREATE.\nBạn chắc chắn tiếp tục?");
+        if (confirm.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) return;
+
+        try {
+            var result = logService.importAttendanceFromExcel(selectedExcelFile, importDate);
+
+            // ✅ label status
+            lblImportStatus.setText(
+                    "Import OK: " + result.success()
+                            + " | Skip: " + result.skip()
+                            + " | Error: " + result.error()
+            );
+
+            if (result.error() > 0) {
+                lblImportStatus.setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
+            } else if (result.skip() > 0) {
+                lblImportStatus.setStyle("-fx-text-fill: #e65100; -fx-font-weight: bold;"); // cam
+            } else {
+                lblImportStatus.setStyle("-fx-text-fill: green; -fx-font-weight: bold;");
+            }
+
+            // ✅ reload UI theo ngày import
+            dpScanDate.setValue(importDate);
+            handleDateFilter();
+
+            // ✅ show detail nếu có lỗi/skip
+            if (result.messages() != null && !result.messages().isEmpty()) {
+                showImportDetailDialog(result.messages());
+            }
+
+        } catch (Exception e) {
+            lblImportStatus.setText("Import FAIL: " + e.getMessage());
+            lblImportStatus.setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
+            FxAlertUtils.error(e.getMessage());
+        }
+    }
+
+    private void showImportDetailDialog(List<String> messages) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Chi tiết Import");
+        alert.setHeaderText("Danh sách dòng bị Skip/Error");
+
+        TextArea area = new TextArea(String.join("\n", messages));
+        area.setEditable(false);
+        area.setWrapText(false);
+        area.setPrefWidth(750);
+        area.setPrefHeight(400);
+
+        alert.getDialogPane().setContent(area);
+        alert.getDialogPane().setPrefWidth(800);
+
+        alert.showAndWait();
+    }
+
+
+
+
 
 }

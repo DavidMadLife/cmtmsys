@@ -1,13 +1,11 @@
 package org.chemtrovina.cmtmsys.service.base;
 
-import org.chemtrovina.cmtmsys.dto.AbsentEmployeeDto;
-import org.chemtrovina.cmtmsys.dto.AttendanceSummaryDto;
-import org.chemtrovina.cmtmsys.dto.EmployeeScanViewDto;
-import org.chemtrovina.cmtmsys.dto.TimeAttendanceLogDto;
+import org.chemtrovina.cmtmsys.dto.*;
 import org.chemtrovina.cmtmsys.model.ShiftTypeEmployee;
 import org.chemtrovina.cmtmsys.model.TimeAttendanceLog;
 import org.chemtrovina.cmtmsys.model.enums.ScanAction;
 
+import java.io.File;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -44,6 +42,8 @@ public interface TimeAttendanceLogService {
     List<EmployeeScanViewDto> getTodayScannedForEmployeeView();
 
     AttendanceSummaryDto getAttendanceSummary(LocalDate date);
+
+    AttendanceImportResult importAttendanceFromExcel(File file, LocalDate workDate);
 
 
 

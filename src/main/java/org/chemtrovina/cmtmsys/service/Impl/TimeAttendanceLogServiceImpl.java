@@ -1,9 +1,6 @@
 package org.chemtrovina.cmtmsys.service.Impl;
 
-import org.chemtrovina.cmtmsys.dto.AbsentEmployeeDto;
-import org.chemtrovina.cmtmsys.dto.AttendanceSummaryDto;
-import org.chemtrovina.cmtmsys.dto.EmployeeScanViewDto;
-import org.chemtrovina.cmtmsys.dto.TimeAttendanceLogDto;
+import org.chemtrovina.cmtmsys.dto.*;
 import org.chemtrovina.cmtmsys.model.*;
 import org.chemtrovina.cmtmsys.model.enums.AttendanceTimeStatus;
 import org.chemtrovina.cmtmsys.model.enums.ScanAction;
@@ -16,6 +13,7 @@ import org.chemtrovina.cmtmsys.service.base.TimeAttendanceLogService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.File;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
@@ -858,5 +856,169 @@ public class TimeAttendanceLogServiceImpl implements TimeAttendanceLogService {
 
         return realDate;
     }
+
+
+    @Override
+    @Transactional
+    public AttendanceImportResult importAttendanceFromExcel(File file, LocalDate workDate) {
+
+        if (file == null) throw new RuntimeException("File import null");
+        if (workDate == null) throw new RuntimeException("Ngày import không hợp lệ");
+
+        List<String> messages = new ArrayList<>();
+        int ok = 0, skip = 0, err = 0;
+
+        List<AttendanceRow> rows = readAttendanceExcel(file); // bạn implement hàm này bên dưới
+
+        for (AttendanceRow r : rows) {
+            try {
+                // ===== validate cơ bản =====
+                if (isBlank(r.employeeCode)) {
+                    skip++;
+                    messages.add("Row " + r.rowIndex + ": EmployeeCode trống");
+                    continue;
+                }
+
+                Employee emp = employeeRepo.findByMscnId1(r.employeeCode.trim());
+                if (emp == null) {
+                    skip++;
+                    messages.add("Row " + r.rowIndex + ": Không tìm thấy mã NV: " + r.employeeCode);
+                    continue;
+                }
+
+                // ===== check tên để tránh import sai người =====
+                if (!isBlank(r.fullName)) {
+                    String fileName = normalizeName(r.fullName);
+                    String sysName = normalizeName(emp.getFullName());
+                    if (!fileName.equals(sysName)) {
+                        skip++;
+                        messages.add("Row " + r.rowIndex + ": Tên không khớp. File='" + r.fullName
+                                + "' | Sys='" + emp.getFullName() + "'");
+                        continue;
+                    }
+                }
+
+                // ===== upsert shift plan (nếu có shift) =====
+                if (!isBlank(r.shiftCode)) {
+                    // ghi note để trace
+                    shiftPlanEmployeeRepo.saveOrUpdate(emp.getEmployeeId(), workDate, r.shiftCode.trim(), "IMPORT EXCEL");
+                    // nếu bạn không có repo saveOrUpdate, dùng service:
+                    // shiftPlanEmployeeService.saveOrUpdate(emp.getEmployeeId(), workDate, r.shiftCode.trim(), "IMPORT EXCEL");
+                }
+
+                // ===== upsert IN/OUT bằng manualFixAttendance (đã support ca đêm) =====
+                if (!isBlank(r.inTime)) {
+                    manualFixAttendance(emp.getEmployeeId(), workDate, normalizeTime(r.inTime), ScanAction.IN);
+                }
+
+                if (!isBlank(r.outTime)) {
+                    manualFixAttendance(emp.getEmployeeId(), workDate, normalizeTime(r.outTime), ScanAction.OUT);
+                }
+
+                ok++;
+
+            } catch (Exception ex) {
+                err++;
+                messages.add("Row " + r.rowIndex + ": " + ex.getMessage());
+            }
+        }
+
+        return new AttendanceImportResult(ok, skip, err, messages);
+    }
+
+    private boolean isBlank(String s) {
+        return s == null || s.trim().isBlank();
+    }
+
+    private String normalizeName(String s) {
+        return s == null ? "" : s.trim().replaceAll("\\s+", " ").toLowerCase();
+    }
+
+    /** chuẩn hoá về HH:mm (accept HH:mm:ss hoặc H:mm) */
+    private String normalizeTime(String s) {
+        if (s == null) return null;
+        s = s.trim();
+        if (s.isBlank()) return null;
+
+        // cho phép "HH:mm:ss" -> "HH:mm"
+        if (s.matches("^\\d{1,2}:\\d{2}:\\d{2}$")) {
+            return s.substring(0, 5);
+        }
+        // nếu "H:mm" -> LocalTime parse vẫn ok
+        // manualFixAttendance dùng LocalTime.parse => cần "HH:mm" hoặc "H:mm"
+        return s;
+    }
+
+    /** row model đơn giản */
+    private static class AttendanceRow {
+        int rowIndex;
+        String employeeCode;
+        String fullName;
+        String shiftCode;
+        String inTime;
+        String outTime;
+    }
+
+    private List<AttendanceRow> readAttendanceExcel(File file) {
+        try (var fis = new java.io.FileInputStream(file);
+             var wb = org.apache.poi.ss.usermodel.WorkbookFactory.create(fis)) {
+
+            var sheet = wb.getSheetAt(0);
+            List<AttendanceRow> rows = new ArrayList<>();
+
+            // bắt đầu từ row 1 nếu row 0 là header
+            for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+                var row = sheet.getRow(i);
+                if (row == null) continue;
+
+                AttendanceRow r = new AttendanceRow();
+                r.rowIndex = i + 1; // excel line
+
+                r.employeeCode = readString(row.getCell(0)); // A
+                r.fullName     = readString(row.getCell(1)); // B
+                r.shiftCode    = readString(row.getCell(2)); // C
+                r.inTime       = readTime(row.getCell(3));   // D
+                r.outTime      = readTime(row.getCell(4));   // E
+
+                // bỏ qua dòng rỗng hoàn toàn
+                if (isBlank(r.employeeCode) && isBlank(r.fullName) && isBlank(r.shiftCode)
+                        && isBlank(r.inTime) && isBlank(r.outTime)) {
+                    continue;
+                }
+
+                rows.add(r);
+            }
+
+            return rows;
+
+        } catch (Exception e) {
+            throw new RuntimeException("Đọc Excel thất bại: " + e.getMessage(), e);
+        }
+    }
+
+    private String readString(org.apache.poi.ss.usermodel.Cell cell) {
+        if (cell == null) return null;
+        cell.setCellType(org.apache.poi.ss.usermodel.CellType.STRING);
+        String s = cell.getStringCellValue();
+        return s == null ? null : s.trim();
+    }
+
+    private String readTime(org.apache.poi.ss.usermodel.Cell cell) {
+        if (cell == null) return null;
+
+        // cell time dạng numeric
+        if (cell.getCellType() == org.apache.poi.ss.usermodel.CellType.NUMERIC
+                && org.apache.poi.ss.usermodel.DateUtil.isCellDateFormatted(cell)) {
+
+            var t = cell.getLocalDateTimeCellValue().toLocalTime();
+            return t.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"));
+        }
+
+        // dạng string
+        String s = cell.toString();
+        return (s == null) ? null : s.trim();
+    }
+
+
 
 }

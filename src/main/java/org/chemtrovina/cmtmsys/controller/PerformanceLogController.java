@@ -218,20 +218,31 @@ public class PerformanceLogController {
             String fileName = fullPath.getFileName().toString();
             appendLog("📥 New file detected: " + fileName);
 
-            String carrierId = extractCarrier(fullPath);
-            if (carrierId == null) {
-                appendLog("❌ Cannot detect CarrierID.");
+            // 1) đọc Carrier + Recipe (Carrier có thể null do file AOI để trống)
+            String carrierId = extractCarrier(fullPath);   // có thể null
+            String recipeName = extractRecipe(fullPath);   // nên có, ví dụ: DU7000(HDWB-2470)-TOP-BOT
+
+            appendLog("🔎 Detect CarrierID: " + (carrierId == null ? "(blank)" : carrierId));
+            appendLog("🔎 Detect RecipeName: " + (recipeName == null ? "(blank)" : recipeName));
+
+            // 2) chặn trùng: nếu file đã save rồi thì skip luôn (không phụ thuộc carrier)
+            if (logService.isFileAlreadySaved(fileName)) {
+                appendLog("⏩ File already saved: " + fileName);
                 return;
             }
 
-            if (logService.isAlreadyProcessed(carrierId) &&
-                    logService.isFileAlreadySaved(fileName)) {
-                appendLog("⏩ Already processed.");
+            // 3) nếu có carrierId thì mới check isAlreadyProcessed(carrierId)
+            if (carrierId != null && logService.isAlreadyProcessed(carrierId)) {
+                appendLog("⏩ Carrier already processed: " + carrierId);
                 return;
             }
 
-            Product product = productResolver.resolveFromCarrierAndFileName(
-                    carrierId, fileName, this::appendLog
+            // 4) resolve Product theo carrier hoặc theo recipe
+            Product product = productResolver.resolve(
+                    carrierId,
+                    recipeName,
+                    fileName,
+                    this::appendLog
             );
 
             if (product == null) {
@@ -239,7 +250,8 @@ public class PerformanceLogController {
                 return;
             }
 
-            processLog(fullPath, carrierId, product, warehouse);
+            // 5) process log (carrierId có thể null => truyền "" để tránh NPE DB nếu cần)
+            processLog(fullPath, carrierId == null ? "" : carrierId, product, warehouse);
 
         } catch (Exception e) {
             appendLog("❌ Error: " + e.getMessage());
@@ -278,18 +290,75 @@ public class PerformanceLogController {
     }
 
     // ===================== Carrier Extract =====================
+    private String detectDelimiter(String headerLine) {
+        // file bạn paste là TAB-separated
+        if (headerLine.contains("\t")) return "\t";
+        return ","; // fallback csv
+    }
+
     private String extractCarrier(Path file) {
         try (BufferedReader br = Files.newBufferedReader(file)) {
-            br.readLine(); // skip header
-            String ln = br.readLine();
+            String header = br.readLine();
+            if (header == null) return null;
 
-            if (ln != null) {
-                String[] parts = ln.split(",");
-                if (parts.length >= 3) return parts[2].trim();
+            String delimiter = detectDelimiter(header);
+
+            String ln = br.readLine(); // first data row
+            if (ln == null) return null;
+
+            String[] parts = ln.split(java.util.regex.Pattern.quote(delimiter), -1);
+
+            // tìm index "Carrier ID" theo header thay vì hardcode parts[2]
+            String[] headers = header.split(java.util.regex.Pattern.quote(delimiter), -1);
+            int carrierIdx = -1;
+            for (int i = 0; i < headers.length; i++) {
+                String h = headers[i].trim().toLowerCase();
+                if (h.equals("carrier id") || h.contains("carrier")) {
+                    carrierIdx = i;
+                    break;
+                }
             }
-        } catch (Exception ignored) {}
-        return null;
+
+            if (carrierIdx == -1 || carrierIdx >= parts.length) return null;
+
+            String carrier = parts[carrierIdx].trim();
+            return carrier.isBlank() ? null : carrier;
+        } catch (Exception ignored) {
+            return null;
+        }
     }
+
+    private String extractRecipe(Path file) {
+        try (BufferedReader br = Files.newBufferedReader(file)) {
+            String header = br.readLine();
+            if (header == null) return null;
+
+            String delimiter = detectDelimiter(header);
+
+            String ln = br.readLine();
+            if (ln == null) return null;
+
+            String[] parts = ln.split(java.util.regex.Pattern.quote(delimiter), -1);
+
+            String[] headers = header.split(java.util.regex.Pattern.quote(delimiter), -1);
+            int recipeIdx = -1;
+            for (int i = 0; i < headers.length; i++) {
+                String h = headers[i].trim().toLowerCase();
+                if (h.equals("recipe name") || h.contains("recipe")) {
+                    recipeIdx = i;
+                    break;
+                }
+            }
+
+            if (recipeIdx == -1 || recipeIdx >= parts.length) return null;
+
+            String recipe = parts[recipeIdx].trim();
+            return recipe.isBlank() ? null : recipe;
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
 
     // ===================== STOP =====================
     private void stopWatching() {
@@ -298,6 +367,7 @@ public class PerformanceLogController {
 
         try {
             if (watchService != null) watchService.close();
+
         } catch (Exception ignored) {}
 
         appendLog("🛑 Stopped.");
@@ -310,7 +380,8 @@ public class PerformanceLogController {
         });
     }
 
-    // ===================== LOG =====================
+    // ===================== LOG ============
+    // =========
     private void appendLog(String msg) {
         Platform.runLater(() ->
                 txtLog.appendText("[" + LocalDateTime.now() + "] " + msg + "\n")

@@ -34,7 +34,12 @@ public interface EmployeeRepository {
     void batchInsert(List<Employee> employees);
     void batchUpdate(List<Employee> employees);
 
+    void batchMarkInactiveByIds(List<Integer> employeeIds, LocalDate exitDate);
+
+
     Employee findByFullName(String fullName);
+
+
 
 
 }

@@ -1,10 +1,8 @@
 package org.chemtrovina.cmtmsys.service.base;
 
-import org.chemtrovina.cmtmsys.dto.ImportResult;
 import org.chemtrovina.cmtmsys.model.Product;
 import org.chemtrovina.cmtmsys.model.enums.ModelType;
 
-import java.io.File;
 import java.util.List;
 
 public interface ProductService {

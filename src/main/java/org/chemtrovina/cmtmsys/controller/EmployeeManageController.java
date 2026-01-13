@@ -20,6 +20,7 @@ import org.chemtrovina.cmtmsys.dto.DepartmentSummaryDto;
 import org.chemtrovina.cmtmsys.dto.EmployeeDto;
 import org.chemtrovina.cmtmsys.model.enums.EmployeeStatus;
 import org.chemtrovina.cmtmsys.service.base.EmployeeService;
+import org.chemtrovina.cmtmsys.utils.FxAlertUtils;
 import org.chemtrovina.cmtmsys.utils.FxClipboardUtils;
 import org.chemtrovina.cmtmsys.utils.FxFilterUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -385,16 +386,33 @@ public class EmployeeManageController {
         File file = fileChooser.showOpenDialog(tblEmployee.getScene().getWindow());
         if (file == null) return;
 
+        DatePicker dp = new DatePicker(LocalDate.now());
+        Alert dateDialog = new Alert(Alert.AlertType.CONFIRMATION);
+        dateDialog.setTitle("Chọn ngày import");
+        dateDialog.setHeaderText("Chọn ngày import (ngày sẽ cắt tên nếu thiếu trong file)");
+        dateDialog.getDialogPane().setContent(dp);
+
+        if (dateDialog.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) return;
+
+        LocalDate importDate = dp.getValue();
+        if (importDate == null) {
+            FxAlertUtils.warning("Vui lòng chọn ngày import.");
+            return;
+        }
+
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
         confirm.setTitle("Xác nhận import");
-        confirm.setHeaderText("Import nhân viên từ Excel");
-        confirm.setContentText("Dữ liệu trùng MSCNID1 sẽ được cập nhật.\nBạn có chắc muốn tiếp tục?");
+        confirm.setHeaderText("Import nhân viên từ Excel - ngày: " + importDate);
+        confirm.setContentText("""
+Dữ liệu trùng MSCNID1 sẽ được cập nhật.
+Nhân viên ACTIVE không có trong file sẽ bị CẮT TÊN (INACTIVE) với ExitDate = ngày import.
+Bạn có chắc muốn tiếp tục?
+""");
 
-        Optional<ButtonType> result = confirm.showAndWait();
-        if (result.isEmpty() || result.get() != ButtonType.OK) return;
+        if (confirm.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) return;
 
         try {
-            employeeService.importEmployeeFromExcel(file);
+            employeeService.importEmployeeFromExcel(file, importDate);
 
             Alert success = new Alert(Alert.AlertType.INFORMATION);
             success.setTitle("Thành công");
@@ -402,29 +420,18 @@ public class EmployeeManageController {
             success.setContentText("Import Excel thành công!");
             success.showAndWait();
 
-            // reload table + summary
             loadEmployeeTable();
 
         } catch (Exception ex) {
-
-            // ✅ LOG FULL STACKTRACE
             ex.printStackTrace();
-
             Alert error = new Alert(Alert.AlertType.ERROR);
             error.setTitle("Lỗi import");
             error.setHeaderText("Import Excel thất bại");
-
-            // UI chỉ hiện thông báo ngắn gọn
-            error.setContentText(
-                    ex.getCause() != null
-                            ? ex.getCause().getMessage()
-                            : ex.getMessage()
-            );
-
+            error.setContentText(ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage());
             error.showAndWait();
         }
-
     }
+
 
     private void deleteSelectedEmployee() {
         EmployeeDto dto = tblEmployee.getSelectionModel().getSelectedItem();

@@ -98,50 +98,91 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     @Transactional
-    public void importEmployeeFromExcel(File file) {
+    public void importEmployeeFromExcel(File file, LocalDate importDate) {
 
-        // 1️⃣ Read Excel
+        if (importDate == null) {
+            throw new RuntimeException("Vui lòng chọn ngày import (ngày cắt tên).");
+        }
+
+        // 1) Read Excel
         List<EmployeeExcelDto> excelList = employeeExcelService.readEmployeeExcel(file);
-        if (excelList.isEmpty()) return;
+        if (excelList == null || excelList.isEmpty()) {
+            throw new RuntimeException("File Excel không có dữ liệu.");
+        }
 
-        // 2️⃣ Load employee hiện có
+        // 2) Build set mã nhân viên trong file
+        var excelCodes = excelList.stream()
+                .map(EmployeeExcelDto::getMscnId1)
+                .filter(s -> s != null && !s.isBlank())
+                .map(String::trim)
+                .collect(Collectors.toSet());
+
+        if (excelCodes.isEmpty()) {
+            throw new RuntimeException("Không tìm thấy cột MSCNID1 trong file.");
+        }
+
+        // 3) Load employee hiện có -> map theo MSCNID1
         Map<String, Employee> employeeMap =
                 employeeRepository.findAll().stream()
                         .filter(e -> e.getMSCNID1() != null && !e.getMSCNID1().isBlank())
                         .collect(Collectors.toMap(
-                                Employee::getMSCNID1,
-                                e -> e
+                                e -> e.getMSCNID1().trim(),
+                                e -> e,
+                                (a, b) -> a
                         ));
 
         List<Employee> insertList = new ArrayList<>();
         List<Employee> updateList = new ArrayList<>();
 
-        // 3️⃣ Phân loại
+        // 4) Upsert
         for (EmployeeExcelDto x : excelList) {
 
             if (x.getMscnId1() == null || x.getMscnId1().isBlank())
                 continue;
 
+            String code = x.getMscnId1().trim();
+
             if (x.getDepartmentName() == null || x.getDepartmentName().isBlank())
-                throw new RuntimeException("DepartmentName không được rỗng: " + x.getMscnId1());
+                throw new RuntimeException("DepartmentName không được rỗng: " + code);
 
             if (x.getPositionName() == null || x.getPositionName().isBlank())
-                throw new RuntimeException("PositionName không được rỗng: " + x.getMscnId1());
+                throw new RuntimeException("PositionName không được rỗng: " + code);
 
-            Employee existing = employeeMap.get(x.getMscnId1());
+            Employee existing = employeeMap.get(code);
 
             if (existing != null) {
                 mapUpdate(existing, x);
+
+                // ✅ tuỳ nghiệp vụ: xuất hiện trong file => đang làm
+                existing.setStatus(EmployeeStatus.ACTIVE);
+                existing.setExitDate(null);
+
                 updateList.add(existing);
             } else {
-                insertList.add(mapInsert(x));
+                Employee e = mapInsert(x);
+                e.setStatus(EmployeeStatus.ACTIVE);
+                e.setExitDate(null);
+                insertList.add(e);
             }
         }
 
-        // 4️⃣ DB
         if (!insertList.isEmpty()) employeeRepository.batchInsert(insertList);
         if (!updateList.isEmpty()) employeeRepository.batchUpdate(updateList);
+
+        // 5) ✅ SYNC CUT NAME: ai ACTIVE mà không có trong file => INACTIVE + ExitDate=importDate
+        List<Employee> active = employeeRepository.findAllActive();
+
+        List<Integer> toCutIds = active.stream()
+                .filter(e -> e.getMSCNID1() != null && !e.getMSCNID1().isBlank())
+                .filter(e -> !excelCodes.contains(e.getMSCNID1().trim()))
+                .map(Employee::getEmployeeId)
+                .toList();
+
+        if (!toCutIds.isEmpty()) {
+            employeeRepository.batchMarkInactiveByIds(toCutIds, importDate);
+        }
     }
+
 
 
     private void mapUpdate(Employee e, EmployeeExcelDto x) {

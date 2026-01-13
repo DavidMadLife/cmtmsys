@@ -59,6 +59,49 @@
                     <Label fx:id="lblScanStatus" text="Sẵn sàng" style="-fx-text-fill: green; -fx-font-weight: bold;" />
                 </children>
             </HBox>
+
+            <TitledPane text="Import chấm công từ Excel"
+                        expanded="true">
+                <content>
+                    <HBox spacing="15"
+                          alignment="CENTER_LEFT"
+                          >
+
+                        <padding>
+                            <Insets top="10" right="10" bottom="10" left="10"/>
+                        </padding>
+
+                        <!-- Ngày import -->
+                        <Label text="Ngày import:" style="-fx-font-weight: bold;" />
+                        <DatePicker fx:id="dpImportDate"
+                                    promptText="YYYY-MM-DD"
+                                    prefWidth="150"/>
+
+                        <!-- Chọn file -->
+                        <Button fx:id="btnChooseExcel"
+                                text="Chọn file Excel"/>
+
+                        <Label fx:id="lblExcelFile"
+                               text="Chưa chọn file"
+                               style="-fx-text-fill: gray; -fx-font-style: italic;"/>
+
+                        <!-- Import -->
+                        <Button fx:id="btnImportExcel"
+                                text="IMPORT"
+                                disable="true"
+                                style="-fx-background-color: #1976D2;
+                           -fx-text-fill: white;
+                           -fx-font-weight: bold;"/>
+
+                        <!-- Status -->
+                        <Label fx:id="lblImportStatus"
+                               text=""
+                               style="-fx-font-weight: bold;"/>
+
+                    </HBox>
+                </content>
+            </TitledPane>
+
         </VBox>
     </top>
 

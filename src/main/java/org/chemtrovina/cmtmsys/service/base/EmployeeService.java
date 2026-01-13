@@ -22,7 +22,8 @@ public interface EmployeeService {
     Employee getByMscnId2(String mscnId2);
 
     void updateManager(int employeeId, String managerName);
-    void importEmployeeFromExcel(File file);
+    void importEmployeeFromExcel(File file, LocalDate importDate);
+
     List<EmployeeDto> getWorkingEmployees(LocalDate date);
 
     Employee findByFullName(String fullName);

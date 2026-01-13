@@ -354,6 +354,24 @@ public class EmployeeRepositoryImpl extends GenericRepositoryImpl<Employee> impl
     }
 
     @Override
+    public void batchMarkInactiveByIds(List<Integer> employeeIds, LocalDate exitDate) {
+        if (employeeIds == null || employeeIds.isEmpty()) return;
+
+        String sql = """
+        UPDATE Employee
+        SET Status = ?, ExitDate = ?
+        WHERE EmployeeId = ?
+    """;
+
+        jdbcTemplate.batchUpdate(sql, employeeIds, 200, (ps, empId) -> {
+            ps.setInt(1, EmployeeStatus.INACTIVE.getCode());
+            ps.setObject(2, exitDate);
+            ps.setInt(3, empId);
+        });
+    }
+
+
+    @Override
     public void batchUpdate(List<Employee> employees) {
         if (employees == null || employees.isEmpty()) return;
 
@@ -401,6 +419,8 @@ public class EmployeeRepositoryImpl extends GenericRepositoryImpl<Employee> impl
             ps.setInt(17, e.getEmployeeId());
         });
     }
+
+
 
 
 }
