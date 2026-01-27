@@ -100,11 +100,11 @@ public class NavbarController {
 
     @FXML
     public void initialize() {
-        applyRolePermissions();
+        //applyRolePermissions();
         setupMenuActions();
     }
 
-    private void applyRolePermissions() {
+    /*private void applyRolePermissions() {
         UserRole role = UserContext.getUser().getRole();
 
         // Duyệt toàn bộ các menu có thể null
@@ -169,9 +169,9 @@ public class NavbarController {
 
 
         System.out.println("✅ Role applied: " + role);
-    }
+    }*/
 
-    private void hideAllMenus() {
+    /*private void hideAllMenus() {
         MenuButton[] menus = {
                 menuWarehouse,
                 menuEmployee,
@@ -191,10 +191,9 @@ public class NavbarController {
                 m.setManaged(false);
             }
         }
-    }
+    }*/
 
-
-    private void setPermission(Object node, String menuId, UserRole role) {
+    /*private void setPermission(Object node, String menuId, UserRole role) {
         boolean canAccess = RolePermissionConfig.canAccess(menuId, role);
 
         if (node instanceof MenuButton menuButton) {
@@ -208,7 +207,7 @@ public class NavbarController {
             control.setVisible(canAccess);
             control.setManaged(canAccess);
         }
-    }
+    }*/
 
 
     private void setupMenuActions() {

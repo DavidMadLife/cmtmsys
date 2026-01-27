@@ -19,6 +19,8 @@ import org.chemtrovina.cmtmsys.config.DataSourceConfig;
 import org.chemtrovina.cmtmsys.dto.DepartmentSummaryDto;
 import org.chemtrovina.cmtmsys.dto.EmployeeDto;
 import org.chemtrovina.cmtmsys.model.enums.EmployeeStatus;
+import org.chemtrovina.cmtmsys.model.enums.UserRole;
+import org.chemtrovina.cmtmsys.security.RequiresRoles;
 import org.chemtrovina.cmtmsys.service.base.EmployeeService;
 import org.chemtrovina.cmtmsys.utils.FxAlertUtils;
 import org.chemtrovina.cmtmsys.utils.FxClipboardUtils;
@@ -31,6 +33,12 @@ import javax.sql.DataSource;
 import java.io.File;
 import java.time.LocalDate;
 import java.util.*;
+
+@RequiresRoles({
+        UserRole.ADMIN,
+        UserRole.EMPLOYEE,
+        UserRole.EMPLOYEE_MINI
+})
 
 @Component
 public class EmployeeManageController {

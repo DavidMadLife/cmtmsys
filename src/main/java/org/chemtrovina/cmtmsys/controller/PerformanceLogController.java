@@ -13,6 +13,8 @@ import org.chemtrovina.cmtmsys.helper.ProductResolver;
 import org.chemtrovina.cmtmsys.model.PcbPerformanceLog;
 import org.chemtrovina.cmtmsys.model.Product;
 import org.chemtrovina.cmtmsys.model.Warehouse;
+import org.chemtrovina.cmtmsys.model.enums.UserRole;
+import org.chemtrovina.cmtmsys.security.RequiresRoles;
 import org.chemtrovina.cmtmsys.service.base.MaterialConsumeDetailLogService;
 import org.chemtrovina.cmtmsys.service.base.PcbPerformanceLogService;
 import org.chemtrovina.cmtmsys.service.base.ProductService;
@@ -28,6 +30,12 @@ import java.nio.file.*;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.*;
+
+@RequiresRoles({
+        UserRole.ADMIN,
+        UserRole.INVENTORY,
+        UserRole.SUBLEEDER
+})
 
 @Component
 public class PerformanceLogController {
@@ -45,7 +53,12 @@ public class PerformanceLogController {
     @FXML private TableColumn<PcbPerformanceLog, Double> colTimeDiff;
 
 
+
+
     @FXML private TextArea txtLog;
+
+    private WatchKey watchKey;
+
 
     // ===================== State =====================
     private final ObservableList<PcbPerformanceLog> logList = FXCollections.observableArrayList();
@@ -155,6 +168,22 @@ public class PerformanceLogController {
     private void startWatching() {
         if (!validateBeforeWatch()) return;
 
+        try {
+            // reset sạch trước khi start lại
+            if (watchService != null) {
+                try { watchService.close(); } catch (Exception ignored) {}
+                watchService = null;
+            }
+            watchKey = null;
+
+            watchService = FileSystems.getDefault().newWatchService();
+            watchKey = logFolder.register(watchService, StandardWatchEventKinds.ENTRY_CREATE);
+
+        } catch (Exception e) {
+            appendLog("❌ Cannot start watcher: " + e.getMessage());
+            return;
+        }
+
         watching = true;
         setWatchingUIState(true);
 
@@ -165,6 +194,7 @@ public class PerformanceLogController {
                 0, 300, TimeUnit.MILLISECONDS
         );
     }
+
 
     private boolean validateBeforeWatch() {
         if (watching) {
@@ -184,13 +214,9 @@ public class PerformanceLogController {
 
     private void watchFolder(Warehouse warehouse) {
         if (!watching) return;
+        if (watchService == null) return;
 
         try {
-            if (watchService == null)
-                watchService = FileSystems.getDefault().newWatchService();
-
-            logFolder.register(watchService, StandardWatchEventKinds.ENTRY_CREATE);
-
             WatchKey key = watchService.poll();
             if (key == null) return;
 
@@ -206,10 +232,15 @@ public class PerformanceLogController {
             }
             key.reset();
 
+        } catch (ClosedWatchServiceException ex) {
+            // stop thì nó sẽ quăng exception này, message thường null => đừng log spam
+            return;
         } catch (Exception e) {
-            appendLog("❌ Watcher error: " + e.getMessage());
+            // log rõ hơn
+            appendLog("❌ Watcher error: " + (e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage()));
         }
     }
+
 
     private void handleCsv(Path fullPath, Warehouse warehouse) {
         try {
@@ -231,11 +262,11 @@ public class PerformanceLogController {
                 return;
             }
 
-            // 3) nếu có carrierId thì mới check isAlreadyProcessed(carrierId)
+            /*// 3) nếu có carrierId thì mới check isAlreadyProcessed(carrierId)
             if (carrierId != null && logService.isAlreadyProcessed(carrierId)) {
                 appendLog("⏩ Carrier already processed: " + carrierId);
                 return;
-            }
+            }*/
 
             // 4) resolve Product theo carrier hoặc theo recipe
             Product product = productResolver.resolve(
@@ -366,12 +397,20 @@ public class PerformanceLogController {
         setWatchingUIState(false);
 
         try {
-            if (watchService != null) watchService.close();
+            if (watchKey != null) {
+                watchKey.cancel();
+                watchKey = null;
+            }
 
+            if (watchService != null) {
+                watchService.close();
+                watchService = null; // ✅ quan trọng
+            }
         } catch (Exception ignored) {}
 
         appendLog("🛑 Stopped.");
     }
+
 
     private void setWatchingUIState(boolean isWatching) {
         Platform.runLater(() -> {

@@ -12,12 +12,14 @@ import javafx.util.Callback;
 import org.chemtrovina.cmtmsys.config.DataSourceConfig;
 import org.chemtrovina.cmtmsys.dto.TransferLogDto;
 import org.chemtrovina.cmtmsys.model.Warehouse;
+import org.chemtrovina.cmtmsys.model.enums.UserRole;
 import org.chemtrovina.cmtmsys.repository.Impl.MaterialRepositoryImpl;
 import org.chemtrovina.cmtmsys.repository.Impl.TransferLogRepositoryImpl;
 import org.chemtrovina.cmtmsys.repository.Impl.WarehouseRepositoryImpl;
 import org.chemtrovina.cmtmsys.repository.base.MaterialRepository;
 import org.chemtrovina.cmtmsys.repository.base.TransferLogRepository;
 import org.chemtrovina.cmtmsys.repository.base.WarehouseRepository;
+import org.chemtrovina.cmtmsys.security.RequiresRoles;
 import org.chemtrovina.cmtmsys.service.Impl.MaterialServiceImpl;
 import org.chemtrovina.cmtmsys.service.Impl.TransferLogServiceImpl;
 import org.chemtrovina.cmtmsys.service.Impl.WarehouseServiceImpl;
@@ -31,6 +33,13 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+
+@RequiresRoles({
+        UserRole.ADMIN,
+        UserRole.INVENTORY,
+        UserRole.SUBLEEDER
+})
+
 @Component
 public class TransferLogController {
 

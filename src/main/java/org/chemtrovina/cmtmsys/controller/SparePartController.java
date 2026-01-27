@@ -10,6 +10,8 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.FileChooser;
 import org.chemtrovina.cmtmsys.model.SparePart;
+import org.chemtrovina.cmtmsys.model.enums.UserRole;
+import org.chemtrovina.cmtmsys.security.RequiresRoles;
 import org.chemtrovina.cmtmsys.service.base.SparePartService;
 import org.springframework.stereotype.Component;
 
@@ -19,6 +21,12 @@ import java.nio.file.Files;
 import java.time.LocalDate;
 import java.util.List;
 import javafx.embed.swing.SwingFXUtils;
+
+@RequiresRoles({
+        UserRole.ADMIN,
+        UserRole.INVENTORY,
+        UserRole.SUBLEEDER
+})
 
 @Component
 public class SparePartController {

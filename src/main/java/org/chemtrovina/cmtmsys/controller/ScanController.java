@@ -18,6 +18,8 @@ import org.chemtrovina.cmtmsys.dto.HistorySummary;
 import org.chemtrovina.cmtmsys.model.Invoice;
 import org.chemtrovina.cmtmsys.model.InvoiceDetail;
 import org.chemtrovina.cmtmsys.model.MOQ;
+import org.chemtrovina.cmtmsys.model.enums.UserRole;
+import org.chemtrovina.cmtmsys.security.RequiresRoles;
 import org.chemtrovina.cmtmsys.service.base.*;
 import org.chemtrovina.cmtmsys.utils.FxClipboardUtils;
 import org.chemtrovina.cmtmsys.utils.TableUtils;
@@ -28,6 +30,12 @@ import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+
+@RequiresRoles({
+        UserRole.ADMIN,
+        UserRole.INVENTORY,
+        UserRole.SUBLEEDER
+})
 
 @Component
 public class ScanController {

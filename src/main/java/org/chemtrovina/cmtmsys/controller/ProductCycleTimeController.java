@@ -9,6 +9,8 @@ import javafx.stage.FileChooser;
 import org.chemtrovina.cmtmsys.dto.ProductCycleTimeViewDto;
 import org.chemtrovina.cmtmsys.model.Warehouse;
 import org.chemtrovina.cmtmsys.model.enums.ModelType;
+import org.chemtrovina.cmtmsys.model.enums.UserRole;
+import org.chemtrovina.cmtmsys.security.RequiresRoles;
 import org.chemtrovina.cmtmsys.service.base.ProductCycleTimeService;
 import org.chemtrovina.cmtmsys.service.base.WarehouseService;
 import org.chemtrovina.cmtmsys.utils.FxAlertUtils;
@@ -18,6 +20,12 @@ import org.springframework.stereotype.Component;
 import java.io.File;
 import java.math.BigDecimal;
 import java.util.List;
+
+@RequiresRoles({
+        UserRole.ADMIN,
+        UserRole.INVENTORY,
+        UserRole.SUBLEEDER
+})
 
 @Component
 public class ProductCycleTimeController {

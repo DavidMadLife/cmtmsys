@@ -7,6 +7,8 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import org.chemtrovina.cmtmsys.dto.ShiftSummaryDTO;
+import org.chemtrovina.cmtmsys.model.enums.UserRole;
+import org.chemtrovina.cmtmsys.security.RequiresRoles;
 import org.chemtrovina.cmtmsys.service.base.ShiftSummaryService;
 import org.chemtrovina.cmtmsys.utils.FxClipboardUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +16,12 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.util.*;
+
+@RequiresRoles({
+        UserRole.ADMIN,
+        UserRole.INVENTORY,
+        UserRole.SUBLEEDER
+})
 
 @Component
 public class ShiftSummaryController {

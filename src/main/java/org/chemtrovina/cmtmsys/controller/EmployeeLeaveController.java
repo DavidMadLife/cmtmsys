@@ -10,7 +10,9 @@ import org.chemtrovina.cmtmsys.dto.LeaveStatisticDeptDto;
 import org.chemtrovina.cmtmsys.model.Employee;
 import org.chemtrovina.cmtmsys.model.EmployeeLeave;
 import org.chemtrovina.cmtmsys.model.enums.LeaveType;
+import org.chemtrovina.cmtmsys.model.enums.UserRole;
 import org.chemtrovina.cmtmsys.repository.base.EmployeeRepository;
+import org.chemtrovina.cmtmsys.security.RequiresRoles;
 import org.chemtrovina.cmtmsys.service.base.EmployeeLeaveService;
 import org.chemtrovina.cmtmsys.service.base.EmployeeService;
 import org.chemtrovina.cmtmsys.utils.AutoCompleteUtils;
@@ -20,6 +22,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
+
+@RequiresRoles({
+        UserRole.ADMIN,
+        UserRole.EMPLOYEE,
+        UserRole.EMPLOYEE_MINI
+})
 
 @Component
 public class EmployeeLeaveController {

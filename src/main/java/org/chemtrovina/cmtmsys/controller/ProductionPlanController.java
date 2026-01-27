@@ -16,7 +16,10 @@ import org.chemtrovina.cmtmsys.model.ProductionPlanDaily;
 import org.chemtrovina.cmtmsys.model.ProductionPlanHourly;
 import org.chemtrovina.cmtmsys.model.Warehouse;
 import org.chemtrovina.cmtmsys.model.enums.ModelType;
+import org.chemtrovina.cmtmsys.model.enums.UserRole;
+import org.chemtrovina.cmtmsys.security.RequiresRoles;
 import org.chemtrovina.cmtmsys.service.base.*;
+import org.chemtrovina.cmtmsys.utils.FxClipboardUtils;
 import org.chemtrovina.cmtmsys.utils.FxFilterUtils;
 import org.chemtrovina.cmtmsys.utils.TableUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +43,12 @@ import javafx.scene.input.ScrollEvent;
 import javafx.util.Duration;
 
 import static org.chemtrovina.cmtmsys.utils.TableCellUtils.mergeIdenticalCells;
+
+@RequiresRoles({
+        UserRole.ADMIN,
+        UserRole.INVENTORY,
+        UserRole.SUBLEEDER
+})
 
 @Component
 public class ProductionPlanController {
@@ -119,21 +128,15 @@ public class ProductionPlanController {
         setupWeeklyPlan();
         setupDailyPlan();
 
-        tblDailyPlans.getSelectionModel().setCellSelectionEnabled(true);
-        tblDailyPlans.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        tblWeeklyPlans.getSelectionModel().setCellSelectionEnabled(true);
-        tblWeeklyPlans.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-
-        tblHourly.getSelectionModel().setCellSelectionEnabled(true);
-        tblHourly.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-
         cbModelType.setItems(FXCollections.observableArrayList(ModelType.values()));
         cbModelType.getSelectionModel().select(ModelType.NONE); // mặc định
         setupHourlyPane();
-        tblSelectedProducts.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        tblHourly.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        tblWeeklyPlans.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        tblDailyPlans.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+
+        FxClipboardUtils.enableCopyShortcut(tblHourly);
+        FxClipboardUtils.enableCopyShortcut(tblWeeklyPlans);
+        FxClipboardUtils.enableCopyShortcut(tblDailyPlans);
+        FxClipboardUtils.enableCopyShortcut(tblSelectedProducts);
+
         tblWeeklyPlans.setStyle("-fx-font-size: 14px;");
         tblDailyPlans.setStyle("-fx-font-size: 14px;");
         tblHourly.setStyle("-fx-font-size: 14px;");
@@ -228,7 +231,6 @@ public class ProductionPlanController {
             double rate = c.getValue().getCompletionRate();
             return new javafx.beans.property.SimpleStringProperty(String.format("%.1f%%", rate));
         });
-        tblWeeklyPlans.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
         ContextMenu contextMenu = new ContextMenu();
         MenuItem deleteItem = new MenuItem("Xoá kế hoạch này");
@@ -343,12 +345,6 @@ public class ProductionPlanController {
             loadDailyPlans();      // Nạp lại dữ liệu và tính lại % hoàn thành
         });
         btnRollbackMaterial.setOnAction(e -> rollbackSelectedMaterial());
-
-        tblDailyPlans.setOnKeyPressed(event -> {
-            if (event.isControlDown() && event.getCode().toString().equals("C")) {
-                copySelectionToClipboard(tblDailyPlans);
-            }
-        });
 
         colType.setCellValueFactory(c -> c.getValue().typeProperty());
         colDailyLine.setCellValueFactory(c -> c.getValue().lineProperty());
@@ -883,22 +879,6 @@ public class ProductionPlanController {
         return Math.min(index, 11);
     }
 
-    private void copySelectionToClipboard(TableView<?> table) {
-        StringBuilder sb = new StringBuilder();
-        var positions = table.getSelectionModel().getSelectedCells();
-        int prevRow = -1;
-        for (var pos : positions) {
-            int row = pos.getRow(), col = pos.getColumn();
-            Object cell = table.getColumns().get(col).getCellData(row);
-            if (cell == null) cell = "";
-            if (prevRow == row) sb.append('\t');
-            else if (prevRow != -1) sb.append('\n');
-            sb.append(cell); prevRow = row;
-        }
-        final ClipboardContent content = new ClipboardContent();
-        content.putString(sb.toString());
-        Clipboard.getSystemClipboard().setContent(content);
-    }
 
     private void showAlert(String msg) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);

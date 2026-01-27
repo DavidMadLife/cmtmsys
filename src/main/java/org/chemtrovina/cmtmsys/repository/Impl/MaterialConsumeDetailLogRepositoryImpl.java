@@ -112,8 +112,8 @@ public class MaterialConsumeDetailLogRepositoryImpl implements MaterialConsumeDe
             int qtyPerBoard = (int) feeder.get("Qty");     // dùng số lượng của feeder
             String sapCode = ((String) feeder.get("SapCode")).trim().toUpperCase();
 
-            int needQty = qtyPerBoard * goodQty;
-            if (needQty <= 0) continue;
+            int needQty = qtyPerBoard;
+            if (qtyPerBoard <= 0) continue;
 
 
             // 4️⃣ Lấy danh sách cuộn đang active gắn vào feeder

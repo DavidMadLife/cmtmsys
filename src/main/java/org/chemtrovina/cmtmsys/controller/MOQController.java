@@ -12,8 +12,11 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import org.chemtrovina.cmtmsys.config.DataSourceConfig;
 import org.chemtrovina.cmtmsys.model.MOQ;
+import org.chemtrovina.cmtmsys.model.enums.UserRole;
 import org.chemtrovina.cmtmsys.repository.Impl.MOQRepositoryImpl;
 import org.chemtrovina.cmtmsys.repository.base.MOQRepository;
+import org.chemtrovina.cmtmsys.security.ActionGuard;
+import org.chemtrovina.cmtmsys.security.RequiresRoles;
 import org.chemtrovina.cmtmsys.service.Impl.MOQServiceImpl;
 import org.chemtrovina.cmtmsys.service.base.MOQService;
 import org.chemtrovina.cmtmsys.utils.AutoCompleteUtils;
@@ -30,6 +33,15 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+
+
+@RequiresRoles({
+        UserRole.ADMIN,
+        UserRole.GENERALWAREHOUSE,
+        UserRole.INVENTORY,
+        UserRole.SUBLEEDER
+})
+
 @Component
 public class MOQController {
     @FXML
@@ -90,20 +102,10 @@ public class MOQController {
             }
         });
 
-        moqTableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        moqTableView.getSelectionModel().setCellSelectionEnabled(true);
-        moqTableView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        FxClipboardUtils.enableCopyShortcut(moqTableView);
         startAutoGC();
 
-        moqTableView.setOnKeyPressed(event -> {
-            if (event.isControlDown() && event.getCode() == KeyCode.C) {
-                FxClipboardUtils.copySelectionToClipboard(moqTableView);
-            }
 
-            if (event.isControlDown() && event.getCode() == KeyCode.F) {
-                openSearchDialog();
-            }
-        });
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -145,6 +147,8 @@ public class MOQController {
 
             MenuItem updateItem = new MenuItem("Update");
             updateItem.setOnAction(event -> {
+
+                if (!ActionGuard.adminOnly("update MOQ")) return;
                 MOQ selected = row.getItem();
                 if (selected != null) {
                     showUpdateDialog(selected);
@@ -153,6 +157,7 @@ public class MOQController {
 
             MenuItem deleteItem = new MenuItem("Delete");
             deleteItem.setOnAction(event -> {
+                if (!ActionGuard.adminOnly("delete MOQ")) return;
                 MOQ selected = row.getItem();
                 if (selected != null) {
                     deleteMOQ(selected);
@@ -173,7 +178,11 @@ public class MOQController {
 
     private void setupEventHandlers() {
         chooseFileBtn.setOnAction(e -> chooseFile());
-        btnImportData.setOnAction(e -> importDataFromExcel());
+        btnImportData.setOnAction(e -> {
+            if (!ActionGuard.adminOnly("import MOQ data")) return;
+            importDataFromExcel();
+        });
+
         btnSearch.setOnAction(e -> onSearch());
         btnCreate.setOnAction(e -> showCreateDialog()); // đã thêm nút tạo mới
         btnClear.setOnAction(e -> OnClear());

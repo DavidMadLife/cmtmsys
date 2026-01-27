@@ -12,6 +12,8 @@ import org.chemtrovina.cmtmsys.dto.SAPSummaryDto;
 import org.chemtrovina.cmtmsys.dto.TransferredDto;
 import org.chemtrovina.cmtmsys.model.Warehouse;
 import org.chemtrovina.cmtmsys.model.WorkOrder;
+import org.chemtrovina.cmtmsys.model.enums.UserRole;
+import org.chemtrovina.cmtmsys.security.RequiresRoles;
 import org.chemtrovina.cmtmsys.service.base.*;
 import org.chemtrovina.cmtmsys.utils.FxClipboardUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +21,12 @@ import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.util.List;
+
+@RequiresRoles({
+        UserRole.ADMIN,
+        UserRole.INVENTORY,
+        UserRole.SUBLEEDER
+})
 
 @Component
 public class InventoryTransferController {

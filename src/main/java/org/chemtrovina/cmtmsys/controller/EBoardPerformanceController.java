@@ -10,6 +10,8 @@ import javafx.scene.control.*;
 import javafx.stage.DirectoryChooser;
 import org.chemtrovina.cmtmsys.helper.AoiEBoardCsvLogParser;
 import org.chemtrovina.cmtmsys.model.*;
+import org.chemtrovina.cmtmsys.model.enums.UserRole;
+import org.chemtrovina.cmtmsys.security.RequiresRoles;
 import org.chemtrovina.cmtmsys.service.base.*;
 import org.chemtrovina.cmtmsys.utils.FxExceptionHandler;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +24,12 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+
+@RequiresRoles({
+        UserRole.ADMIN,
+        UserRole.INVENTORY,
+        UserRole.SUBLEEDER
+})
 
 @Component
 public class EBoardPerformanceController {

@@ -7,6 +7,8 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import org.chemtrovina.cmtmsys.model.ShiftScheduleSMT;
 import org.chemtrovina.cmtmsys.model.Warehouse;
+import org.chemtrovina.cmtmsys.model.enums.UserRole;
+import org.chemtrovina.cmtmsys.security.RequiresRoles;
 import org.chemtrovina.cmtmsys.service.base.ShiftScheduleSMTService;
 import org.chemtrovina.cmtmsys.service.base.WarehouseService;
 import org.chemtrovina.cmtmsys.utils.FxAlertUtils;
@@ -18,6 +20,12 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+
+@RequiresRoles({
+        UserRole.ADMIN,
+        UserRole.INVENTORY,
+        UserRole.SUBLEEDER
+})
 
 @Component
 public class ShiftScheduleSMTController {

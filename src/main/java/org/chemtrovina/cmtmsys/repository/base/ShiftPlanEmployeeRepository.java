@@ -33,6 +33,12 @@ public interface ShiftPlanEmployeeRepository {
 
     int updateNote(int employeeId, LocalDate date, String note);
 
+    List<ShiftPlanEmployee> findByShiftDateRange(LocalDate from, LocalDate to);
+
+    List<ShiftPlanEmployee> findByEmployeesAndDateRange(List<Integer> employeeIds, LocalDate from, LocalDate to);
+
+
+
 
 }
 

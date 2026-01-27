@@ -144,6 +144,7 @@ public class ShiftPlanEmployeeRepositoryImpl implements ShiftPlanEmployeeReposit
 
         List<String> result = jdbc.query(
                 sql,
+
                 (rs, rowNum) -> rs.getString("ShiftCode"),
                 employeeId,
                 date
@@ -255,5 +256,63 @@ public class ShiftPlanEmployeeRepositoryImpl implements ShiftPlanEmployeeReposit
 
         return jdbc.update(sql, note, employeeId, date);
     }
+
+    @Override
+    public List<ShiftPlanEmployee> findByShiftDateRange(LocalDate from, LocalDate to) {
+        String sql = """
+        SELECT 
+            ShiftPlanId AS shiftPlanId,
+            EmployeeId AS employeeId,
+            ShiftDate AS shiftDate,
+            ShiftCode AS shiftCode,
+            Note AS note,
+            ImportedBy AS importedBy,
+            ImportedAt AS importedAt
+        FROM ShiftPlanEmployee
+        WHERE ShiftDate >= ? AND ShiftDate <= ?
+        ORDER BY ShiftDate ASC, EmployeeId ASC
+    """;
+
+        return jdbc.query(sql, mapper,
+                java.sql.Date.valueOf(from),
+                java.sql.Date.valueOf(to)
+        );
+    }
+
+    @Override
+    public List<ShiftPlanEmployee> findByEmployeesAndDateRange(List<Integer> employeeIds, LocalDate from, LocalDate to) {
+        if (employeeIds == null || employeeIds.isEmpty()) return List.of();
+
+        String inSql = employeeIds.stream().map(x -> "?").collect(java.util.stream.Collectors.joining(","));
+
+        String sql = """
+        SELECT 
+            ShiftPlanId AS shiftPlanId,
+            EmployeeId AS employeeId,
+            ShiftDate AS shiftDate, 
+            ShiftCode AS shiftCode, 
+            Note AS note,
+            ImportedBy AS importedBy,
+            ImportedAt AS importedAt
+        FROM ShiftPlanEmployee
+        WHERE EmployeeId IN (%s)
+          AND ShiftDate >= ? AND ShiftDate <= ?
+        ORDER BY ShiftDate ASC, EmployeeId ASC
+    """.formatted(inSql);
+
+        // args: ids..., from, to
+        Object[] args = new Object[employeeIds.size() + 2];
+        for (int i = 0; i < employeeIds.size(); i++) args[i] = employeeIds.get(i);
+        args[employeeIds.size()] = java.sql.Date.valueOf(from);
+        args[employeeIds.size() + 1] = java.sql.Date.valueOf(to);
+
+        return jdbc.query(sql, mapper, args);
+    }
+
+
+
+
+
+
 
 }

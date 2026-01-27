@@ -98,130 +98,95 @@ public class TimeAttendanceLogServiceImpl implements TimeAttendanceLogService {
     }
 
     @Override
-    public List<TimeAttendanceLogDto> getLogDtosByDateRange(
-            LocalDate from,
-            LocalDate to
-    ) {
+    public List<TimeAttendanceLogDto> getLogDtosByDateRange(LocalDate from, LocalDate to) {
 
-        // ===== 1️⃣ LOAD RAW LOG (+1 DAY) =====
-        List<TimeAttendanceLog> rawLogs =
-                logRepo.findByScanDateRange(from, to.plusDays(1));
+        // 1) Load raw logs: lấy tới to+1 end of day => end exclusive = to+2 00:00
+        List<TimeAttendanceLog> rawLogs = logRepo.findByScanDateRange(from, to.plusDays(2));
+        if (rawLogs.isEmpty()) return new ArrayList<>();
 
-        if (rawLogs.isEmpty()) {
-            return new ArrayList<>();
+        // 2) Preload shift plan cho các employee có trong log (từ from-1 đến to)
+        List<Integer> empIdsInLogs = rawLogs.stream()
+                .map(TimeAttendanceLog::getEmployeeId)
+                .distinct()
+                .toList();
+
+        Map<String, String> shiftCodeByEmpDate = shiftPlanEmployeeRepo
+                .findByEmployeesAndDateRange(empIdsInLogs, from.minusDays(1), to)
+                .stream()
+                .collect(Collectors.toMap(
+                        sp -> sp.getEmployeeId() + "_" + sp.getShiftDate(),
+                        ShiftPlanEmployee::getShiftCode,
+                        (a, b) -> a
+                ));
+
+        // 3) Preload ShiftTypeEmployee theo list shiftCode (1 query)
+        Set<String> shiftCodes = shiftCodeByEmpDate.values().stream()
+                .filter(s -> s != null && !s.isBlank())
+                .collect(Collectors.toSet());
+
+        Map<String, ShiftTypeEmployee> shiftTypeByCode = new HashMap<>();
+        if (!shiftCodes.isEmpty()) {
+            // Khuyến nghị: implement findByCodes(Set<String>) để query IN (...)
+            List<ShiftTypeEmployee> shifts = shiftTypeEmployeeRepo.findByCodes(shiftCodes);
+            for (ShiftTypeEmployee s : shifts) {
+                shiftTypeByCode.put(s.getShiftCode(), s);
+            }
         }
 
-        // ===== 2️⃣ FILTER RAW (CHỈ LOẠI RÁC, KHÔNG QUYẾT ĐỊNH HIỂN THỊ) =====
+        // 4) Filter raw logs (không gọi DB nữa)
         List<TimeAttendanceLog> logs = rawLogs.stream()
                 .filter(log -> {
+                    LocalDate scanDate = log.getScanDateTime().toLocalDate();
 
-                    LocalDate scanDate =
-                            log.getScanDateTime().toLocalDate();
+                    // trong from..to => lấy
+                    if (!scanDate.isBefore(from) && !scanDate.isAfter(to)) return true;
 
-                    // trong from → to → lấy
-                    if (!scanDate.isBefore(from)
-                            && !scanDate.isAfter(to)) {
-                        return true;
-                    }
-
-                    // ngày +1 → chỉ cho OUT ca đêm
-                    if (scanDate.equals(to.plusDays(1))
-                            && log.getScanAction() == ScanAction.OUT) {
-
-                        String prevShiftCode =
-                                shiftPlanEmployeeRepo
-                                        .findShiftCodeByEmployeeAndDate(
-                                                log.getEmployeeId(),
-                                                scanDate.minusDays(1)
-                                        );
-
+                    // chỉ lấy OUT ngày to+1 nếu thuộc ca đêm của ngày trước
+                    if (scanDate.equals(to.plusDays(1)) && log.getScanAction() == ScanAction.OUT) {
+                        String prevShiftCode = shiftCodeByEmpDate.get(log.getEmployeeId() + "_" + scanDate.minusDays(1));
                         if (prevShiftCode == null) return false;
 
-                        ShiftTypeEmployee prevShift =
-                                shiftTypeEmployeeRepo.findByCode(prevShiftCode);
-
-                        return prevShift != null
-                                && Boolean.TRUE.equals(prevShift.getIsOvernight());
+                        ShiftTypeEmployee prevShift = shiftTypeByCode.get(prevShiftCode);
+                        return prevShift != null && Boolean.TRUE.equals(prevShift.getIsOvernight());
                     }
 
                     return false;
                 })
                 .toList();
 
-        if (logs.isEmpty()) {
-            return new ArrayList<>();
-        }
+        if (logs.isEmpty()) return new ArrayList<>();
 
-        // ===== 3️⃣ LOAD EMPLOYEE =====
-        Map<Integer, Employee> employeeMap =
-                employeeRepo.findByIds(
-                                logs.stream()
-                                        .map(TimeAttendanceLog::getEmployeeId)
-                                        .distinct()
-                                        .toList()
-                        )
-                        .stream()
-                        .collect(Collectors.toMap(
-                                Employee::getEmployeeId,
-                                e -> e
-                        ));
+        // 5) Load employee (1 query)
+        Map<Integer, Employee> employeeMap = employeeRepo.findByIds(
+                        logs.stream().map(TimeAttendanceLog::getEmployeeId).distinct().toList()
+                ).stream()
+                .collect(Collectors.toMap(Employee::getEmployeeId, e -> e));
 
-        // ===== 4️⃣ MAP GỘP DTO =====
+        // 6) Group DTO theo empId + workDate
         Map<String, TimeAttendanceLogDto> map = new LinkedHashMap<>();
 
-        // ===== 5️⃣ PROCESS LOG =====
         for (TimeAttendanceLog log : logs) {
 
             Employee emp = employeeMap.get(log.getEmployeeId());
             if (emp == null) continue;
 
-            LocalDate scanDate =
-                    log.getScanDateTime().toLocalDate();
-            LocalTime scanTime =
-                    log.getScanDateTime().toLocalTime();
+            LocalDate scanDate = log.getScanDateTime().toLocalDate();
+            LocalTime scanTime = log.getScanDateTime().toLocalTime();
 
-            // ===== 5.1 FIX WORK DATE (QUAN TRỌNG NHẤT) =====
+            // 6.1) resolve workDate (OUT ca đêm thuộc ngày hôm qua)
             LocalDate workDate = scanDate;
-
             if (log.getScanAction() == ScanAction.OUT) {
+                String prevShiftCode = shiftCodeByEmpDate.get(emp.getEmployeeId() + "_" + scanDate.minusDays(1));
+                ShiftTypeEmployee prevShift = prevShiftCode == null ? null : shiftTypeByCode.get(prevShiftCode);
 
-                String prevShiftCode =
-                        shiftPlanEmployeeRepo
-                                .findShiftCodeByEmployeeAndDate(
-                                        emp.getEmployeeId(),
-                                        scanDate.minusDays(1)
-                                );
-
-                ShiftTypeEmployee prevShift =
-                        prevShiftCode == null
-                                ? null
-                                : shiftTypeEmployeeRepo.findByCode(prevShiftCode);
-
-                if (prevShift != null
-                        && Boolean.TRUE.equals(prevShift.getIsOvernight())) {
+                if (prevShift != null && Boolean.TRUE.equals(prevShift.getIsOvernight())) {
                     workDate = scanDate.minusDays(1);
                 }
             }
 
-            // ===== 5.2 LOAD SHIFT =====
-            String shiftCode =
-                    shiftPlanEmployeeRepo
-                            .findShiftCodeByEmployeeAndDate(
-                                    emp.getEmployeeId(),
-                                    workDate
-                            );
-
-            ShiftTypeEmployee shift =
-                    shiftCode == null
-                            ? null
-                            : shiftTypeEmployeeRepo.findByCode(shiftCode);
-
-            String key =
-                    emp.getEmployeeId() + "_" + workDate;
+            String key = emp.getEmployeeId() + "_" + workDate;
 
             TimeAttendanceLogDto dto = map.get(key);
-
-            // ===== 5.3 CREATE DTO =====
             if (dto == null) {
                 dto = new TimeAttendanceLogDto();
                 map.put(key, dto);
@@ -240,50 +205,42 @@ public class TimeAttendanceLogServiceImpl implements TimeAttendanceLogService {
 
                 dto.setScanDate(workDate);
 
+                // 6.2) attach shift theo workDate
+                String shiftCode = shiftCodeByEmpDate.get(emp.getEmployeeId() + "_" + workDate);
+                ShiftTypeEmployee shift = shiftCode == null ? null : shiftTypeByCode.get(shiftCode);
+
                 if (shift != null) {
                     dto.setShiftCode(shift.getShiftCode());
                     dto.setShiftName(shift.getShiftName());
                 } else {
+                    dto.setShiftCode(shiftCode); // vẫn set để debug nếu cần
                     dto.setShiftName("N/A");
                 }
             }
 
-            // ===== 5.4 SET IN / OUT =====
-            if (log.getScanAction() == ScanAction.IN) {
-                dto.setIn(scanTime.toString());
-            } else {
-                dto.setOut(scanTime.toString());
-            }
+            // 6.3) set in/out
+            if (log.getScanAction() == ScanAction.IN) dto.setIn(scanTime.toString());
+            else dto.setOut(scanTime.toString());
         }
 
-        // ===== 6️⃣ APPLY STATUS =====
+        // 7) Apply status (không query DB nữa)
         for (TimeAttendanceLogDto dto : map.values()) {
-
             if (dto.getShiftCode() == null) continue;
 
-            ShiftTypeEmployee shift =
-                    shiftTypeEmployeeRepo.findByCode(dto.getShiftCode());
-
-            if (shift != null) {
-                applyAttendanceStatus(dto, shift);
-            }
+            ShiftTypeEmployee shift = shiftTypeByCode.get(dto.getShiftCode());
+            if (shift != null) applyAttendanceStatus(dto, shift);
         }
 
-        // ===== 7️⃣ INDEX =====
+        // 8) Index
         AtomicInteger index = new AtomicInteger(0);
-        map.values().forEach(
-                d -> d.setNo(index.incrementAndGet())
-        );
+        map.values().forEach(d -> d.setNo(index.incrementAndGet()));
 
-        // ===== 8️⃣ 🔥 FILTER CUỐI THEO workDate (FIX DỨT ĐIỂM) =====
+        // 9) return theo workDate
         return map.values().stream()
-                .filter(dto ->
-                        !dto.getScanDate().isBefore(from)
-                                && !dto.getScanDate().isAfter(to)
-
-                )
+                .filter(dto -> !dto.getScanDate().isBefore(from) && !dto.getScanDate().isAfter(to))
                 .toList();
     }
+
 
 
     @Override
@@ -588,44 +545,67 @@ public class TimeAttendanceLogServiceImpl implements TimeAttendanceLogService {
 
 
 
-    public void applyAttendanceStatus(
-            TimeAttendanceLogDto dto,
-            ShiftTypeEmployee shift
-    ) {
+    public void applyAttendanceStatus(TimeAttendanceLogDto dto, ShiftTypeEmployee shift) {
 
-        // ===== IN =====
-        if (dto.getIn() != null) {
+        final int WINDOW_MIN = 30;
+
+        LocalDate workDate = dto.getScanDate();
+        if (workDate == null || shift == null) return;
+
+        boolean overnight = Boolean.TRUE.equals(shift.getIsOvernight());
+
+        // planned datetime
+        LocalDateTime shiftStartDT = LocalDateTime.of(workDate, shift.getStartTime());
+        LocalDateTime shiftEndDT   = overnight
+                ? LocalDateTime.of(workDate.plusDays(1), shift.getEndTime())
+                : LocalDateTime.of(workDate, shift.getEndTime());
+
+        // ========= IN =========
+        // ========= IN =========
+        if (dto.getIn() != null && !dto.getIn().isBlank()) {
             LocalTime inTime = LocalTime.parse(dto.getIn());
+            LocalDateTime inDT = LocalDateTime.of(workDate, inTime);
 
-            if (inTime.isAfter(shift.getStartTime())) {
+            LocalDateTime inMin = shiftStartDT.minusMinutes(WINDOW_MIN); // mốc 30p trước
+            LocalDateTime inMax = shiftStartDT;                          // giờ bắt đầu
+
+            // ❌ đỏ nếu <= inMin  (tức 7:30 đỏ)
+            if (!inDT.isAfter(inMin)) { // BEFORE or EQUAL
+                dto.setInStatus(AttendanceTimeStatus.TOO_EARLY_IN);
+
+                // ❌ đỏ nếu > inMax (tức sau giờ bắt đầu là trễ)
+            } else if (inDT.isAfter(inMax)) {
                 dto.setInStatus(AttendanceTimeStatus.LATE);
+
+                // ✅ xanh nếu (inMin, inMax] => từ 7:31 đến 8:00
             } else {
                 dto.setInStatus(AttendanceTimeStatus.OK);
             }
         }
 
-        // ===== OUT =====
-        if (dto.getOut() != null) {
-            LocalTime outTime = LocalTime.parse(dto.getOut());
-            LocalTime endTime = shift.getEndTime();
 
-            if (Boolean.TRUE.equals(shift.getIsOvernight())) {
-                // ✅ CA ĐÊM → CHỈ SO TIME
-                if (outTime.isBefore(endTime)) {
-                    dto.setOutStatus(AttendanceTimeStatus.EARLY);
-                } else {
-                    dto.setOutStatus(AttendanceTimeStatus.OK);
-                }
+        // ========= OUT =========
+        if (dto.getOut() != null && !dto.getOut().isBlank()) {
+            LocalTime outTime = LocalTime.parse(dto.getOut());
+
+            LocalDate outDate = overnight ? workDate.plusDays(1) : workDate;
+            LocalDateTime outDT = LocalDateTime.of(outDate, outTime);
+
+            LocalDateTime endDT = shiftEndDT; // 17:00
+            LocalDateTime okMaxDT = endDT.plusMinutes(29); // 17:29 (vẫn xanh)
+
+            if (outDT.isBefore(endDT)) {
+                dto.setOutStatus(AttendanceTimeStatus.EARLY);          // ❌ đỏ
+            } else if (outDT.isAfter(okMaxDT)) {
+                dto.setOutStatus(AttendanceTimeStatus.TOO_LATE_OUT);   // ❌ đỏ (>= 17:30)
             } else {
-                // CA THƯỜNG
-                if (outTime.isBefore(endTime)) {
-                    dto.setOutStatus(AttendanceTimeStatus.EARLY);
-                } else {
-                    dto.setOutStatus(AttendanceTimeStatus.OK);
-                }
+                dto.setOutStatus(AttendanceTimeStatus.OK);             // ✅ xanh (17:00..17:29)
             }
         }
+
+
     }
+
 
 
 
@@ -784,6 +764,7 @@ public class TimeAttendanceLogServiceImpl implements TimeAttendanceLogService {
                 naTotal++;
                 if (hasIn) naPresent++;
                 continue;
+
             }
 
             // Có ca -> lấy shiftType

@@ -9,6 +9,8 @@ import javafx.scene.input.KeyCode;
 import org.chemtrovina.cmtmsys.model.Material;
 import org.chemtrovina.cmtmsys.model.MaterialCart;
 import org.chemtrovina.cmtmsys.model.MaterialCartTree;
+import org.chemtrovina.cmtmsys.model.enums.UserRole;
+import org.chemtrovina.cmtmsys.security.RequiresRoles;
 import org.chemtrovina.cmtmsys.service.base.MaterialCartService;
 import org.chemtrovina.cmtmsys.service.base.MaterialCartTreeService;
 import org.chemtrovina.cmtmsys.service.base.MaterialService;
@@ -19,6 +21,12 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.stream.Collectors;
+
+@RequiresRoles({
+        UserRole.ADMIN,
+        UserRole.INVENTORY,
+        UserRole.SUBLEEDER
+})
 
 @Component
 public class MaterialCartController {

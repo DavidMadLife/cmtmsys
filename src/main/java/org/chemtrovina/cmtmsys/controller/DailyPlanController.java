@@ -8,6 +8,8 @@ import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.util.converter.IntegerStringConverter;
 import org.chemtrovina.cmtmsys.dto.DailyPlanDisplayRow;
 import org.chemtrovina.cmtmsys.model.Warehouse;
+import org.chemtrovina.cmtmsys.model.enums.UserRole;
+import org.chemtrovina.cmtmsys.security.RequiresRoles;
 import org.chemtrovina.cmtmsys.service.base.ProductionPlanDailyService;
 import org.chemtrovina.cmtmsys.service.base.ProductionPlanService;
 import org.chemtrovina.cmtmsys.service.base.WarehouseService;
@@ -23,6 +25,12 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.chemtrovina.cmtmsys.utils.TableCellUtils.mergeIdenticalCells;
+
+@RequiresRoles({
+        UserRole.ADMIN,
+        UserRole.INVENTORY,
+        UserRole.SUBLEEDER
+})
 
 @Component
 public class DailyPlanController {

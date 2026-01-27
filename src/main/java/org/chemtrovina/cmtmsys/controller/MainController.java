@@ -3,10 +3,12 @@ package org.chemtrovina.cmtmsys.controller;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.Parent;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 
 import org.chemtrovina.cmtmsys.model.FxmlPage;
+import org.chemtrovina.cmtmsys.security.PermissionGuard;
 
 public class MainController {
 
@@ -41,20 +43,33 @@ public class MainController {
         };
 
         loadTask.setOnSucceeded(e -> {
-            Parent view = loadTask.getValue().getView();
-            Tab tab = new Tab(title, view);
-            tab.setClosable(true);
-            tab.setOnClosed(ev -> FXMLCacheManager.removePage(fxmlPath));
+            FxmlPage page = loadTask.getValue();
+
+            // ✅ CHECK PERMISSION HERE
+            Object controller = page.getController(); // bạn đảm bảo FxmlPage có getter này
+            if (!PermissionGuard.canAccess(controller)) {
+                showAlert("Access denied", PermissionGuard.deniedMessage(controller));
+                return;
+            }
+
+            Tab tab = new Tab(title);
+            tab.setContent(page.getRoot());
             mainTabPane.getTabs().add(tab);
             mainTabPane.getSelectionModel().select(tab);
         });
 
-        loadTask.setOnFailed(e -> {
-            System.err.println("Lỗi khi load tab: " + title);
-            loadTask.getException().printStackTrace();
-        });
-
+        loadTask.setOnFailed(e -> loadTask.getException().printStackTrace());
         new Thread(loadTask).start();
     }
+
+    private void showAlert(String title, String msg) {
+        Alert a = new Alert(Alert.AlertType.WARNING);
+        a.setTitle(title);
+        a.setHeaderText(null);
+        a.setContentText(msg);
+        a.showAndWait();
+    }
+
+
 }
 

@@ -19,6 +19,8 @@ import org.chemtrovina.cmtmsys.model.Employee;
 import org.chemtrovina.cmtmsys.model.ShiftPlanEmployee;
 import org.chemtrovina.cmtmsys.model.ShiftTypeEmployee;
 import org.chemtrovina.cmtmsys.model.enums.ScanAction;
+import org.chemtrovina.cmtmsys.model.enums.UserRole;
+import org.chemtrovina.cmtmsys.security.RequiresRoles;
 import org.chemtrovina.cmtmsys.service.base.EmployeeService;
 import org.chemtrovina.cmtmsys.service.base.ShiftPlanEmployeeService;
 import org.chemtrovina.cmtmsys.service.base.ShiftTypeEmployeeService;
@@ -33,6 +35,12 @@ import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+
+@RequiresRoles({
+        UserRole.ADMIN,
+        UserRole.EMPLOYEE,
+        UserRole.EMPLOYEE_MINI
+})
 
 @Component
 public class AttendanceScanController {

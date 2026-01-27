@@ -2,6 +2,7 @@ package org.chemtrovina.cmtmsys.controller;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.ComboBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.GridPane;
@@ -9,6 +10,8 @@ import javafx.stage.FileChooser;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.chemtrovina.cmtmsys.model.History;
+import org.chemtrovina.cmtmsys.model.enums.UserRole;
+import org.chemtrovina.cmtmsys.security.RequiresRoles;
 import org.chemtrovina.cmtmsys.service.base.HistoryService;
 import org.chemtrovina.cmtmsys.service.base.InvoiceService;
 import org.chemtrovina.cmtmsys.service.base.MOQService;
@@ -28,6 +31,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+@RequiresRoles({
+        UserRole.ADMIN,
+        UserRole.GENERALWAREHOUSE,
+        UserRole.INVENTORY
+})
+
 @Component
 public class HistoryListController {
     @FXML private TableView<History> historyDateTableView;
@@ -41,6 +50,8 @@ public class HistoryListController {
     @FXML private TableColumn<History, String> mslColumn, specColumn;
     @FXML private TableColumn<History, String> timeColumn;
     @FXML private TableColumn<History, String> employeeIdColumn; // thêm dòng này
+    @FXML private TableColumn<History, String> statusColumn;
+
 
 
     @FXML private TextField invoiceNoField, makerField, pnField, sapField, mslField, invoicePNField;
@@ -71,16 +82,11 @@ public class HistoryListController {
         searchBtn.setOnAction(e -> onSearch());
         clearBtn.setOnAction(e -> clearFields());
         importExcelBtn.setOnAction(e -> onExportExcel());
-        historyDateTableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        historyDateTableView.getSelectionModel().setCellSelectionEnabled(true);
-        historyDateTableView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         //startAutoGC();
 
-        historyDateTableView.setOnKeyPressed(event -> {
-            if (event.isControlDown() && event.getCode() == KeyCode.C) {
-                FxClipboardUtils.copySelectionToClipboard(historyDateTableView);
-            }
+        FxClipboardUtils.enableCopyShortcut(historyDateTableView);
 
+        historyDateTableView.setOnKeyPressed(event -> {
             if (event.isControlDown() && event.getCode() == KeyCode.F) {
                 openSearchDialog();
             }
@@ -124,6 +130,10 @@ public class HistoryListController {
             });
             return row;
         });
+
+
+
+
     }
 
     private void setupTable() {
@@ -138,6 +148,53 @@ public class HistoryListController {
         mslColumn.setCellValueFactory(new PropertyValueFactory<>("MSL"));
         specColumn.setCellValueFactory(new PropertyValueFactory<>("spec"));
         employeeIdColumn.setCellValueFactory(new PropertyValueFactory<>("employeeId"));
+        statusColumn.setCellValueFactory(new PropertyValueFactory<>("status"));
+
+        historyDateTableView.setEditable(true);
+        statusColumn.setEditable(true);
+
+        statusColumn.setCellFactory(col -> new ComboBoxTableCell<History, String>(
+                "Scanned", "NG", "DUPLICATE", "NOT_EXIST", "NONE"
+        ) {
+            @Override
+            public void updateItem(String status, boolean empty) {
+                super.updateItem(status, empty);
+
+                if (empty || status == null) {
+                    setText(null);
+                    setStyle("");
+                    return;
+                }
+
+                setText(status);
+
+                switch (status) {
+                    case "NG" -> {
+                        setStyle("-fx-background-color: #ffe5e5; -fx-text-fill: #b00020; -fx-font-weight: bold;");
+                    }
+                    default -> {
+                        setStyle("-fx-background-color: #e9fbe9; -fx-text-fill: #0b6b0b;");
+                    }
+                }
+            }
+        });
+
+
+        statusColumn.setOnEditCommit(e -> {
+            History h = e.getRowValue();
+            String newStatus = e.getNewValue();
+
+            h.setStatus(newStatus);
+
+            // tận dụng updateHistory()
+            historyService.updateHistory(h);
+
+            historyDateTableView.refresh();
+        });
+
+
+
+
 
     }
 

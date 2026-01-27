@@ -9,6 +9,8 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.util.converter.IntegerStringConverter;
 import org.chemtrovina.cmtmsys.model.Product;
+import org.chemtrovina.cmtmsys.model.enums.UserRole;
+import org.chemtrovina.cmtmsys.security.RequiresRoles;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -16,6 +18,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@RequiresRoles({
+        UserRole.ADMIN,
+        UserRole.INVENTORY
+})
 
 @Component
 public class CreateWOController {

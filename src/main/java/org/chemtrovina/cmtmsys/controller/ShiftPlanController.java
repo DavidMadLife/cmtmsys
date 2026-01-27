@@ -11,6 +11,8 @@ import org.chemtrovina.cmtmsys.dto.ShiftPlanRow;
 import org.chemtrovina.cmtmsys.model.Employee;
 import org.chemtrovina.cmtmsys.model.ShiftTypeEmployee;
 import org.chemtrovina.cmtmsys.model.ShiftPlanEmployee;
+import org.chemtrovina.cmtmsys.model.enums.UserRole;
+import org.chemtrovina.cmtmsys.security.RequiresRoles;
 import org.chemtrovina.cmtmsys.service.base.EmployeeService;
 import org.chemtrovina.cmtmsys.service.base.ShiftPlanEmployeeService;
 import org.chemtrovina.cmtmsys.service.base.ShiftTypeEmployeeService;
@@ -22,6 +24,13 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+
+@RequiresRoles({
+        UserRole.ADMIN,
+        UserRole.INVENTORY,
+        UserRole.SUBLEEDER
+})
+
 @Component
 public class ShiftPlanController {
 

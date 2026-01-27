@@ -12,6 +12,8 @@ import org.chemtrovina.cmtmsys.dto.AbsentEmployeeDto;
 import org.chemtrovina.cmtmsys.dto.TimeAttendanceLogDto;
 import org.chemtrovina.cmtmsys.model.enums.AttendanceTimeStatus;
 import org.chemtrovina.cmtmsys.model.enums.ScanAction;
+import org.chemtrovina.cmtmsys.model.enums.UserRole;
+import org.chemtrovina.cmtmsys.security.RequiresRoles;
 import org.chemtrovina.cmtmsys.service.base.EmployeeService;
 import org.chemtrovina.cmtmsys.service.base.ShiftPlanEmployeeService;
 import org.chemtrovina.cmtmsys.service.base.TimeAttendanceLogService;
@@ -23,9 +25,16 @@ import org.springframework.stereotype.Controller;
 
 import java.io.File;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+@RequiresRoles({
+        UserRole.ADMIN,
+        UserRole.EMPLOYEE,
+        UserRole.EMPLOYEE_MINI
+})
 
 @Component
 public class TimeAttendanceController {
@@ -170,21 +179,19 @@ public class TimeAttendanceController {
             String newTime = event.getNewValue();
 
             try {
-                logService.manualFixAttendance(
-                        dto.getEmployeeId(),
-                        dto.getScanDate(),
-                        newTime,
-                        ScanAction.IN
-                );
-
+                logService.manualFixAttendance(dto.getEmployeeId(), dto.getScanDate(), newTime, ScanAction.IN);
                 dto.setIn(newTime);
-                tblTimeAttendanceLog.refresh();
 
+                // ⭐ cần để đổi màu đúng
+                logService.recalculateStatus(dto);
+
+                tblTimeAttendanceLog.refresh();
             } catch (Exception e) {
                 FxAlertUtils.error(e.getMessage());
                 tblTimeAttendanceLog.refresh();
             }
         });
+
 
         colOut.setOnEditCommit(event -> {
             TimeAttendanceLogDto dto = event.getRowValue();
@@ -232,7 +239,7 @@ public class TimeAttendanceController {
 
                 setText(value);
 
-                if (dto.getInStatus() == AttendanceTimeStatus.LATE) {
+                if (dto.getInStatus() == AttendanceTimeStatus.LATE || dto.getInStatus() == AttendanceTimeStatus.TOO_EARLY_IN) {
                     setStyle("""
                 -fx-background-color: #ee2828;
                 -fx-text-fill: black;
@@ -264,24 +271,22 @@ public class TimeAttendanceController {
 
                 setText(value);
 
-                if (dto.getOutStatus() == AttendanceTimeStatus.EARLY) {
+                if (dto.getOutStatus() == AttendanceTimeStatus.EARLY || dto.getOutStatus() == AttendanceTimeStatus.TOO_LATE_OUT) {
                     setStyle("""
                 -fx-background-color: #e12c2c;
                 -fx-text-fill: black;
             """);
                 } else {
-                    setStyle("""
+                    setStyle("""    
                 -fx-background-color: #54ed54;
                 -fx-text-fill: black;
             """);
                 }
             }
-        });colOut.setEditable(true);
+        });
 
-        colOut.setCellFactory(col -> new TextFieldTableCell<>(
-                new DefaultStringConverter()
-        ) {
-
+        colOut.setEditable(true);
+        colOut.setCellFactory(col -> new TextFieldTableCell<>(new DefaultStringConverter()) {
             @Override
             public void updateItem(String value, boolean empty) {
                 super.updateItem(value, empty);
@@ -292,12 +297,11 @@ public class TimeAttendanceController {
                     return;
                 }
 
-                TimeAttendanceLogDto dto =
-                        getTableView().getItems().get(getIndex());
-
+                TimeAttendanceLogDto dto = getTableView().getItems().get(getIndex());
                 setText(value);
 
-                if (dto.getOutStatus() == AttendanceTimeStatus.EARLY) {
+                if (dto.getOutStatus() == AttendanceTimeStatus.EARLY
+                        || dto.getOutStatus() == AttendanceTimeStatus.TOO_LATE_OUT) {
                     setStyle("""
                 -fx-background-color: #e12c2c;
                 -fx-text-fill: black;
@@ -310,6 +314,7 @@ public class TimeAttendanceController {
                 }
             }
         });
+
 
         dpImportDate.valueProperty().addListener((obs, oldV, newV) -> {
             boolean ok = (newV != null && selectedExcelFile != null);
@@ -591,8 +596,29 @@ public class TimeAttendanceController {
         alert.showAndWait();
     }
 
+    private AttendanceTimeStatus calcInStatus(LocalTime scanTime, LocalTime shiftStart) {
+        LocalTime earliest = shiftStart.minusMinutes(30);
 
+        if (scanTime.isBefore(earliest)) {
+            return AttendanceTimeStatus.TOO_EARLY_IN; // đỏ
+        }
+        if (scanTime.isAfter(shiftStart)) {
+            return AttendanceTimeStatus.LATE; // đỏ
+        }
+        return AttendanceTimeStatus.OK; // xanh
+    }
 
+    private AttendanceTimeStatus calcOutStatus(LocalTime scanTime, LocalTime shiftEnd) {
+        LocalTime latest = shiftEnd.plusMinutes(30);
+
+        if (scanTime.isBefore(shiftEnd)) {
+            return AttendanceTimeStatus.EARLY; // đỏ
+        }
+        if (scanTime.isAfter(latest)) {
+            return AttendanceTimeStatus.TOO_LATE_OUT; // đỏ
+        }
+        return AttendanceTimeStatus.OK; // xanh
+    }
 
 
 }

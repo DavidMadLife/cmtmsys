@@ -8,6 +8,8 @@ import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import org.chemtrovina.cmtmsys.model.*;
 import org.chemtrovina.cmtmsys.model.enums.ModelType;
+import org.chemtrovina.cmtmsys.model.enums.UserRole;
+import org.chemtrovina.cmtmsys.security.RequiresRoles;
 import org.chemtrovina.cmtmsys.service.base.*;
 import org.chemtrovina.cmtmsys.utils.AutoCompleteUtils;
 import org.chemtrovina.cmtmsys.utils.FxClipboardUtils;
@@ -17,6 +19,12 @@ import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.util.List;
+
+@RequiresRoles({
+        UserRole.ADMIN,
+        UserRole.INVENTORY,
+        UserRole.SUBLEEDER
+})
 
 @Component
 public class FeederListController {
@@ -264,6 +272,7 @@ public class FeederListController {
             selectedFile = null;
         });
     }
+
     // endregion
 
 

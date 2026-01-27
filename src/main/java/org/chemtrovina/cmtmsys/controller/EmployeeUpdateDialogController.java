@@ -6,9 +6,17 @@ import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 import org.chemtrovina.cmtmsys.dto.EmployeeDto;
 import org.chemtrovina.cmtmsys.model.Employee;
+import org.chemtrovina.cmtmsys.model.enums.UserRole;
+import org.chemtrovina.cmtmsys.security.RequiresRoles;
 import org.chemtrovina.cmtmsys.service.base.EmployeeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+@RequiresRoles({
+        UserRole.ADMIN,
+        UserRole.EMPLOYEE,
+        UserRole.EMPLOYEE_MINI
+})
 
 @Component
 public class EmployeeUpdateDialogController {

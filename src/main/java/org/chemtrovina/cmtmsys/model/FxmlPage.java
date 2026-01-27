@@ -2,7 +2,7 @@ package org.chemtrovina.cmtmsys.model;
 
 import javafx.scene.Parent;
 
-public class FxmlPage {
+/*public class FxmlPage {
     private Parent view;
     private Object controller;
 
@@ -18,4 +18,17 @@ public class FxmlPage {
     public Object getController() {
         return controller;
     }
+}*/
+
+public class FxmlPage {
+    private final Parent root;
+    private final Object controller;
+
+    public FxmlPage(Parent root, Object controller) {
+        this.root = root;
+        this.controller = controller;
+    }
+    public Parent getRoot() { return root; }
+    public Object getController() { return controller; }
 }
+

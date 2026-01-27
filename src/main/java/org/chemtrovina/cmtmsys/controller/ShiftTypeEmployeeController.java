@@ -5,12 +5,20 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import org.chemtrovina.cmtmsys.model.ShiftTypeEmployee;
+import org.chemtrovina.cmtmsys.model.enums.UserRole;
+import org.chemtrovina.cmtmsys.security.RequiresRoles;
 import org.chemtrovina.cmtmsys.service.base.ShiftTypeEmployeeService;
 import org.chemtrovina.cmtmsys.utils.FxAlertUtils;
 import org.chemtrovina.cmtmsys.utils.FxClipboardUtils;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+
+@RequiresRoles({
+        UserRole.ADMIN,
+        UserRole.EMPLOYEE,
+        UserRole.EMPLOYEE_MINI
+})
 
 @Component
 public class ShiftTypeEmployeeController {

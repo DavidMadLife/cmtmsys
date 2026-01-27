@@ -8,6 +8,8 @@ import javafx.scene.control.*;
 import org.chemtrovina.cmtmsys.dto.FeederDisplayRow;
 import org.chemtrovina.cmtmsys.model.*;
 import org.chemtrovina.cmtmsys.model.enums.ModelType;
+import org.chemtrovina.cmtmsys.model.enums.UserRole;
+import org.chemtrovina.cmtmsys.security.RequiresRoles;
 import org.chemtrovina.cmtmsys.service.base.*;
 import org.chemtrovina.cmtmsys.utils.AutoCompleteUtils;
 import org.chemtrovina.cmtmsys.utils.FxClipboardUtils;
@@ -22,6 +24,12 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.chemtrovina.cmtmsys.utils.TableUtils.centerAlignColumn;
+
+@RequiresRoles({
+        UserRole.ADMIN,
+        UserRole.INVENTORY,
+        UserRole.SUBLEEDER
+})
 
 @Component
 public class FeederMultiRollController {

@@ -69,7 +69,7 @@ public class RolePermissionConfig {
         PERMISSIONS.put("menuStencilManager", List.of(UserRole.ADMIN, UserRole.INVENTORY));
         PERMISSIONS.put("menuStencilTransferLog", List.of(UserRole.ADMIN, UserRole.INVENTORY));
 
-// === E-Board ===
+        // === E-Board ===
         PERMISSIONS.put("menuEBoard", List.of(UserRole.ADMIN, UserRole.SUBLEEDER));
         PERMISSIONS.put("menuEBoardLog", List.of(UserRole.ADMIN, UserRole.SUBLEEDER));
         PERMISSIONS.put("menuEBoardHistory", List.of(UserRole.ADMIN, UserRole.SUBLEEDER));

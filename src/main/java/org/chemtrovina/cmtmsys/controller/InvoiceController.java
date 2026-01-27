@@ -21,10 +21,12 @@ import org.chemtrovina.cmtmsys.dto.InvoiceDetailViewDto;
 import org.chemtrovina.cmtmsys.model.Invoice;
 import org.chemtrovina.cmtmsys.model.InvoiceDetail;
 import org.chemtrovina.cmtmsys.model.MOQ;
+import org.chemtrovina.cmtmsys.model.enums.UserRole;
 import org.chemtrovina.cmtmsys.repository.Impl.InvoiceRepositoryImpl;
 import org.chemtrovina.cmtmsys.repository.Impl.MOQRepositoryImpl;
 import org.chemtrovina.cmtmsys.repository.base.InvoiceRepository;
 import org.chemtrovina.cmtmsys.repository.base.MOQRepository;
+import org.chemtrovina.cmtmsys.security.RequiresRoles;
 import org.chemtrovina.cmtmsys.service.Impl.InvoiceServiceImpl;
 import org.chemtrovina.cmtmsys.service.Impl.MOQServiceImpl;
 import org.chemtrovina.cmtmsys.service.base.InvoiceService;
@@ -51,6 +53,13 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+@RequiresRoles({
+        UserRole.ADMIN,
+        UserRole.GENERALWAREHOUSE,
+        UserRole.INVENTORY
+})
+
 @Component
 public class InvoiceController {
 

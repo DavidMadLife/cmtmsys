@@ -12,6 +12,8 @@ import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import org.chemtrovina.cmtmsys.dto.MaterialDto;
 import org.chemtrovina.cmtmsys.model.Warehouse;
+import org.chemtrovina.cmtmsys.model.enums.UserRole;
+import org.chemtrovina.cmtmsys.security.RequiresRoles;
 import org.chemtrovina.cmtmsys.service.base.MaterialService;
 import org.chemtrovina.cmtmsys.service.base.TransferLogService;
 import org.chemtrovina.cmtmsys.service.base.WarehouseService;
@@ -26,6 +28,12 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+@RequiresRoles({
+        UserRole.ADMIN,
+        UserRole.INVENTORY,
+        UserRole.SUBLEEDER
+})
 
 @Component
 public class InventoryCheckController {

@@ -9,12 +9,15 @@ import javafx.util.Duration;
 import org.chemtrovina.cmtmsys.context.UserContext;
 import org.chemtrovina.cmtmsys.model.User;
 import org.chemtrovina.cmtmsys.repository.Impl.UserRepositoryImpl;
+import org.chemtrovina.cmtmsys.security.RequiresRoles;
 import org.chemtrovina.cmtmsys.service.Impl.UserServiceImpl;
 import org.chemtrovina.cmtmsys.service.base.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.chemtrovina.cmtmsys.config.DataSourceConfig;
 import org.springframework.stereotype.Component;
+
+@RequiresRoles(allowAll = true)
 
 @Component
 public class ChangePasswordController {

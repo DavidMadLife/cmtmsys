@@ -13,6 +13,8 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.layout.GridPane;
 import javafx.stage.FileChooser;
 import org.chemtrovina.cmtmsys.model.Solder;
+import org.chemtrovina.cmtmsys.model.enums.UserRole;
+import org.chemtrovina.cmtmsys.security.RequiresRoles;
 import org.chemtrovina.cmtmsys.service.base.SolderService;
 import org.chemtrovina.cmtmsys.utils.FxClipboardUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +27,12 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+
+@RequiresRoles({
+        UserRole.ADMIN,
+        UserRole.INVENTORY,
+        UserRole.SUBLEEDER
+})
 
 @Component
 public class SolderManagerController {

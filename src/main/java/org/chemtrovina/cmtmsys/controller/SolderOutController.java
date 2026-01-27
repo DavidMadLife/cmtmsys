@@ -15,6 +15,8 @@ import org.chemtrovina.cmtmsys.model.Employee;
 import org.chemtrovina.cmtmsys.model.Solder;
 import org.chemtrovina.cmtmsys.model.SolderSession;
 import org.chemtrovina.cmtmsys.model.Warehouse;
+import org.chemtrovina.cmtmsys.model.enums.UserRole;
+import org.chemtrovina.cmtmsys.security.RequiresRoles;
 import org.chemtrovina.cmtmsys.service.base.EmployeeService;
 import org.chemtrovina.cmtmsys.service.base.SolderService;
 import org.chemtrovina.cmtmsys.service.base.SolderSessionService;
@@ -27,6 +29,12 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+
+@RequiresRoles({
+        UserRole.ADMIN,
+        UserRole.INVENTORY,
+        UserRole.SUBLEEDER
+})
 
 @Component
 public class SolderOutController {

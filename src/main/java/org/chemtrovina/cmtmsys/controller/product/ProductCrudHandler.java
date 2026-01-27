@@ -94,6 +94,7 @@ public class ProductCrudHandler {
         Alert c = new Alert(Alert.AlertType.CONFIRMATION,
                 "Xoá sản phẩm " + p.getProductCode() + " ?", ButtonType.OK, ButtonType.CANCEL);
 
+
         c.showAndWait().ifPresent(res -> {
             if (res == ButtonType.OK) {
                 productService.deleteProductWithBOM(p.getProductId());

@@ -9,6 +9,8 @@ import javafx.stage.FileChooser;
 import org.chemtrovina.cmtmsys.controller.product.*;
 import org.chemtrovina.cmtmsys.dto.ProductBomDto;
 import org.chemtrovina.cmtmsys.model.Product;
+import org.chemtrovina.cmtmsys.model.enums.UserRole;
+import org.chemtrovina.cmtmsys.security.RequiresRoles;
 import org.chemtrovina.cmtmsys.service.base.ProductBOMService;
 import org.chemtrovina.cmtmsys.service.base.ProductService;
 import org.chemtrovina.cmtmsys.utils.AutoCompleteUtils;
@@ -19,6 +21,12 @@ import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.util.List;
+
+@RequiresRoles({
+        UserRole.ADMIN,
+        UserRole.INVENTORY,
+        UserRole.SUBLEEDER
+})
 
 @Component
 public class ProductController {
@@ -234,61 +242,160 @@ public class ProductController {
         });
     }
 
-    private void setupAutoCompleteModels() {
-        if (allProducts == null) return;
+    private boolean syncing = false;
 
-        // Lọc null + chuẩn hoá
+    private void setupAutoCompleteModels() {
+        if (allProducts == null || allProducts.isEmpty()) return;
+
+        // ===== List gợi ý =====
         List<String> codes = allProducts.stream()
                 .map(Product::getProductCode)
                 .filter(s -> s != null && !s.isBlank())
                 .distinct()
+                .sorted()
                 .toList();
 
         List<String> names = allProducts.stream()
                 .map(Product::getName)
                 .filter(s -> s != null && !s.isBlank())
                 .distinct()
+                .sorted()
                 .toList();
 
-        // thiết lập autocomplete
         AutoCompleteUtils.setupAutoComplete(txtProductCode, codes);
         AutoCompleteUtils.setupAutoComplete(txtProductName, names);
 
-        // ===== Khi chọn CODE → fill NAME + TYPE =====
+        // ===== Index nhanh: code/name -> list product =====
+        var byCode = allProducts.stream()
+                .filter(p -> p.getProductCode() != null && !p.getProductCode().isBlank())
+                .collect(java.util.stream.Collectors.groupingBy(p -> p.getProductCode().trim().toLowerCase()));
+
+        var byName = allProducts.stream()
+                .filter(p -> p.getName() != null && !p.getName().isBlank())
+                .collect(java.util.stream.Collectors.groupingBy(p -> p.getName().trim().toLowerCase()));
+
+        // ===== Helper chọn đúng record (ưu tiên type đang chọn) =====
+        java.util.function.BiFunction<List<Product>, String, Product> pickBest = (list, typeStr) -> {
+            if (list == null || list.isEmpty()) return null;
+
+            // ưu tiên đúng type đang filter
+            if (typeStr != null && !typeStr.isBlank()) {
+                Product typeMatch = list.stream()
+                        .filter(p -> p.getModelType() != null)
+                        .filter(p -> p.getModelType().name().equalsIgnoreCase(typeStr))
+                        .findFirst()
+                        .orElse(null);
+                if (typeMatch != null) return typeMatch;
+            }
+
+            // fallback: lấy record đầu
+            return list.get(0);
+        };
+
+        // ===== Khi gõ CODE -> fill NAME + TYPE =====
         txtProductCode.textProperty().addListener((obs, oldVal, newVal) -> {
+            if (syncing) return;
             if (newVal == null || newVal.isBlank()) return;
 
-            Product found = allProducts.stream()
-                    .filter(p -> newVal.equalsIgnoreCase(p.getProductCode()))
-                    .findFirst()
-                    .orElse(null);
+            String key = newVal.trim().toLowerCase();
+            List<Product> list = byCode.get(key);
+            if (list == null || list.isEmpty()) return;
 
-            if (found != null) {
-                txtProductName.setText(found.getName());
-                if (found.getModelType() != null) {
-                    cbModelTypeFilter.setValue(found.getModelType().name());
+            String currentType = cbModelTypeFilter.getValue(); // có thể null
+            Product found = pickBest.apply(list, currentType);
+            if (found == null) return;
+
+            syncing = true;
+            try {
+                // fill NAME
+                if (found.getName() != null) {
+                    txtProductName.setText(found.getName());
                 }
+
+                // fill TYPE nếu combobox đang trống hoặc khác
+                if (found.getModelType() != null) {
+                    String mt = found.getModelType().name();
+                    if (cbModelTypeFilter.getValue() == null || !cbModelTypeFilter.getValue().equalsIgnoreCase(mt)) {
+                        cbModelTypeFilter.setValue(mt);
+                    }
+                }
+            } finally {
+                syncing = false;
             }
         });
 
-        // ===== Khi chọn NAME → fill CODE + TYPE =====
+        // ===== Khi gõ NAME -> fill CODE + TYPE =====
         txtProductName.textProperty().addListener((obs, oldVal, newVal) -> {
+            if (syncing) return;
             if (newVal == null || newVal.isBlank()) return;
 
-            Product found = allProducts.stream()
-                    .filter(p -> newVal.equalsIgnoreCase(
-                            p.getName() != null ? p.getName() : ""))
-                    .findFirst()
-                    .orElse(null);
+            String key = newVal.trim().toLowerCase();
+            List<Product> list = byName.get(key);
+            if (list == null || list.isEmpty()) return;
 
-            if (found != null) {
-                txtProductCode.setText(found.getProductCode());
+            String currentType = cbModelTypeFilter.getValue();
+            Product found = pickBest.apply(list, currentType);
+            if (found == null) return;
+
+            syncing = true;
+            try {
+                if (found.getProductCode() != null) {
+                    txtProductCode.setText(found.getProductCode());
+                }
+
                 if (found.getModelType() != null) {
-                    cbModelTypeFilter.setValue(found.getModelType().name());
+                    String mt = found.getModelType().name();
+                    if (cbModelTypeFilter.getValue() == null || !cbModelTypeFilter.getValue().equalsIgnoreCase(mt)) {
+                        cbModelTypeFilter.setValue(mt);
+                    }
+                }
+            } finally {
+                syncing = false;
+            }
+        });
+
+        // ===== Khi đổi ModelTypeFilter -> nếu đã có code/name thì chọn lại record đúng type =====
+        cbModelTypeFilter.valueProperty().addListener((obs, oldVal, newVal) -> {
+            if (syncing) return;
+
+            String code = txtProductCode.getText();
+            String name = txtProductName.getText();
+
+            // ưu tiên lấy theo code nếu có
+            if (code != null && !code.isBlank()) {
+                String key = code.trim().toLowerCase();
+                List<Product> list = byCode.get(key);
+                Product found = pickBest.apply(list, newVal);
+
+                if (found != null) {
+                    syncing = true;
+                    try {
+                        if (found.getName() != null) txtProductName.setText(found.getName());
+                    } finally {
+                        syncing = false;
+                    }
+                }
+                return;
+            }
+
+            // fallback theo name
+            if (name != null && !name.isBlank()) {
+                String key = name.trim().toLowerCase();
+                List<Product> list = byName.get(key);
+                Product found = pickBest.apply(list, newVal);
+
+                if (found != null) {
+                    syncing = true;
+                    try {
+                        if (found.getProductCode() != null) txtProductCode.setText(found.getProductCode());
+                    } finally {
+                        syncing = false;
+                    }
                 }
             }
         });
     }
+
 
 
 

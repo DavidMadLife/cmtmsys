@@ -12,6 +12,8 @@ import org.chemtrovina.cmtmsys.dto.MaterialUsage;
 import org.chemtrovina.cmtmsys.dto.PcbPerformanceLogHistoryDTO;
 import org.chemtrovina.cmtmsys.model.Warehouse;
 import org.chemtrovina.cmtmsys.model.enums.ModelType;
+import org.chemtrovina.cmtmsys.model.enums.UserRole;
+import org.chemtrovina.cmtmsys.security.RequiresRoles;
 import org.chemtrovina.cmtmsys.service.base.MaterialConsumeDetailLogService;
 import org.chemtrovina.cmtmsys.service.base.PcbPerformanceLogService;
 import org.chemtrovina.cmtmsys.service.base.WarehouseService;
@@ -23,6 +25,12 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+
+@RequiresRoles({
+        UserRole.ADMIN,
+        UserRole.INVENTORY,
+        UserRole.SUBLEEDER
+})
 
 @Component
 public class PerformanceLogHistoryController {

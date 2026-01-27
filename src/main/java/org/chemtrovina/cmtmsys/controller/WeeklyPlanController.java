@@ -9,12 +9,14 @@ import org.chemtrovina.cmtmsys.dto.SelectedModelDto;
 import org.chemtrovina.cmtmsys.dto.WeeklyPlanDto;
 import org.chemtrovina.cmtmsys.model.Warehouse;
 import org.chemtrovina.cmtmsys.model.enums.ModelType;
+import org.chemtrovina.cmtmsys.model.enums.UserRole;
 import org.chemtrovina.cmtmsys.repository.Impl.ProductRepositoryImpl;
 import org.chemtrovina.cmtmsys.repository.Impl.ProductionPlanRepositoryImpl;
 import org.chemtrovina.cmtmsys.repository.Impl.WarehouseRepositoryImpl;
 import org.chemtrovina.cmtmsys.repository.base.ProductRepository;
 import org.chemtrovina.cmtmsys.repository.base.ProductionPlanRepository;
 import org.chemtrovina.cmtmsys.repository.base.WarehouseRepository;
+import org.chemtrovina.cmtmsys.security.RequiresRoles;
 import org.chemtrovina.cmtmsys.service.Impl.ProductServiceImpl;
 import org.chemtrovina.cmtmsys.service.Impl.ProductionPlanServiceImpl;
 import org.chemtrovina.cmtmsys.service.Impl.WarehouseServiceImpl;
@@ -31,6 +33,12 @@ import java.time.temporal.WeekFields;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
+
+@RequiresRoles({
+        UserRole.ADMIN,
+        UserRole.INVENTORY,
+        UserRole.SUBLEEDER
+})
 
 @Component
 public class WeeklyPlanController {

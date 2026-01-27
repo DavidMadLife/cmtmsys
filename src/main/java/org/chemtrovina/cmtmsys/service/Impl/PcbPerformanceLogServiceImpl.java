@@ -310,10 +310,6 @@ public class PcbPerformanceLogServiceImpl implements PcbPerformanceLogService {
 
 
     private void consumeRealtime(PcbPerformanceLog log) {
-        // 0) Tính good output
-        int good = Math.max(0, log.getTotalModules());
-        if (good <= 0) return;
-
         // 1) Lấy BOM của product
         List<ProductBOM> bomList = productBOMService.getByProductId(log.getProductId());
         if (bomList == null || bomList.isEmpty()) return;
@@ -347,8 +343,9 @@ public class PcbPerformanceLogServiceImpl implements PcbPerformanceLogService {
             String sap = (bom.getSappn() == null) ? "" : bom.getSappn().trim().toUpperCase();
             if (sap.isEmpty()) continue;
 
+
             // Lượng cần trừ = Qty/board * Good
-            int need = (int)Math.round(bom.getQuantity() * good);
+            int need = (int)Math.round(bom.getQuantity());
             if (need <= 0) continue;
 
             List<Feeder> sapFeeders = feedersBySap.getOrDefault(sap, List.of());

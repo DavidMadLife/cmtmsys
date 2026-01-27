@@ -7,6 +7,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Set;
 
 @Repository
 public class ShiftTypeEmployeeRepositoryImpl implements ShiftTypeEmployeeRepository {
@@ -63,4 +64,32 @@ public class ShiftTypeEmployeeRepositoryImpl implements ShiftTypeEmployeeReposit
     public int delete(String shiftCode) {
         return jdbc.update("DELETE FROM ShiftTypeEmployee WHERE ShiftCode = ?", shiftCode);
     }
+
+    @Override
+    public List<ShiftTypeEmployee> findByCodes(Set<String> shiftCodes) {
+
+        if (shiftCodes == null || shiftCodes.isEmpty()) {
+            return List.of();
+        }
+
+        // tạo ?,?,? cho IN (...)
+        String placeholders = shiftCodes.stream()
+                .map(c -> "?")
+                .collect(java.util.stream.Collectors.joining(","));
+
+        String sql = """
+        SELECT *
+        FROM ShiftTypeEmployee
+        WHERE ShiftCode IN (%s)
+    """.formatted(placeholders);
+
+        return jdbc.query(
+                sql,
+                mapper,
+                shiftCodes.toArray()
+        );
+    }
+
+
+
 }

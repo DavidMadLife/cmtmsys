@@ -118,24 +118,21 @@ public class TimeAttendanceLogRepositoryImpl implements TimeAttendanceLogReposit
     }
 
     @Override
-    public List<TimeAttendanceLog> findByScanDateRange(LocalDate from, LocalDate to) {
+    public List<TimeAttendanceLog> findByScanDateRange(LocalDate from, LocalDate toExclusive) {
         String sql = """
-            SELECT 
-                LogId, 
-                EmployeeId, 
-                ScanDateTime, 
-                ScanAction, 
-                ScanMethod, 
-                CreatedAt 
-            FROM TimeAttendanceLog
-            WHERE 
-                ScanDateTime >= ? AND ScanDateTime < ?
-            ORDER BY ScanDateTime DESC
-        """;
+        SELECT LogId, EmployeeId, ScanDateTime, ScanAction, ScanMethod, CreatedAt
+        FROM TimeAttendanceLog
+        WHERE ScanDateTime >= ? AND ScanDateTime < ?
+        ORDER BY ScanDateTime DESC
+    """;
 
-        // Sử dụng to.plusDays(1) để bao gồm toàn bộ thời gian của ngày 'to'
-        return jdbc.query(sql, mapper, from, to.plusDays(1));
+        // IMPORTANT: KHÔNG plusDays ở đây
+        return jdbc.query(sql, mapper,
+                java.sql.Timestamp.valueOf(from.atStartOfDay()),
+                java.sql.Timestamp.valueOf(toExclusive.atStartOfDay())
+        );
     }
+
 
     public List<TimeAttendanceLog> findByEmployeeIdAndDate(int employeeId, LocalDate date) {
         String sql = """

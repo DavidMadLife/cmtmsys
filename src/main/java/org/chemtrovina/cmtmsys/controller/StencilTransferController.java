@@ -6,6 +6,8 @@ import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import org.chemtrovina.cmtmsys.model.StencilTransfer;
+import org.chemtrovina.cmtmsys.model.enums.UserRole;
+import org.chemtrovina.cmtmsys.security.RequiresRoles;
 import org.chemtrovina.cmtmsys.service.base.StencilTransferService;
 import org.chemtrovina.cmtmsys.service.base.WarehouseService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +15,12 @@ import org.springframework.stereotype.Component;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+
+@RequiresRoles({
+        UserRole.ADMIN,
+        UserRole.INVENTORY,
+        UserRole.SUBLEEDER
+})
 
 @Component
 public class StencilTransferController {

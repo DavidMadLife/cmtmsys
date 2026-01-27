@@ -12,6 +12,8 @@ import javafx.util.Pair;
 import org.chemtrovina.cmtmsys.model.Product;
 import org.chemtrovina.cmtmsys.model.WorkOrder;
 import org.chemtrovina.cmtmsys.model.enums.ModelType;
+import org.chemtrovina.cmtmsys.model.enums.UserRole;
+import org.chemtrovina.cmtmsys.security.RequiresRoles;
 import org.chemtrovina.cmtmsys.service.base.ProductService;
 import org.chemtrovina.cmtmsys.service.base.WorkOrderService;
 import org.chemtrovina.cmtmsys.utils.AutoCompleteUtils;
@@ -23,6 +25,12 @@ import org.springframework.stereotype.Component;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+@RequiresRoles({
+        UserRole.ADMIN,
+        UserRole.INVENTORY,
+        UserRole.SUBLEEDER
+})
 
 @Component
 public class WorkOrderCreateController {

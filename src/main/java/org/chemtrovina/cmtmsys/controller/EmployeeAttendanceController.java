@@ -6,10 +6,18 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import org.chemtrovina.cmtmsys.dto.EmployeeScanViewDto;
 import org.chemtrovina.cmtmsys.model.enums.ScanAction;
+import org.chemtrovina.cmtmsys.model.enums.UserRole;
+import org.chemtrovina.cmtmsys.security.RequiresRoles;
 import org.chemtrovina.cmtmsys.service.base.TimeAttendanceLogService;
 import org.chemtrovina.cmtmsys.utils.FxClipboardUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+@RequiresRoles({
+        UserRole.ADMIN,
+        UserRole.EMPLOYEE_MINI,
+        UserRole.EMPLOYEE
+})
 
 @Component
 public class EmployeeAttendanceController {
