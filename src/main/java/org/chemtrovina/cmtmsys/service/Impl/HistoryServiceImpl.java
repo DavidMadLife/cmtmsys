@@ -61,9 +61,9 @@ public class HistoryServiceImpl implements HistoryService {
     }
 
     @Override
-    public void createHistoryForScannedMakePN(MOQ moq, String employeeId, String scanCode, int invoiceId) {
+    public void createHistoryForScannedMakePN(MOQ moq, String employeeId, String scanCode, int invoiceId, String status) {
         if (moq == null) {
-            System.out.println("Không có MOQ để lưu.");
+            System.out.println("[HIS] moq is null -> skip");
             return;
         }
 
@@ -74,23 +74,33 @@ public class HistoryServiceImpl implements HistoryService {
         history.setInvoiceId(invoiceId);
         history.setMakerPN(moq.getMakerPN());
         history.setSapPN(moq.getSapPN());
-        history.setQuantity(moq.getMoq());
+        history.setQuantity(moq.getMoq());         // qty lưu ở đây
         history.setDate(LocalDate.now());
         history.setTime(LocalTime.now());
         history.setEmployeeId(employeeId);
         history.setScanCode(scanCode);
         history.setMSL(moq.getMsql());
         history.setSpec(moq.getSpec());
-        history.setStatus("Scanned");
+        history.setStatus(status);
 
         if (invoice != null) {
-            history.setInvoicePN(invoice.getInvoicePN()); // Gán invoicePN
+            history.setInvoicePN(invoice.getInvoicePN());
         }
 
+        System.out.println("===== [HISTORY][INSERT] =====");
+        System.out.println("invoiceId   = " + history.getInvoiceId());
+        System.out.println("invoicePN   = " + history.getInvoicePN());
+        System.out.println("sapPN       = " + history.getSapPN());
+        System.out.println("makerPN     = " + history.getMakerPN());
+        System.out.println("qty         = " + history.getQuantity());
+        System.out.println("scanCode    = " + history.getScanCode());
+        System.out.println("status      = " + history.getStatus());
+        System.out.println("employeeId  = " + history.getEmployeeId());
+        System.out.println("date/time   = " + history.getDate() + " " + history.getTime());
+        System.out.println("=============================");
 
         addHistory(history);
     }
-
 
     @Override
     public void createHistoryForScanOddReel(MOQ moq, String employeeId, String scanCode, int invoiceId, int quantity) {

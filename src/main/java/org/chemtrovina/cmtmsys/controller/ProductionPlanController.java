@@ -11,7 +11,11 @@ import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.util.Callback;
 import javafx.util.converter.IntegerStringConverter;
+import org.chemtrovina.cmtmsys.controller.productionPlan.ProductionPlanDailySection;
+import org.chemtrovina.cmtmsys.controller.productionPlan.ProductionPlanHourlySection;
+import org.chemtrovina.cmtmsys.controller.productionPlan.ProductionPlanWeeklySection;
 import org.chemtrovina.cmtmsys.dto.*;
+import org.chemtrovina.cmtmsys.helper.TabDisposable;
 import org.chemtrovina.cmtmsys.model.ProductionPlanDaily;
 import org.chemtrovina.cmtmsys.model.ProductionPlanHourly;
 import org.chemtrovina.cmtmsys.model.Warehouse;
@@ -19,6 +23,7 @@ import org.chemtrovina.cmtmsys.model.enums.ModelType;
 import org.chemtrovina.cmtmsys.model.enums.UserRole;
 import org.chemtrovina.cmtmsys.security.RequiresRoles;
 import org.chemtrovina.cmtmsys.service.base.*;
+import org.chemtrovina.cmtmsys.utils.FxAlertUtils;
 import org.chemtrovina.cmtmsys.utils.FxClipboardUtils;
 import org.chemtrovina.cmtmsys.utils.FxFilterUtils;
 import org.chemtrovina.cmtmsys.utils.TableUtils;
@@ -44,78 +49,95 @@ import javafx.util.Duration;
 
 import static org.chemtrovina.cmtmsys.utils.TableCellUtils.mergeIdenticalCells;
 
-@RequiresRoles({
-        UserRole.ADMIN,
-        UserRole.INVENTORY,
-        UserRole.SUBLEEDER
-})
 
 @Component
-public class ProductionPlanController {
-    // --- Weekly Plan ---
+@RequiresRoles({ UserRole.ADMIN, UserRole.INVENTORY, UserRole.SUBLEEDER })
+public class ProductionPlanController implements TabDisposable {
+
+    // ==========================================================
+    // 1) FXML - WEEKLY PLAN
+    // ==========================================================
     @FXML private TextField txtSearchProduct, txtModelCode, txtPlannedQty;
     @FXML private ComboBox<String> cbSearchLine;
-
     @FXML private DatePicker dpSearchWeek, dpFromDate, dpToDate;
     @FXML private Button btnSearchPlans, btnResetFilters, btnCreatePlan, btnAddModel;
+
+    @FXML private ComboBox<String> cbLine;
+    @FXML private ComboBox<ModelType> cbModelType;
+
     @FXML private TableView<WeeklyPlanDto> tblWeeklyPlans;
     @FXML private TableColumn<WeeklyPlanDto, String> colLine, colProductCode, colFromDate, colToDate;
     @FXML private TableColumn<WeeklyPlanDto, Integer> colWeekNo, colPlannedQty, colActualQty, colDiffQty;
-    @FXML private ComboBox<String> cbLine;
+    @FXML private TableColumn<WeeklyPlanDto, String> colModelType, colCompletionRate;
+
     @FXML private TableView<SelectedModelDto> tblSelectedProducts;
-    @FXML private TableColumn<SelectedModelDto, String> colSelectedProductCode;
+    @FXML private TableColumn<SelectedModelDto, String> colSelectedProductCode, colSelectedModelType;
     @FXML private TableColumn<SelectedModelDto, Integer> colSelectedQty;
     @FXML private TableColumn<SelectedModelDto, Void> colRemoveAction;
-    @FXML
-    private ComboBox<ModelType> cbModelType;
 
 
-
-    @FXML private TableColumn<WeeklyPlanDto, String> colModelType;
-    @FXML private TableColumn<WeeklyPlanDto, String> colCompletionRate;
-    @FXML private TableColumn<HourlyActualRow,String> colHStage;
-
-    @FXML private TableColumn<DailyPlanDisplayRow, String> colDailyModelType;
-
-
-
-    private ObservableList<SelectedModelDto> selectedProducts = FXCollections.observableArrayList();
-    @FXML private TableColumn<SelectedModelDto, String> colSelectedModelType;
-
-
-    // --- Daily Plan ---
+    // ==========================================================
+    // 2) FXML - DAILY PLAN
+    // ==========================================================
     @FXML private ComboBox<String> cbLineFilter;
     @FXML private DatePicker dpWeekDate;
     @FXML private Button btnLoadDailyPlans, btnSaveActuals, btnRollbackMaterial;
+
     @FXML private TableView<DailyPlanDisplayRow> tblDailyPlans;
-    @FXML private TableColumn<DailyPlanDisplayRow, String> colDailyLine, colModel, colDailyProductCode, colType;
+    @FXML private TableColumn<DailyPlanDisplayRow, String> colDailyLine, colModel, colDailyProductCode, colType, colDailyModelType;
     @FXML private TableColumn<DailyPlanDisplayRow, Integer> colD1, colD2, colD3, colD4, colD5, colD6, colD7, colTotal;
 
+
+    // ==========================================================
+    // 3) FXML - HOURLY PANE
+    // ==========================================================
+    @FXML private ComboBox<String> cbLineHourly;
+    @FXML private DatePicker dpHourlyDate;
+    @FXML private Button btnLoadHourly;
+
+    @FXML private TableView<HourlyActualRow> tblHourly;
+    @FXML private TableColumn<HourlyActualRow, String> colHLine, colHModel, colHModelType, colHProduct, colHStage;
+    @FXML private TableColumn<HourlyActualRow, Integer> colS1,colS2,colS3,colS4,colS5,colS6,colS7,colS8,colS9,colS10,colS11,colS12,colHTotal;
+
+
+    // ==========================================================
+    // 4) DEPENDENCIES (SERVICES)
+    // ==========================================================
     private final ProductionPlanService productionPlanService;
     private final WarehouseService warehouseService;
     private final ProductService productService;
     private final ProductionPlanDailyService dailyService;
     private final PcbPerformanceLogService pcbPerformanceLogService;
 
+
+    // ==========================================================
+    // 5) STATE / DATA
+    // ==========================================================
+    private final ObservableList<SelectedModelDto> selectedProducts = FXCollections.observableArrayList();
     private List<DailyPlanDisplayRow> masterRows = new ArrayList<>();
 
+
+    // ==========================================================
+    // 6) AUTO REFRESH STATE
+    // ==========================================================
     private Timeline autoRefresh;
     private volatile long lastUserEventAt = System.currentTimeMillis();
-    private static final long IDLE_MS = 5000;
+    private static final long IDLE_MS = 10_000;
 
-    // Hourly pane
-    @FXML private ComboBox<String> cbLineHourly;
-    @FXML private DatePicker dpHourlyDate;
-    @FXML private Button btnLoadHourly;
-    @FXML private TableView<HourlyActualRow> tblHourly;
+    private javafx.scene.Scene trackedScene;
+    private EventHandler<Event> anyEventHandler;
 
-    @FXML private TableColumn<HourlyActualRow,String> colHLine, colHModel, colHModelType, colHProduct;
-    @FXML private TableColumn<HourlyActualRow,Integer> colS1,colS2,colS3,colS4,colS5,colS6,colS7,colS8,colS9,colS10,colS11,colS12,colHTotal;
-
-
+    // ==========================================================
+    // 7) CONSTRUCTOR
+    // ==========================================================
     @Autowired
-    public ProductionPlanController(ProductionPlanService productionPlanService, WarehouseService warehouseService,
-                                    ProductService productService, ProductionPlanDailyService dailyService, PcbPerformanceLogService pcbPerformanceLogService) {
+    public ProductionPlanController(
+            ProductionPlanService productionPlanService,
+            WarehouseService warehouseService,
+            ProductService productService,
+            ProductionPlanDailyService dailyService,
+            PcbPerformanceLogService pcbPerformanceLogService
+    ) {
         this.productionPlanService = productionPlanService;
         this.warehouseService = warehouseService;
         this.productService = productService;
@@ -123,14 +145,37 @@ public class ProductionPlanController {
         this.pcbPerformanceLogService = pcbPerformanceLogService;
     }
 
+    @Autowired
+    private ProductionPlanWeeklySection weeklySection;
+    @Autowired
+    private ProductionPlanDailySection dailySection;
+    @Autowired private ProductionPlanHourlySection hourlySection;
+
+
+
+    // ==========================================================
+    // 8) LIFECYCLE
+    // ==========================================================
     @FXML
     public void initialize() {
-        setupWeeklyPlan();
-        setupDailyPlan();
+        weeklySection.init(buildWeeklyRefs());
+        dailySection.init(buildDailyRefs());
+        hourlySection.init(buildHourlyRefs());
 
+        setupCommonUi();
+    }
+
+    @Override
+    public void onTabClose() {
+        hourlySection.dispose();
+    }
+
+    // ==========================================================
+    // 9) COMMON UI
+    // ==========================================================
+    private void setupCommonUi() {
         cbModelType.setItems(FXCollections.observableArrayList(ModelType.values()));
-        cbModelType.getSelectionModel().select(ModelType.NONE); // mặc định
-        setupHourlyPane();
+        cbModelType.getSelectionModel().select(ModelType.NONE);
 
         FxClipboardUtils.enableCopyShortcut(tblHourly);
         FxClipboardUtils.enableCopyShortcut(tblWeeklyPlans);
@@ -141,47 +186,61 @@ public class ProductionPlanController {
         tblDailyPlans.setStyle("-fx-font-size: 14px;");
         tblHourly.setStyle("-fx-font-size: 14px;");
         tblSelectedProducts.setStyle("-fx-font-size: 14px;");
-
-        setupIdleTrackingAndAutoRefresh();
-
     }
 
-    private void setupIdleTrackingAndAutoRefresh() {
-        // tick mỗi 5s
+    // ==========================================================
+    // 10) AUTO REFRESH (IDLE TRACKING)
+    // ==========================================================
+ /*   private void setupIdleTrackingAndAutoRefresh() {
         autoRefresh = new Timeline(new KeyFrame(Duration.seconds(5), e -> maybeAutoLoadHourly()));
         autoRefresh.setCycleCount(Timeline.INDEFINITE);
         autoRefresh.play();
 
-        // gắn event filter sau khi scene sẵn sàng
-        javafx.application.Platform.runLater(() -> {
-            var scene = tblHourly.getScene();
-            if (scene == null) return;
+        Platform.runLater(() -> attachIdleEventTracking());
+    }
+    private void attachIdleEventTracking() {
+        var scene = tblHourly.getScene();
+        if (scene == null) return;
 
-            // Cách 1: bắt tất cả event
-            EventHandler<Event> any = e -> lastUserEventAt = System.currentTimeMillis();
-            scene.addEventFilter(Event.ANY, any);
+        trackedScene = scene;
 
-            // (hoặc Cách 2: tách từng loại)
-            // scene.addEventFilter(MouseEvent.ANY, e -> lastUserEventAt = System.currentTimeMillis());
-            // scene.addEventFilter(KeyEvent.ANY,   e -> lastUserEventAt = System.currentTimeMillis());
-            // scene.addEventFilter(ScrollEvent.ANY,e -> lastUserEventAt = System.currentTimeMillis());
+        anyEventHandler = e -> lastUserEventAt = System.currentTimeMillis();
+        trackedScene.addEventFilter(Event.ANY, anyEventHandler);
+    }
 
-            var window = scene.getWindow();
-            if (window != null) window.setOnHidden(ev -> { if (autoRefresh != null) autoRefresh.stop(); });
-        });
+    private void detachIdleEventTracking() {
+        if (trackedScene != null && anyEventHandler != null) {
+            trackedScene.removeEventFilter(Event.ANY, anyEventHandler);
+        }
+        trackedScene = null;
+        anyEventHandler = null;
+    }
+
+    private void stopAutoRefresh() {
+        if (autoRefresh != null) {
+            autoRefresh.stop();
+            autoRefresh = null;
+        }
     }
 
     private void maybeAutoLoadHourly() {
         long idle = System.currentTimeMillis() - lastUserEventAt;
-        if (idle < IDLE_MS) return;                 // còn đang thao tác
-        if (tblHourly.getEditingCell() != null) return; // đang edit ô
+        if (idle < IDLE_MS) return;
+        if (tblHourly.getEditingCell() != null) return;
         if (dpHourlyDate.getValue() == null) return;
 
         loadHourlyActuals();
     }
 
+*/
+    public void pauseAutoRefresh() { if (autoRefresh != null) autoRefresh.pause(); }
+    public void resumeAutoRefresh() { if (autoRefresh != null) autoRefresh.play(); }
 
-    private void setupWeeklyPlan() {
+    // ==========================================================
+    // 11) WEEKLY PLAN
+    // ==========================================================
+
+    /*private void setupWeeklyPlan() {
         colLine.setCellValueFactory(c -> c.getValue().lineProperty());
         colProductCode.setCellValueFactory(c -> c.getValue().productCodeProperty());
         colWeekNo.setCellValueFactory(c -> c.getValue().weekNoProperty().asObject());
@@ -253,9 +312,9 @@ public class ProductionPlanController {
                     productionPlanService.deleteWeeklyPlan(planId);
                     handleSearch(); // Tải lại danh sách
                     loadDailyPlans();
-                    showAlert("Đã xoá kế hoạch.");
+                    FxAlertUtils.warning("Đã xoá kế hoạch.");
                 } else {
-                    showAlert("Không tìm thấy kế hoạch để xoá.");
+                    FxAlertUtils.warning("Không tìm thấy kế hoạch để xoá.");
                 }
             }
         });
@@ -277,12 +336,12 @@ public class ProductionPlanController {
         ModelType selectedType = cbModelType.getValue();
 
         if (modelCode.isEmpty() || qtyStr.isEmpty() || selectedType == null) {
-            showAlert("Vui lòng nhập đầy đủ model, số lượng và chọn Model Type.");
+            FxAlertUtils.warning("Vui lòng nhập đầy đủ model, số lượng và chọn Model Type.");
             return;
         }
 
         if (!productService.checkProductExists(modelCode, selectedType)) {
-            showAlert("Model không tồn tại với kiểu đã chọn.");
+            FxAlertUtils.warning("Model không tồn tại với kiểu đã chọn.");
             return;
         }
 
@@ -291,7 +350,7 @@ public class ProductionPlanController {
             qty = Integer.parseInt(qtyStr);
             if (qty <= 0) throw new NumberFormatException();
         } catch (NumberFormatException e) {
-            showAlert("Số lượng phải > 0.");
+            FxAlertUtils.warning("Số lượng phải > 0.");
             return;
         }
 
@@ -304,13 +363,13 @@ public class ProductionPlanController {
     private void handleCreatePlan() {
         String line = cbLine.getValue();
         if (line == null || dpFromDate.getValue() == null || dpToDate.getValue() == null || selectedProducts.isEmpty()) {
-            showAlert("Vui lòng nhập đầy đủ thông tin và ít nhất một model."); return;
+            FxAlertUtils.warning("Vui lòng nhập đầy đủ thông tin và ít nhất một model."); return;
         }
         int weekNo = dpFromDate.getValue().get(WeekFields.of(Locale.getDefault()).weekOfWeekBasedYear());
         boolean success = productionPlanService.createWeeklyPlan(line, selectedProducts, dpFromDate.getValue(), dpToDate.getValue(), weekNo, dpFromDate.getValue().getYear());
         if (success) {
-            showAlert("Tạo kế hoạch thành công!"); selectedProducts.clear(); handleSearch();
-        } else showAlert("Không thể tạo kế hoạch. Vui lòng kiểm tra lại.");
+            FxAlertUtils.info("Tạo kế hoạch thành công!"); selectedProducts.clear(); handleSearch();
+        } else FxAlertUtils.warning("Không thể tạo kế hoạch. Vui lòng kiểm tra lại.");
     }
 
     private void handleSearch() {
@@ -325,9 +384,57 @@ public class ProductionPlanController {
         }
         var plans = productionPlanService.searchWeeklyPlans(line, model, weekNo, year);
         tblWeeklyPlans.setItems(FXCollections.observableArrayList(plans));
+    }*/
+
+    private ProductionPlanWeeklySection.Refs buildWeeklyRefs() {
+        var refs = new ProductionPlanWeeklySection.Refs();
+
+        refs.txtSearchProduct = txtSearchProduct;
+        refs.txtModelCode = txtModelCode;
+        refs.txtPlannedQty = txtPlannedQty;
+
+        refs.cbSearchLine = cbSearchLine;
+        refs.dpSearchWeek = dpSearchWeek;
+        refs.dpFromDate = dpFromDate;
+        refs.dpToDate = dpToDate;
+
+        refs.btnSearchPlans = btnSearchPlans;
+        refs.btnResetFilters = btnResetFilters;
+        refs.btnCreatePlan = btnCreatePlan;
+        refs.btnAddModel = btnAddModel;
+
+        refs.tblWeeklyPlans = tblWeeklyPlans;
+        refs.colLine = colLine;
+        refs.colProductCode = colProductCode;
+        refs.colFromDate = colFromDate;
+        refs.colToDate = colToDate;
+        refs.colWeekNo = colWeekNo;
+        refs.colPlannedQty = colPlannedQty;
+        refs.colActualQty = colActualQty;
+        refs.colDiffQty = colDiffQty;
+        refs.colModelType = colModelType;
+        refs.colCompletionRate = colCompletionRate;
+
+        refs.cbLine = cbLine;
+        refs.cbModelType = cbModelType;
+
+        refs.tblSelectedProducts = tblSelectedProducts;
+        refs.colSelectedProductCode = colSelectedProductCode;
+        refs.colSelectedModelType = colSelectedModelType;
+        refs.colSelectedQty = colSelectedQty;
+        refs.colRemoveAction = colRemoveAction;
+
+        // weekly thay đổi -> bạn muốn daily reload thì gắn callback:
+        refs.afterWeeklyChanged = () -> dailySection.loadDailyPlans();
+
+        return refs;
     }
 
-    private void setupDailyPlan() {
+    // ==========================================================
+    // 12) DAILY PLAN
+    // ==========================================================
+
+    /*private void setupDailyPlan() {
         List<String> lineNames = warehouseService.getAllWarehouses()
                 .stream().map(Warehouse::getName).toList();
 
@@ -408,7 +515,7 @@ public class ProductionPlanController {
     private void loadDailyPlans() {
         String selectedLine = cbLineFilter.getValue();
         LocalDate selectedDate = dpWeekDate.getValue();
-        if (selectedDate == null) { showAlert("Vui lòng chọn ngày trong tuần."); return; }
+        if (selectedDate == null) { FxAlertUtils.warning("Vui lòng chọn ngày trong tuần."); return; }
 
         // Monday của tuần
         LocalDate monday = selectedDate.with(WeekFields.of(Locale.getDefault()).dayOfWeek(), 1);
@@ -437,19 +544,19 @@ public class ProductionPlanController {
                 int totalActual = dto.getTotalActual();
                 String modelType = dto.getModelType();
 
-                var plan = new DailyPlanDisplayRow(dto.getPlanItemId(), line, dto.getModelCode(), dto.getSapCode(),
+                var plan = new DailyPlanDisplayRow(dto.getPlanItemId(), line, dto.getModelName(), dto.getSapCode(),
                         "Plan", dto.getStock(),
                         dto.getDayPlan(1), dto.getDayPlan(2), dto.getDayPlan(3), dto.getDayPlan(4),
                         dto.getDayPlan(5), dto.getDayPlan(6), dto.getDayPlan(7));
                 plan.setModelType(modelType);
 
-                var actual = new DailyPlanDisplayRow(dto.getPlanItemId(), line, dto.getModelCode(), dto.getSapCode(),
+                var actual = new DailyPlanDisplayRow(dto.getPlanItemId(), line, dto.getModelName(), dto.getSapCode(),
                         "Actual", dto.getStock(),
                         dto.getDayActual(1), dto.getDayActual(2), dto.getDayActual(3), dto.getDayActual(4),
                         dto.getDayActual(5), dto.getDayActual(6), dto.getDayActual(7));
                 actual.setModelType(modelType);
 
-                var diff = new DailyPlanDisplayRow(dto.getPlanItemId(), line, dto.getModelCode(), dto.getSapCode(),
+                var diff = new DailyPlanDisplayRow(dto.getPlanItemId(), line, dto.getModelName(), dto.getSapCode(),
                         "Diff", dto.getStock(),
                         dto.getDayActual(1) - dto.getDayPlan(1),
                         dto.getDayActual(2) - dto.getDayPlan(2),
@@ -461,7 +568,7 @@ public class ProductionPlanController {
                 diff.setModelType(modelType);
 
                 double completion = (totalPlan == 0) ? 0 : (totalActual * 100.0 / totalPlan);
-                var completionRow = new DailyPlanDisplayRow(dto.getPlanItemId(), line, dto.getModelCode(), dto.getSapCode(),
+                var completionRow = new DailyPlanDisplayRow(dto.getPlanItemId(), line, dto.getModelName(), dto.getSapCode(),
                         "Completion", 0, 0,0,0,0,0,0,0);
                 completionRow.setModelType(modelType);
                 completionRow.setCompletionRate(completion);
@@ -477,7 +584,6 @@ public class ProductionPlanController {
         tblDailyPlans.setEditable(true);
         setupColumnFilters(); // như bạn đã viết
     }
-
 
     private void setupColumnFilters() {
         // hủy menu cũ (nếu util của bạn gán đè thì có thể bỏ bước này)
@@ -512,7 +618,7 @@ public class ProductionPlanController {
         var displayRows = tblDailyPlans.getItems();
         LocalDate selectedDate = dpWeekDate.getValue();
         if (selectedDate == null || displayRows.isEmpty()) {
-            showAlert("Không có dữ liệu để lưu."); return;
+            FxAlertUtils.warning("Không có dữ liệu để lưu."); return;
         }
         LocalDate monday = selectedDate.with(WeekFields.of(Locale.getDefault()).dayOfWeek(), 1);
         var planRows = displayRows.stream().filter(r -> "Plan".equals(r.getType())).toList();
@@ -521,40 +627,40 @@ public class ProductionPlanController {
         for (var planRow : planRows) {
             int weekly = dailyService.getPlannedWeeklyQuantityByPlanItemId(planRow.getPlanItemId());
             int total = planRow.totalProperty().get();
-            if (total > weekly) { showAlert("Kế hoạch ngày vượt quá kế hoạch tuần của model " + planRow.getModel()); return; }
+            if (total > weekly) { FxAlertUtils.warning("Kế hoạch ngày vượt quá kế hoạch tuần của model " + planRow.getModel()); return; }
             for (int i = 0; i < 7; i++) dailyService.updateDailyPlan(planRow.getPlanItemId(), monday.plusDays(i), planRow.getDay(i));
         }
 
         for (var actualRow : actualRows) {
             int weekly = dailyService.getPlannedWeeklyQuantityByPlanItemId(actualRow.getPlanItemId());
             int total = actualRow.totalProperty().get();
-            if (total > weekly) { showAlert("Số lượng thực tế vượt kế hoạch tuần của model " + actualRow.getModel()); return; }
+            if (total > weekly) { FxAlertUtils.warning("Số lượng thực tế vượt kế hoạch tuần của model " + actualRow.getModel()); return; }
             for (int i = 0; i < 7; i++) {
                 var date = monday.plusDays(i);
                 int actual = actualRow.getDay(i);
                 dailyService.updateActual(actualRow.getPlanItemId(), date, actual);
                 try { dailyService.consumeMaterialByActual(actualRow.getPlanItemId(), date, actual); }
-                catch (Exception e) { showAlert("Lỗi trừ liệu: " + e.getMessage()); return; }
+                catch (Exception e) { FxAlertUtils.warning("Lỗi trừ liệu: " + e.getMessage()); return; }
             }
         }
 
-        showAlert("Đã lưu kế hoạch ngày và số lượng thực tế thành công!");
+        FxAlertUtils.info("Đã lưu kế hoạch ngày và số lượng thực tế thành công!");
     }
 
     private void rollbackSelectedMaterial() {
         var selected = tblDailyPlans.getSelectionModel().getSelectedItem();
         if (selected == null || !"Actual".equals(selected.getType())) {
-            showAlert("Vui lòng chọn một dòng loại 'Actual' để hoàn tác."); return;
+            FxAlertUtils.warning("Vui lòng chọn một dòng loại 'Actual' để hoàn tác."); return;
         }
         LocalDate selectedDate = dpWeekDate.getValue();
         for (int i = 0; i < 7; i++) {
             var runDate = selectedDate.with(WeekFields.of(Locale.getDefault()).dayOfWeek(), 1).plusDays(i);
             if (selected.getDay(i) > 0) {
                 try { dailyService.rollbackConsumeMaterial(selected.getPlanItemId(), runDate); }
-                catch (Exception e) { showAlert("Lỗi hoàn tác: " + e.getMessage()); return; }
+                catch (Exception e) { FxAlertUtils.warning("Lỗi hoàn tác: " + e.getMessage()); return; }
             }
         }
-        showAlert("Đã hoàn tác trừ liệu cho model: " + selected.getModel());
+        FxAlertUtils.info("Đã hoàn tác trừ liệu cho model: " + selected.getModel());
     }
 
     private void updateDayColumnHeaders(LocalDate start) {
@@ -565,9 +671,43 @@ public class ProductionPlanController {
         colD7.setText(start.plusDays(6).format(fmt));
         int weekNo = start.get(WeekFields.of(Locale.getDefault()).weekOfWeekBasedYear());
         colTotal.setText("Total W" + weekNo);
+    }*/
+
+    private ProductionPlanDailySection.Refs buildDailyRefs() {
+        var refs = new ProductionPlanDailySection.Refs();
+
+        refs.cbLineFilter = cbLineFilter;
+        refs.dpWeekDate = dpWeekDate;
+
+        refs.btnLoadDailyPlans = btnLoadDailyPlans;
+        refs.btnSaveActuals = btnSaveActuals;
+        refs.btnRollbackMaterial = btnRollbackMaterial;
+
+        refs.tblDailyPlans = tblDailyPlans;
+
+        refs.colDailyLine = colDailyLine;
+        refs.colModel = colModel;
+        refs.colDailyProductCode = colDailyProductCode;
+        refs.colType = colType;
+        refs.colDailyModelType = colDailyModelType;
+
+        refs.colD1 = colD1;
+        refs.colD2 = colD2;
+        refs.colD3 = colD3;
+        refs.colD4 = colD4;
+        refs.colD5 = colD5;
+        refs.colD6 = colD6;
+        refs.colD7 = colD7;
+        refs.colTotal = colTotal;
+
+        return refs;
     }
 
-    private void setupHourlyPane() {
+    // ==========================================================
+    // 13) HOURLY PANE
+    // ==========================================================
+
+   /* private void setupHourlyPane() {
         List<String> lineNames = warehouseService.getAllWarehouses().stream()
                 .map(Warehouse::getName).toList();
 
@@ -624,7 +764,7 @@ public class ProductionPlanController {
                 );
 
                 if (!success) {
-                    showAlert("Tổng kế hoạch giờ vượt quá kế hoạch ngày!");
+                    FxAlertUtils.warning("Tổng kế hoạch giờ vượt quá kế hoạch ngày!");
                     // rollback UI
                     row.slotProperty(idx).set(oldQty);
                     row.totalProperty().set(row.totalProperty().get());
@@ -641,6 +781,7 @@ public class ProductionPlanController {
         colHModel.setCellFactory(mergeIdenticalCells(
                 HourlyActualRow::getModel,
                 HourlyActualRow::getLine
+
         ));
         colHProduct.setCellFactory(mergeIdenticalCells(
                 HourlyActualRow::getProductCode,
@@ -659,7 +800,237 @@ public class ProductionPlanController {
         btnLoadHourly.setOnAction(e -> loadHourlyActuals());
     }
 
-    // Gắn style cho Stage mà KHÔNG ghi đè merge
+    private void loadHourlyActuals() {
+        LocalDate day = dpHourlyDate.getValue();
+        String lineFilter = cbLineHourly.getValue();
+
+        if (day == null) { FxAlertUtils.warning("Vui lòng chọn ngày."); return; }
+
+        LocalDateTime start = day.atStartOfDay();
+        LocalDateTime end   = start.plusDays(1);
+
+        // Lines cần load
+        List<String> lines = (lineFilter == null || "Tất cả".equalsIgnoreCase(lineFilter))
+                ? warehouseService.getAllWarehouses().stream().map(Warehouse::getName).toList()
+                : List.of(lineFilter);
+
+        // 1) Logs từ AOI
+        List<PcbPerformanceLogHistoryDTO> logs = new ArrayList<>();
+        for (String ln : lines) {
+            logs.addAll(pcbPerformanceLogService.fetchPerformanceGoodModules(ln, start, end));
+        }
+
+        if (logs.isEmpty()) {
+            tblHourly.setItems(FXCollections.observableArrayList());
+            return;
+        }
+
+        // 2) Map (ProductCode|ModelType) -> ProductName ✅ CHẮC ĂN
+        //    - key lấy từ log: modelCode + modelType
+        Set<String> productKeys = logs.stream()
+                .filter(l -> l.getModelCode() != null && l.getModelType() != null)
+                .map(l -> l.getModelCode() + "|" + l.getModelType().name())
+                .collect(Collectors.toSet());
+
+        // ✅ Hàm mới (đúng yêu cầu productCode + modelType)
+        Map<String, String> productNameMap = productService.findProductNamesByCodeAndModelType(productKeys);
+
+        // 3) Daily map (model|line|date -> ProductionPlanDaily)
+        Set<String> keysToFetch = logs.stream()
+                .map(l -> l.getModelCode() + "|" + l.getWarehouseName() + "|" + l.getCreatedAt().toLocalDate())
+                .collect(Collectors.toSet());
+
+        Map<String, ProductionPlanDaily> dailyMap = dailyService.findByModelLineAndDates(keysToFetch);
+
+        Map<String, HourlyActualRow> resultMap = new LinkedHashMap<>();
+
+        // ===================== PLAN =====================
+        for (var entry : dailyMap.entrySet()) {
+            ProductionPlanDaily d = entry.getValue();
+            if (d == null) continue;
+
+            String[] parts = entry.getKey().split("\\|");
+            if (parts.length < 3) continue;
+
+            String modelCode = parts[0];
+            String lineName  = parts[1];
+            LocalDate runDate = LocalDate.parse(parts[2]);
+
+            String baseKey = modelCode + "|" + lineName;
+
+            // ✅ modelType cho PLAN: lấy từ daily (đã có plan record)
+            String planModelType = (d.getModelType() != null && !d.getModelType().isBlank())
+                    ? d.getModelType()
+                    : "NONE";
+
+            String productKey = modelCode + "|" + planModelType;
+
+            // ✅ tên ưu tiên từ daily, fallback sang Products map theo (code|type)
+            String modelName = (d.getProductName() != null && !d.getProductName().isBlank())
+                    ? d.getProductName()
+                    : productNameMap.getOrDefault(productKey, modelCode);
+
+            HourlyActualRow planRow = new HourlyActualRow(
+                    d.getPlanItemID(),
+                    lineName,
+                    modelName,
+                    modelCode,
+                    planModelType,
+                    new int[12],
+                    "Plan",
+                    "AOI",
+                    runDate
+            );
+
+            List<ProductionPlanHourly> slots = dailyService.getHourlyPlansByDailyId(d.getDailyID());
+            for (ProductionPlanHourly slot : slots) {
+                int idx = Math.max(0, Math.min(11, slot.getSlotIndex()));
+                int q = Math.max(0, slot.getPlanQuantity());
+                planRow.slotProperty(idx).set(q);
+                planRow.totalProperty().set(planRow.totalProperty().get() + q);
+            }
+
+            resultMap.put(baseKey + "|Plan", planRow);
+        }
+
+        // ===================== ACTUAL =====================
+        for (var log : logs) {
+            int good = Math.max(0, log.getTotalModules() - log.getNgModules());
+            int idx  = slotIndexTwoHours(log.getCreatedAt().toLocalTime());
+
+            String modelCode = log.getModelCode();
+            String lineName  = log.getWarehouseName();
+            LocalDate runDate = log.getCreatedAt().toLocalDate();
+
+            String baseKey = modelCode + "|" + lineName;
+            String fullKey = baseKey + "|Actual";
+
+            ProductionPlanDaily d = dailyMap.get(modelCode + "|" + lineName + "|" + runDate);
+
+            int planItemId = (d != null) ? d.getPlanItemID() : 0;
+
+            // ✅ modelType ưu tiên daily nếu có, không có thì lấy từ log
+            String modelType = (d != null && d.getModelType() != null && !d.getModelType().isBlank())
+                    ? d.getModelType()
+                    : (log.getModelType() != null ? log.getModelType().name() : "NONE");
+
+            // ✅ TÊN: lookup theo (code|type)
+            String productKey = modelCode + "|" + modelType;
+            String modelName = productNameMap.getOrDefault(productKey, modelCode);
+
+            HourlyActualRow row = resultMap.computeIfAbsent(fullKey, k -> new HourlyActualRow(
+                    planItemId,
+                    lineName,
+                    modelName,
+                    modelCode,
+                    modelType,
+                    new int[12],
+                    "Actual",
+                    log.getAoi(),
+                    runDate
+            ));
+
+            row.slotProperty(idx).set(row.slotProperty(idx).get() + good);
+            row.totalProperty().set(row.totalProperty().get() + good);
+        }
+
+        // ===================== DIFF & COMPLETION =====================
+        Map<String, HourlyActualRow> finalMap = new LinkedHashMap<>(resultMap);
+
+        for (var entry : resultMap.entrySet()) {
+            String key = entry.getKey();
+            if (!key.endsWith("|Plan")) continue;
+
+            String baseKey = key.substring(0, key.length() - "|Plan".length());
+            HourlyActualRow planRow   = resultMap.get(key);
+            HourlyActualRow actualRow = resultMap.get(baseKey + "|Actual");
+
+            if (planRow != null && actualRow != null) {
+                int[] diffSlots = new int[12];
+                for (int i = 0; i < 12; i++) {
+                    diffSlots[i] = planRow.slotProperty(i).get() - actualRow.slotProperty(i).get();
+                }
+
+                HourlyActualRow diffRow = new HourlyActualRow(
+                        planRow.getPlanItemId(),
+                        planRow.getLine(),
+                        planRow.getModel(),
+                        planRow.getProductCode(),
+                        planRow.getModelType(),
+                        diffSlots,
+                        "Diff",
+                        planRow.getStage(),
+                        planRow.getRunDate()
+                );
+                finalMap.put(baseKey + "|Diff", diffRow);
+
+                HourlyActualRow compRow = new HourlyActualRow(
+                        planRow.getPlanItemId(),
+                        planRow.getLine(),
+                        planRow.getModel(),
+                        planRow.getProductCode(),
+                        planRow.getModelType(),
+                        new int[12],
+                        "Completion",
+                        planRow.getStage(),
+                        planRow.getRunDate()
+                );
+                finalMap.put(baseKey + "|Completion", compRow);
+            }
+        }
+
+        // Sort
+        List<HourlyActualRow> rows = new ArrayList<>(finalMap.values());
+        rows.sort(
+                Comparator
+                        .comparing(HourlyActualRow::getLine, Comparator.nullsLast(String::compareTo))
+                        .thenComparing(HourlyActualRow::getModel, Comparator.nullsLast(String::compareTo))
+                        .thenComparingInt(r -> switch (r.getStage()) {
+                            case "Plan" -> 0;
+                            case "Actual" -> 1;
+                            case "Diff" -> 2;
+                            case "Completion" -> 3;
+                            default -> 9;
+                        })
+        );
+
+        tblHourly.setItems(FXCollections.observableArrayList(rows));
+        tblHourly.setEditable(true);
+    }*/
+
+    private ProductionPlanHourlySection.Refs buildHourlyRefs() {
+        var refs = new ProductionPlanHourlySection.Refs();
+
+        refs.cbLineHourly = cbLineHourly;
+        refs.dpHourlyDate = dpHourlyDate;
+        refs.btnLoadHourly = btnLoadHourly;
+        refs.tblHourly = tblHourly;
+
+        refs.colHLine = colHLine;
+        refs.colHModel = colHModel;
+        refs.colHProduct = colHProduct;
+        refs.colHModelType = colHModelType;
+        refs.colHStage = colHStage;
+
+        refs.colS1 = colS1; refs.colS2 = colS2; refs.colS3 = colS3; refs.colS4 = colS4;
+        refs.colS5 = colS5; refs.colS6 = colS6; refs.colS7 = colS7; refs.colS8 = colS8;
+        refs.colS9 = colS9; refs.colS10 = colS10; refs.colS11 = colS11; refs.colS12 = colS12;
+
+        refs.colHTotal = colHTotal;
+
+        // optional: nếu bạn add UI cho idle seconds
+        // refs.idleSecondsSpinner = spIdleSeconds;
+        // refs.idleSecondsSlider  = slIdleSeconds;
+        // refs.idleSecondsText    = txtIdleSeconds;
+
+        return refs;
+    }
+
+    // ==========================================================
+    // 14) HELPERS
+    // ==========================================================
+
+  /*  // Gắn style cho Stage mà KHÔNG ghi đè merge
     private static void applyStageStyle(TableCell<HourlyActualRow, String> cell, String item) {
         if (item == null || cell.isEmpty()) {
             cell.setStyle("");
@@ -671,11 +1042,21 @@ public class ProductionPlanController {
             case "Diff" -> style += " -fx-text-fill: red;";
             case "Plan" -> style += " -fx-text-fill: black;";
             case "Completion" -> style += " -fx-text-fill: green;";
-            default -> { /* giữ nguyên */ }
+            default -> {  giữ nguyên  }
         }
         cell.setStyle(style);
     }
+    // 08:00..09:59 -> 0, 10:00..11:59 -> 1, ..., 06:00..07:59 -> 11
+    private int slotIndexTwoHours(LocalTime time) {
+        int hour = time.getHour();
+        int minute = time.getMinute();
+        int totalMinutes = hour * 60 + minute;
 
+        // Chuyển mốc 08:00 → 0, 10:00 → 1, ..., 06:00 hôm sau → 11
+        int baseMinutes = 8 * 60; // 08:00
+        int index = (totalMinutes - baseMinutes + 24 * 60) % (24 * 60) / 120;
+        return Math.min(index, 11);
+    }
     private static Callback<TableColumn<HourlyActualRow, String>, TableCell<HourlyActualRow, String>>
     mergeStageWithStyling() {
         Callback<TableColumn<HourlyActualRow, String>, TableCell<HourlyActualRow, String>> base =
@@ -695,194 +1076,6 @@ public class ProductionPlanController {
         };
     }
 
-    private void loadHourlyActuals() {
-        LocalDate day = dpHourlyDate.getValue();
-        String line = cbLineHourly.getValue();
 
-        if (day == null) {
-            showAlert("Vui lòng chọn ngày.");
-            return;
-        }
-
-        LocalDateTime start = day.atStartOfDay();
-        LocalDateTime end = start.plusDays(1);
-
-        // Lines cần load
-        List<String> lines;
-        if (line == null || line.equalsIgnoreCase("Tất cả")) {
-            lines = warehouseService.getAllWarehouses().stream().map(Warehouse::getName).toList();
-        } else {
-            lines = List.of(line);
-        }
-
-        // Actual logs từ AOI
-        List<PcbPerformanceLogHistoryDTO> logs = new ArrayList<>();
-        for (String ln : lines) {
-            logs.addAll(pcbPerformanceLogService.fetchPerformanceGoodModules(ln, start, end));
-        }
-
-        // Daily map (model|line|date -> ProductionPlanDaily)
-        Set<String> keysToFetch = logs.stream()
-                .map(log -> log.getModelCode() + "|" + log.getWarehouseName() + "|" + log.getCreatedAt().toLocalDate())
-                .collect(Collectors.toSet());
-        Map<String, ProductionPlanDaily> dailyMap = dailyService.findByModelLineAndDates(keysToFetch);
-
-        Map<String, HourlyActualRow> resultMap = new LinkedHashMap<>();
-
-        // --- PLAN luôn hiển thị ---
-        for (var entry : dailyMap.entrySet()) {
-            ProductionPlanDaily daily = entry.getValue();
-            if (daily == null) continue;
-
-            String[] parts = entry.getKey().split("\\|");
-            String modelCode = parts[0];
-            String warehouseNm = parts[1];
-            LocalDate runDate = LocalDate.parse(parts[2]);
-
-            String baseKey = modelCode + "|" + warehouseNm;
-            String fullKey = baseKey + "|Plan";
-
-            HourlyActualRow planRow = new HourlyActualRow(
-                    daily.getPlanItemID(),
-                    warehouseNm,
-                    modelCode,
-                    modelCode,
-                    daily.getModelType(),   // <-- dùng luôn từ Daily
-                    new int[12],
-                    "Plan",
-                    "AOI",
-                    runDate
-            );
-
-            // Load kế hoạch giờ nếu đã có trong DB
-            List<ProductionPlanHourly> slots = dailyService.getHourlyPlansByDailyId(daily.getDailyID());
-            for (ProductionPlanHourly slot : slots) {
-                int idx = Math.max(0, Math.min(11, slot.getSlotIndex()));
-                int q = Math.max(0, slot.getPlanQuantity());
-                planRow.slotProperty(idx).set(q);
-                planRow.totalProperty().set(planRow.totalProperty().get() + q);
-            }
-
-            resultMap.put(fullKey, planRow);
-        }
-
-        // --- ACTUAL từ log ---
-        for (var log : logs) {
-            int actual = log.getTotalModules() - log.getNgModules();
-            int idx = slotIndexTwoHours(log.getCreatedAt().toLocalTime());
-
-            String baseKey = log.getModelCode() + "|" + log.getWarehouseName();
-            String fullKey = baseKey + "|Actual";
-
-            ProductionPlanDaily daily = dailyMap.get(
-                    log.getModelCode() + "|" + log.getWarehouseName() + "|" + log.getCreatedAt().toLocalDate()
-            );
-            int planItemId = (daily != null) ? daily.getPlanItemID() : 0;
-
-            HourlyActualRow row = resultMap.computeIfAbsent(fullKey, k -> new HourlyActualRow(
-                    planItemId,
-                    log.getWarehouseName(),
-                    log.getModelCode(),
-                    log.getModelCode(),
-                    log.getModelType().name(),
-                    new int[12],
-                    "Actual",
-                    log.getAoi(),
-                    log.getCreatedAt().toLocalDate()
-            ));
-
-            row.slotProperty(idx).set(row.slotProperty(idx).get() + Math.max(0, actual));
-            row.totalProperty().set(row.totalProperty().get() + Math.max(0, actual));
-        }
-
-        // --- DIFF & COMPLETION ---
-        Map<String, HourlyActualRow> finalMap = new LinkedHashMap<>(resultMap);
-
-        for (var entry : resultMap.entrySet()) {
-            String key = entry.getKey();
-            if (!key.endsWith("|Plan")) continue;
-
-            String baseKey = key.substring(0, key.length() - "|Plan".length());
-            HourlyActualRow planRow = resultMap.get(key);
-            HourlyActualRow actualRow = resultMap.get(baseKey + "|Actual");
-
-            if (planRow != null && actualRow != null) {
-                // Diff
-                int[] diffSlots = new int[12];
-                for (int i = 0; i < 12; i++) {
-                    diffSlots[i] = planRow.slotProperty(i).get() - actualRow.slotProperty(i).get();
-                }
-                HourlyActualRow diffRow = new HourlyActualRow(
-                        planRow.getPlanItemId(),
-                        planRow.getLine(),
-                        planRow.getModel(),
-                        planRow.getProductCode(),
-                        planRow.getModelType(),
-                        diffSlots,
-                        "Diff",
-                        planRow.getStage(),
-                        planRow.getRunDate()
-                );
-                finalMap.put(baseKey + "|Diff", diffRow);
-
-                // Completion
-                int totalPlan = planRow.totalProperty().get();
-                int totalActual = actualRow.totalProperty().get();
-                double rate = (totalPlan == 0) ? 0 : (totalActual * 100.0 / totalPlan);
-
-                HourlyActualRow compRow = new HourlyActualRow(
-                        planRow.getPlanItemId(),
-                        planRow.getLine(),
-                        planRow.getModel(),
-                        planRow.getProductCode(),
-                        planRow.getModelType(),
-                        new int[12],
-                        "Completion",
-                        planRow.getStage(),
-                        planRow.getRunDate()
-                );
-                //compRow.setCompletionRate(rate);
-                finalMap.put(baseKey + "|Completion", compRow);
-            }
-        }
-
-        // Sort để Plan → Actual → Diff → Completion
-        List<HourlyActualRow> rows = new ArrayList<>(finalMap.values());
-        rows.sort(
-                Comparator
-                        .comparing(HourlyActualRow::getLine, Comparator.nullsLast(String::compareTo))
-                        .thenComparing(HourlyActualRow::getModel, Comparator.nullsLast(String::compareTo))
-                        .thenComparingInt(row -> switch (row.getStage()) {
-                            case "Plan" -> 0;
-                            case "Actual" -> 1;
-                            case "Diff" -> 2;
-                            case "Completion" -> 3;
-                            default -> 9;
-                        })
-        );
-
-        tblHourly.setItems(FXCollections.observableArrayList(rows));
-        tblHourly.setEditable(true);
-    }
-
-
-
-    // 08:00..09:59 -> 0, 10:00..11:59 -> 1, ..., 06:00..07:59 -> 11
-    private int slotIndexTwoHours(LocalTime time) {
-        int hour = time.getHour();
-        int minute = time.getMinute();
-        int totalMinutes = hour * 60 + minute;
-
-        // Chuyển mốc 08:00 → 0, 10:00 → 1, ..., 06:00 hôm sau → 11
-        int baseMinutes = 8 * 60; // 08:00
-        int index = (totalMinutes - baseMinutes + 24 * 60) % (24 * 60) / 120;
-        return Math.min(index, 11);
-    }
-
-
-    private void showAlert(String msg) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Thông báo"); alert.setHeaderText(null);
-        alert.setContentText(msg); alert.showAndWait();
-    }
+*/
 }

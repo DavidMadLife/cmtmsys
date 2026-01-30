@@ -38,4 +38,7 @@ module org.chemtrovina.cmtmsys {
     opens org.chemtrovina.cmtmsys.controller.inventoryTransfer;
     exports org.chemtrovina.cmtmsys.controller.product;
     opens org.chemtrovina.cmtmsys.controller.product;
+
+    opens org.chemtrovina.cmtmsys.controller.productionPlan to spring.core, spring.beans, spring.context;
+
 }

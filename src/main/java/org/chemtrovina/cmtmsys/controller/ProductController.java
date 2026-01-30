@@ -408,6 +408,10 @@ public class ProductController {
     }
 
     private void onLoadBOM() {
+        String code = txtProductCode.getText() != null ? txtProductCode.getText().trim() : "";
+        String type = cbModelTypeFilter.getValue(); // có thể null
+
+        // 1) Load BOM như cũ
         bomLoader.loadBom(
                 txtProductCode,
                 txtProductName,
@@ -415,5 +419,70 @@ public class ProductController {
                 allProducts,
                 tblProductBOM
         );
+
+        // 2) Nếu không có BOM -> focus model trong tblProducts
+        if (tblProductBOM.getItems() == null || tblProductBOM.getItems().isEmpty()) {
+            focusProductInList(code, type);
+
+            Alert a = new Alert(Alert.AlertType.INFORMATION);
+            a.setTitle("Thông báo");
+            a.setHeaderText(null);
+            a.setContentText("Model này chưa có BOM. Đã focus model trong danh sách Products.");
+            a.showAndWait();
+        }
     }
+
+    private void focusProductInList(String productCode, String modelType) {
+        if (productCode == null || productCode.isBlank()) return;
+
+        // đảm bảo tblProducts có data
+        if (tblProducts.getItems() == null || tblProducts.getItems().isEmpty()) {
+            loadAllProducts();
+        }
+
+        var items = tblProducts.getItems();
+        if (items == null || items.isEmpty()) return;
+
+        // ưu tiên match theo code + type (nếu có)
+        int idx = -1;
+
+        if (modelType != null && !modelType.isBlank()) {
+            for (int i = 0; i < items.size(); i++) {
+                Product p = items.get(i);
+                if (p == null) continue;
+
+                boolean matchCode = p.getProductCode() != null
+                        && p.getProductCode().equalsIgnoreCase(productCode);
+
+                boolean matchType = p.getModelType() != null
+                        && p.getModelType().name().equalsIgnoreCase(modelType);
+
+                if (matchCode && matchType) {
+                    idx = i;
+                    break;
+                }
+            }
+        }
+
+        // fallback: match theo code thôi
+        if (idx < 0) {
+            for (int i = 0; i < items.size(); i++) {
+                Product p = items.get(i);
+                if (p == null) continue;
+
+                if (p.getProductCode() != null && p.getProductCode().equalsIgnoreCase(productCode)) {
+                    idx = i;
+                    break;
+                }
+            }
+        }
+
+        if (idx >= 0) {
+            tblProducts.getSelectionModel().clearAndSelect(idx);
+            tblProducts.scrollTo(idx);
+            tblProducts.requestFocus();
+        }
+    }
+
+
 }

@@ -77,8 +77,9 @@ public class ProductionPlanDailyRepositoryImpl implements ProductionPlanDailyRep
     public List<DailyPlanRowDto> getDailyPlansByLineAndWeek(String lineName, int weekNo, int year) {
         String sql = """
         SELECT 
-            ppi.PlanItemID, 
-            p.ProductCode, 
+            ppi.PlanItemID,
+            p.ProductCode As ModelCode,
+            p.Name As ModelName, 
             p.ProductCode AS SapCode, 
             p.ModelType,
             0 AS Stock,  -- Nếu muốn bỏ luôn stock thì có thể giữ 0 ở đây
@@ -106,7 +107,7 @@ public class ProductionPlanDailyRepositoryImpl implements ProductionPlanDailyRep
         LEFT JOIN ProductionPlanDaily ppd ON ppi.PlanItemID = ppd.PlanItemID
 
         WHERE w.Name = ? AND pp.WeekNo = ? AND pp.Year = ?
-        GROUP BY ppi.PlanItemID, p.ProductCode, p.ModelType
+        GROUP BY ppi.PlanItemID, p.ProductCode,  p.Name, p.ModelType
     """;
 
         LocalDate monday = getStartOfWeek(weekNo, year);
@@ -315,43 +316,49 @@ public class ProductionPlanDailyRepositoryImpl implements ProductionPlanDailyRep
     public Map<String, ProductionPlanDaily> findByModelLineAndDates(Set<String> keys) {
         if (keys == null || keys.isEmpty()) return new HashMap<>();
 
+        String placeholders = keys.stream().map(k -> "?").collect(Collectors.joining(", "));
+
         String sql = """
-        SELECT d.*, p.ProductCode, w.Name AS WarehouseName
+        SELECT
+            d.*,
+            p.ProductCode,
+            p.Name        AS ProductName,
+            p.ModelType,
+            w.Name        AS WarehouseName
         FROM ProductionPlanDaily d
         JOIN ProductionPlanItems i ON d.PlanItemId = i.PlanItemId
-        JOIN Products p ON i.ProductId = p.ProductId
-        JOIN ProductionPlans pp ON i.PlanId = pp.PlanId
-        JOIN Warehouses w ON pp.LineWarehouseId = w.WarehouseId
-        WHERE (p.ProductCode + '|' + w.Name + '|' + FORMAT(d.RunDate, 'yyyy-MM-dd')) IN (%s)
-    """;
+        JOIN Products p           ON i.ProductId = p.ProductId
+        JOIN ProductionPlans pp   ON i.PlanId = pp.PlanId
+        JOIN Warehouses w         ON pp.LineWarehouseId = w.WarehouseId
+        WHERE (p.ProductCode + '|' + w.Name + '|' + CONVERT(varchar(10), d.RunDate, 23)) IN (%s)
+    """.formatted(placeholders);
 
-        // Tạo placeholders ?, ?, ?...
-        String placeholders = keys.stream().map(k -> "?").collect(Collectors.joining(", "));
-        sql = String.format(sql, placeholders);
-
-        List<Object> params = new ArrayList<>(keys);
-
-        return jdbcTemplate.query(sql, params.toArray(), rs -> {
+        return jdbcTemplate.query(sql, keys.toArray(), rs -> {
             Map<String, ProductionPlanDaily> map = new HashMap<>();
+
             while (rs.next()) {
-                ProductionPlanDaily daily = new ProductionPlanDaily();
-                daily.setDailyID(rs.getInt("DailyID"));
-                daily.setPlanItemID(rs.getInt("PlanItemID"));
-                daily.setRunDate(rs.getDate("RunDate").toLocalDate());
-                daily.setQuantity(rs.getInt("Quantity"));
-                daily.setCreatedAt(rs.getTimestamp("CreatedAt").toLocalDateTime());
-                daily.setActualQuantity(rs.getInt("ActualQuantity"));
+                ProductionPlanDaily d = new ProductionPlanDaily();
+                d.setDailyID(rs.getInt("DailyID"));
+                d.setPlanItemID(rs.getInt("PlanItemID"));
+                d.setRunDate(rs.getDate("RunDate").toLocalDate());
+                d.setQuantity(rs.getInt("Quantity"));
+                d.setActualQuantity(rs.getInt("ActualQuantity"));
+                d.setCreatedAt(rs.getTimestamp("CreatedAt").toLocalDateTime());
 
-                String model = rs.getString("ProductCode");
-                String line = rs.getString("WarehouseName");
-                LocalDate date = rs.getDate("RunDate").toLocalDate();
+                d.setProductName(rs.getString("ProductName"));   // ✅ QUAN TRỌNG
+                d.setModelType(rs.getString("ModelType"));       // ✅ QUAN TRỌNG
 
-                String key = model + "|" + line + "|" + date;
-                map.put(key, daily);
+                String key =
+                        rs.getString("ProductCode") + "|" +
+                                rs.getString("WarehouseName") + "|" +
+                                rs.getDate("RunDate").toLocalDate();
+
+                map.put(key, d);
             }
             return map;
         });
     }
+
 
     @Override
     public List<ProductionPlanDaily> findByLineAndDate(String lineName, LocalDate runDate) {
@@ -384,7 +391,8 @@ public class ProductionPlanDailyRepositoryImpl implements ProductionPlanDailyRep
         public DailyPlanRowDto mapRow(ResultSet rs, int rowNum) throws SQLException {
             return new DailyPlanRowDto(
                     rs.getInt("PlanItemID"),
-                    rs.getString("ProductCode"),
+                    rs.getString("ModelCode"),
+                    rs.getString("ModelName"),
                     rs.getString("SapCode"),
                     rs.getInt("Stock"),
                     rs.getInt("Day1"), rs.getInt("Day2"), rs.getInt("Day3"), rs.getInt("Day4"),

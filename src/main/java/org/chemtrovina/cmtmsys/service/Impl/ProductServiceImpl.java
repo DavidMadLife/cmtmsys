@@ -7,6 +7,8 @@ import org.chemtrovina.cmtmsys.service.base.ProductService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Service
 public class ProductServiceImpl implements ProductService {
@@ -100,5 +102,11 @@ public class ProductServiceImpl implements ProductService {
 
         return product;
     }
+
+    @Override
+    public Map<String, String> findProductNamesByCodeAndModelType(Set<String> keys) {
+        return repository.findProductNamesByCodeAndModelType(keys);
+    }
+
 
 }

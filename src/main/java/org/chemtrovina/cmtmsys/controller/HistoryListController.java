@@ -11,6 +11,7 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.chemtrovina.cmtmsys.model.History;
 import org.chemtrovina.cmtmsys.model.enums.UserRole;
+import org.chemtrovina.cmtmsys.security.ActionGuard;
 import org.chemtrovina.cmtmsys.security.RequiresRoles;
 import org.chemtrovina.cmtmsys.service.base.HistoryService;
 import org.chemtrovina.cmtmsys.service.base.InvoiceService;
@@ -51,6 +52,7 @@ public class HistoryListController {
     @FXML private TableColumn<History, String> timeColumn;
     @FXML private TableColumn<History, String> employeeIdColumn; // thêm dòng này
     @FXML private TableColumn<History, String> statusColumn;
+    @FXML private TableColumn<History, String> scanCodeColumn;
 
 
 
@@ -101,6 +103,7 @@ public class HistoryListController {
         MenuItem deleteItem = new MenuItem("Xóa dòng này");
 
         deleteItem.setOnAction(e -> {
+            if (!ActionGuard.adminOnly("Delete History Data")) return;
             History selected = historyDateTableView.getSelectionModel().getSelectedItem();
             if (selected != null) {
                 Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
@@ -149,6 +152,8 @@ public class HistoryListController {
         specColumn.setCellValueFactory(new PropertyValueFactory<>("spec"));
         employeeIdColumn.setCellValueFactory(new PropertyValueFactory<>("employeeId"));
         statusColumn.setCellValueFactory(new PropertyValueFactory<>("status"));
+        scanCodeColumn.setCellValueFactory(new PropertyValueFactory<>("scanCode"));
+
 
         historyDateTableView.setEditable(true);
         statusColumn.setEditable(true);

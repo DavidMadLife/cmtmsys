@@ -4,6 +4,8 @@ import org.chemtrovina.cmtmsys.model.Product;
 import org.chemtrovina.cmtmsys.model.enums.ModelType;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 
 public interface ProductRepository {
@@ -25,5 +27,7 @@ public interface ProductRepository {
 
     String findProductCodeByPlanItemId(int planItemId);
     Product findByNameAndModelType(String productName, ModelType modelType);
+
+    Map<String, String> findProductNamesByCodeAndModelType(Set<String> keys);
 
 }

@@ -120,6 +120,7 @@
                         <ComboBox fx:id="cbLineHourly" promptText="Chọn Line"/>
                         <DatePicker fx:id="dpHourlyDate" promptText="Chọn ngày"/>
                         <Button fx:id="btnLoadHourly" text="Tải thực tế theo khung giờ"/>
+
                     </HBox>
 
                     <TableView fx:id="tblHourly" editable="false" prefHeight="400" VBox.vgrow="ALWAYS">

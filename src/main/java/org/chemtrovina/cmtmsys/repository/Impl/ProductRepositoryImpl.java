@@ -9,7 +9,11 @@ import org.springframework.stereotype.Repository;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 
 @Repository
@@ -145,6 +149,45 @@ public class ProductRepositoryImpl implements ProductRepository {
         List<Product> results = jdbcTemplate.query(sql, new ProductRowMapper(), productName, modelType.name());
         return results.isEmpty() ? null : results.get(0);
     }
+
+    @Override
+    public Map<String, String> findProductNamesByCodeAndModelType(Set<String> keys) {
+        if (keys == null || keys.isEmpty()) return new HashMap<>();
+
+        // tách key thành pair
+        List<Object[]> params = keys.stream()
+                .map(k -> k.split("\\|"))
+                .filter(arr -> arr.length == 2)
+                .map(arr -> new Object[]{arr[0], arr[1]})
+                .toList();
+
+        // (ProductCode = ? AND ModelType = ?) OR ...
+        String whereClause = params.stream()
+                .map(p -> "(ProductCode = ? AND ModelType = ?)")
+                .collect(Collectors.joining(" OR "));
+
+        String sql = """
+        SELECT ProductCode, ModelType,
+               COALESCE(NULLIF(LTRIM(RTRIM(Name)), ''), ProductCode) AS Name
+        FROM Products
+        WHERE %s
+    """.formatted(whereClause);
+
+        Object[] flatParams = params.stream()
+                .flatMap(p -> List.of(p[0], p[1]).stream())
+                .toArray();
+
+        return jdbcTemplate.query(sql, flatParams, rs -> {
+            Map<String, String> map = new HashMap<>();
+            while (rs.next()) {
+                String key = rs.getString("ProductCode") + "|" + rs.getString("ModelType");
+                map.put(key, rs.getString("Name"));
+            }
+            return map;
+        });
+    }
+
+
 
 
 

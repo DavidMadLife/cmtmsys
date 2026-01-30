@@ -10,7 +10,7 @@ public class ProductionPlanDaily {
     private int quantity;
     private LocalDateTime createdAt;
     private int actualQuantity;
-
+    private String productName;
     private String modelType;
 
     public ProductionPlanDaily() {}
@@ -51,4 +51,7 @@ public class ProductionPlanDaily {
     public void setModelType(String modelType) {
         this.modelType = modelType;
     }
+
+    public String getProductName() { return productName; }
+    public void setProductName(String productName) { this.productName = productName; }
 }

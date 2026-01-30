@@ -132,6 +132,8 @@
                     <TableColumn fx:id="mslColumn" prefWidth="99.0" text="MSL" />
                     <TableColumn fx:id="specColumn" prefWidth="99.0" text="Spec" />
                     <TableColumn fx:id="employeeIdColumn" prefWidth="120" text="Employee ID" />
+
+                    <TableColumn fx:id="scanCodeColumn" text="Scan Code" prefWidth="90"/>
                     <TableColumn fx:id="statusColumn" text="Status" prefWidth="90"/>
 
                 </columns>

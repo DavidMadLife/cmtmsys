@@ -33,7 +33,7 @@ public class ProductResolver {
         if (carrierId != null && !carrierId.isBlank()) {
             byCarrier = resolveFromCarrier(carrierId, logFileName, logCallback);
 
-            if (byCarrier != null && recipeName != null && !recipeName.isBlank()) {
+            /*if (byCarrier != null && recipeName != null && !recipeName.isBlank()) {
                 // check carrier match recipe bằng fuzzy score
                 int carrierScore = score(buildFeatures(recipeName), buildFeatures(byCarrier.getName()))
                         + bonusFromFileName(logFileName, byCarrier.getName());
@@ -42,7 +42,7 @@ public class ProductResolver {
                     logCallback.accept("⚠️ Carrier resolved but NOT match recipe → fallback to Recipe (score=" + carrierScore + ")");
                     byCarrier = null;
                 }
-            }
+            }*/
         }
 
         if (byCarrier != null) {

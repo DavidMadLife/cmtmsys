@@ -213,10 +213,12 @@ public class HistoryRepositoryImpl extends GenericRepositoryImpl<History> implem
         WITH x AS (
             SELECT TOP 1 *
             FROM History
-            WHERE SapPN = ? AND InvoiceId = ?
+            WHERE SapPN = ? 
+              AND InvoiceId = ?
             ORDER BY Id DESC
         )
-        DELETE FROM x;
+        UPDATE x
+        SET Status = 'NG';
     """;
 
         jdbcTemplate.update(sql, sapPN, invoiceId);

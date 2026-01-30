@@ -9,6 +9,8 @@ public class DailyPlanRowDto {
     private final StringProperty modelCode = new SimpleStringProperty();
     private final StringProperty sapCode = new SimpleStringProperty();
     private final IntegerProperty stock = new SimpleIntegerProperty();
+    private final StringProperty modelName = new SimpleStringProperty();
+
 
     private final IntegerProperty day1Plan = new SimpleIntegerProperty();
     private final IntegerProperty day2Plan = new SimpleIntegerProperty();
@@ -35,12 +37,14 @@ public class DailyPlanRowDto {
     private final StringProperty modelType = new SimpleStringProperty();
 
 
-    public DailyPlanRowDto(int planItemId, String modelCode, String sapCode, int stock,
+    public DailyPlanRowDto(int planItemId, String modelCode, String modelName, String sapCode, int stock,
                            int d1, int d2, int d3, int d4, int d5, int d6, int d7,
                            int a1, int a2, int a3, int a4, int a5, int a6, int a7,
                            String modelType) {
         this.planItemId.set(planItemId);
+
         this.modelCode.set(modelCode);
+        this.modelName.set(modelName);
         this.sapCode.set(sapCode);
         this.stock.set(stock);
         this.modelType.set(modelType); // 👈 Gán modelType
@@ -88,6 +92,11 @@ public class DailyPlanRowDto {
     public String getModelCode() { return modelCode.get(); }
     public void setModelCode(String value) { modelCode.set(value); }
     public StringProperty modelCodeProperty() { return modelCode; }
+
+    public String getModelName() { return modelName.get(); }
+    public void setModelName(String value) { modelName.set(value); }
+    public StringProperty modelNameProperty() { return modelName; }
+
 
     public String getSapCode() { return sapCode.get(); }
     public void setSapCode(String value) { sapCode.set(value); }

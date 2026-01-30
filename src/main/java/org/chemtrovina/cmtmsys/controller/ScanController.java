@@ -220,10 +220,10 @@ public class ScanController {
     private void onCallSupervisor() {
         String currentStatus = txtScanStatus.getText();
 
-        if (!"Over".equalsIgnoreCase(currentStatus) && !"Z".equalsIgnoreCase(currentStatus)) {
+/*        if (!"Over".equalsIgnoreCase(currentStatus) && !"Z".equalsIgnoreCase(currentStatus)) {
             showAlert("No Issue", "This item doesn't require supervisor approval.");
             return;
-        }
+        }*/
 
         if (selectedInvoice == null) {
             showAlert("No Invoice", "Please select an invoice first.");
@@ -747,7 +747,7 @@ public class ScanController {
             dummy.setMakerPN(makerPN);
             dummy.setSapPN(selectedSap);
             dummy.setMoq(0);
-            historyService.createHistoryForScannedMakePN(dummy, currentScanId, "NG_NO_DETECT", selectedInvoice.getId());
+            historyService.createHistoryForScannedMakePN(dummy, currentScanId, "NG_NO_DETECT", selectedInvoice.getId(), "NG");
 
             showResult("NG", "#d01029", "Cannot detect MakerPN!");
             markStatus(selectedSap, "Z");
@@ -763,7 +763,7 @@ public class ScanController {
             dummy.setMakerPN(extractedMakerPN);
             dummy.setSapPN(selectedSap);
             dummy.setMoq(0);
-            historyService.createHistoryForScannedMakePN(dummy, currentScanId, "NG_NOT_IN_MOQ", selectedInvoice.getId());
+            historyService.createHistoryForScannedMakePN(dummy, currentScanId, "NG_NOT_IN_MOQ", selectedInvoice.getId(), "NG");
 
             showResult("NG", "#d01029", "MakerPN not found in MOQ table!");
             markStatus(selectedSap, "Z");
@@ -779,12 +779,31 @@ public class ScanController {
                 .orElse(null);
 
         if (matchedMOQ == null) {
-            showResult("Z", "#CAAA12", "MakerPN not belong to selected SAP!");
-            markStatus(selectedSap, "Z");
+
+            // ✅ Lưu history NG (audit) - sai SAP
+            MOQ dummy = new MOQ();
+            dummy.setMakerPN(extractedMakerPN);   // makerPN đã extract
+            dummy.setSapPN(selectedSap);          // SAP người dùng đang chọn
+            dummy.setMoq(0);                      // không cộng qty
+
+            historyService.createHistoryForScannedMakePN(
+                    dummy,
+                    currentScanId,
+                    "NG_WRONG_SAP",
+                    selectedInvoice.getId(),
+                    "NG"
+            );
+
+            System.out.println();
+
+            // ✅ UI
+            showResult("MakerPN khác SAP!", "#d01029", "MakerPN not belong to selected SAP!");
+            markStatus(selectedSap, "X");
             btnCallSuperV.setDisable(false);
             btnKeepGoing.setDisable(true);
             return;
         }
+
 
         // ================================
         // ✅ FIX QUAN TRỌNG — UPDATE MAKER/SPEC TRƯỚC KHI LƯU
@@ -802,7 +821,7 @@ public class ScanController {
         // ================================
 
         // 4️⃣ Hợp lệ → ghi bình thường
-        historyService.createHistoryForScannedMakePN(matchedMOQ, currentScanId, "Scan Code", selectedInvoice.getId());
+        historyService.createHistoryForScannedMakePN(matchedMOQ, currentScanId, "Scan Code: " + matchedMOQ, selectedInvoice.getId(), "Scanned");
 
 
 

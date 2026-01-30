@@ -7,8 +7,10 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 
+import org.chemtrovina.cmtmsys.helper.TabDisposable;
 import org.chemtrovina.cmtmsys.model.FxmlPage;
 import org.chemtrovina.cmtmsys.security.PermissionGuard;
+import org.chemtrovina.cmtmsys.utils.FxAlertUtils;
 
 public class MainController {
 
@@ -48,28 +50,40 @@ public class MainController {
             // ✅ CHECK PERMISSION HERE
             Object controller = page.getController(); // bạn đảm bảo FxmlPage có getter này
             if (!PermissionGuard.canAccess(controller)) {
-                showAlert("Access denied", PermissionGuard.deniedMessage(controller));
+                FxAlertUtils.warning(PermissionGuard.deniedMessage(controller));
                 return;
             }
 
             Tab tab = new Tab(title);
             tab.setContent(page.getRoot());
+
+            // ✅ Khi đóng tab thì cleanup controller
+            tab.setOnClosed(ev -> {
+                if (controller instanceof TabDisposable disposable) {
+                    disposable.onTabClose();
+                }
+            });
+
+            // (tuỳ chọn) Nếu bạn có nút X trên tab và muốn chắc chắn nó đóng:
+            tab.setClosable(true);
+
             mainTabPane.getTabs().add(tab);
             mainTabPane.getSelectionModel().select(tab);
+
+            tab.selectedProperty().addListener((obs, was, isSelected) -> {
+                if (controller instanceof ProductionPlanController c) {
+                    if (isSelected) c.resumeAutoRefresh();
+                    else c.pauseAutoRefresh();
+                }
+            });
+
         });
 
         loadTask.setOnFailed(e -> loadTask.getException().printStackTrace());
         new Thread(loadTask).start();
-    }
 
-    private void showAlert(String title, String msg) {
-        Alert a = new Alert(Alert.AlertType.WARNING);
-        a.setTitle(title);
-        a.setHeaderText(null);
-        a.setContentText(msg);
-        a.showAndWait();
-    }
 
+    }
 
 }
 
