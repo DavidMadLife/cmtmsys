@@ -46,6 +46,19 @@ public class FeederAssignmentRepositoryImpl implements FeederAssignmentRepositor
         return list.isEmpty() ? null : list.get(0);
     }
 
+    @Override
+    public List<Integer> findIdsByFeederId(int feederId) {
+        String sql = "SELECT AssignmentID FROM FeederAssignments WHERE FeederID = ?";
+        return jdbc.query(sql, (rs, rowNum) -> rs.getInt("AssignmentID"), feederId);
+    }
+
+    @Override
+    public void deleteByFeederId(int feederId) {
+        String sql = "DELETE FROM FeederAssignments WHERE FeederID = ?";
+        jdbc.update(sql, feederId);
+    }
+
+
 
 
 }

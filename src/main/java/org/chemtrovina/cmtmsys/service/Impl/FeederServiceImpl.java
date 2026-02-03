@@ -7,6 +7,7 @@ import org.chemtrovina.cmtmsys.model.enums.ModelType;
 import org.chemtrovina.cmtmsys.repository.base.*;
 import org.chemtrovina.cmtmsys.service.base.FeederService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -20,15 +21,24 @@ public class FeederServiceImpl implements FeederService {
     private final ProductRepository productRepository;
     private final WarehouseRepository warehouseRepository;
 
+    // ✅ thêm 2 repo để xóa cascade
+    private final FeederAssignmentRepository feederAssignmentRepository;
+    private final FeederAssignmentMaterialRepository feederAssignmentMaterialRepository;
+
     public FeederServiceImpl(
             FeederRepository feederRepository,
             ModelLineRepository modelLineRepository,
             ProductRepository productRepository,
-            WarehouseRepository warehouseRepository) {
+            WarehouseRepository warehouseRepository,
+            FeederAssignmentRepository feederAssignmentRepository,
+            FeederAssignmentMaterialRepository feederAssignmentMaterialRepository
+    ) {
         this.feederRepository = feederRepository;
         this.modelLineRepository = modelLineRepository;
         this.productRepository = productRepository;
         this.warehouseRepository = warehouseRepository;
+        this.feederAssignmentRepository = feederAssignmentRepository;
+        this.feederAssignmentMaterialRepository = feederAssignmentMaterialRepository;
     }
 
     @Override
@@ -42,22 +52,33 @@ public class FeederServiceImpl implements FeederService {
     }
 
     @Override
+    @Transactional
     public void deleteFeederById(int feederId) {
-        // 1. Lấy feeder trước khi xóa (để biết modelLineId)
+
+        // 1) Lấy feeder trước để biết modelLineId
         Feeder feeder = feederRepository.findById(feederId);
         if (feeder == null) {
             throw new RuntimeException("Feeder không tồn tại.");
         }
-
         int modelLineId = feeder.getModelLineId();
 
-        // 2. Xóa feeder
+        // 2) Lấy assignmentIds theo feederId
+        List<Integer> assignmentIds = feederAssignmentRepository.findIdsByFeederId(feederId);
+
+        // 3) Xóa assignment-material trước (tránh lỗi FK)
+        if (assignmentIds != null && !assignmentIds.isEmpty()) {
+            feederAssignmentMaterialRepository.deleteByAssignmentIds(assignmentIds);
+        }
+
+        // 4) Xóa assignment của feeder
+        feederAssignmentRepository.deleteByFeederId(feederId);
+
+        // 5) Xóa feeder
         feederRepository.deleteById(feederId);
 
-        // 3. Kiểm tra xem còn feeder nào khác trong modelLine không
+        // 6) Nếu modelLine không còn feeder -> xóa modelLine
         List<Feeder> remaining = feederRepository.findByModelLineId(modelLineId);
-        if (remaining.isEmpty()) {
-            // 4. Nếu không còn feeder → xóa luôn modelLine
+        if (remaining == null || remaining.isEmpty()) {
             modelLineRepository.deleteById(modelLineId);
         }
     }

@@ -9,5 +9,7 @@ public interface FeederAssignmentRepository {
     FeederAssignment findByRunAndFeeder(int runId, int feederId);
 
     FeederAssignment findById(int assignmentId);
+    List<Integer> findIdsByFeederId(int feederId);
+    void deleteByFeederId(int feederId);
 
 }

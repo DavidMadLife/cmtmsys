@@ -20,5 +20,6 @@ public interface FeederAssignmentMaterialRepository {
 
     FeederAssignmentMaterial findLatestByMaterialId(int materialId);
 
+    void deleteByAssignmentIds(List<Integer> assignmentIds);
 
 }

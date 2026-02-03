@@ -114,6 +114,17 @@ public class FeederAssignmentMaterialRepositoryImpl implements FeederAssignmentM
         return list.isEmpty() ? null : list.get(0);
     }
 
+    @Override
+    public void deleteByAssignmentIds(List<Integer> assignmentIds) {
+        if (assignmentIds == null || assignmentIds.isEmpty()) return;
+
+        String inSql = String.join(",", java.util.Collections.nCopies(assignmentIds.size(), "?"));
+        String sql = "DELETE FROM FeederAssignmentMaterials WHERE AssignmentID IN (" + inSql + ")";
+
+        jdbc.update(sql, assignmentIds.toArray());
+    }
+
+
 
 
 }
