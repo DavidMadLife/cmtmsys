@@ -478,14 +478,14 @@ public class FeederMultiRollController {
 
     private void handleRemoveMaterial(Material material) {
         if (material == null || material.getTreeId() == null) {
-            showAlert("⚠️ Cuộn này không nằm trong cây nào!");
+            FxAlertUtils.warning("⚠️ Cuộn này không nằm trong cây nào!");
             return;
         }
 
         int treeId = material.getTreeId();
         material.setTreeId(null);
         materialService.updateMaterial(material);
-        showAlert("✅ Đã gỡ cuộn khỏi cây!");
+        FxAlertUtils.info("✅ Đã gỡ cuộn khỏi cây!");
         loadRollsByTree(treeId);
     }
 
@@ -615,7 +615,7 @@ public class FeederMultiRollController {
         Warehouse selectedLine = cbLines.getValue();
 
         if ((modelCode.isEmpty() && modelName.isEmpty()) || modelType == null || selectedLine == null) {
-            showAlert("⚠️ Vui lòng nhập Mã hoặc Tên Model, chọn Loại và Line trước khi tải.");
+            FxAlertUtils.warning("⚠️ Vui lòng nhập Mã hoặc Tên Model, chọn Loại và Line trước khi tải.");
             return;
         }
 
@@ -628,7 +628,7 @@ public class FeederMultiRollController {
         }
 
         if (product == null) {
-            showAlert("❌ Không tìm thấy Model trong hệ thống.");
+            FxAlertUtils.warning("❌ Không tìm thấy Model trong hệ thống.");
             return;
         }
 
@@ -705,7 +705,7 @@ public class FeederMultiRollController {
 
     private void createNewRun() {
         if (currentModelLine == null) {
-            showAlert("Bạn cần tải model trước khi tạo phiên chạy.");
+            FxAlertUtils.warning("Bạn cần tải model trước khi tạo phiên chạy.");
             return;
         }
 
@@ -836,7 +836,7 @@ public class FeederMultiRollController {
 
     private void handleDetachFromFeeder(FeederDisplayRow row) {
         if (currentRun == null) {
-            showAlert("Vui lòng chọn phiên chạy trước.");
+            FxAlertUtils.warning("Vui lòng chọn phiên chạy trước.");
             return;
         }
 
@@ -864,13 +864,7 @@ public class FeederMultiRollController {
 
 
 
-    private void showAlert(String msg) {
-        Alert alert = new Alert(Alert.AlertType.WARNING);
-        alert.setTitle("Thông báo");
-        alert.setHeaderText(null);
-        alert.setContentText(msg);
-        alert.showAndWait();
-    }
+
 
     private void scrollToFeederCode() {
         String searchCode = txtSearchFeederCode.getText().trim().toLowerCase();
@@ -919,59 +913,79 @@ public class FeederMultiRollController {
     }
 
     private void handleSearchFeederBySap() {
-        String rollCode = txtScanRollForSap.getText().trim();
-        if (rollCode.isEmpty()) return;
 
-        Material material = materialService.getMaterialByRollCode(rollCode);
-        if (material == null) {
-            txtStatusLog.appendText("❌ Không tìm thấy cuộn [" + rollCode + "]\n");
+        if (currentModelLine == null || currentRun == null) {
+            txtStatusLog.appendText("⚠️ Vui lòng Load model và chọn phiên chạy trước.\n");
             SoundUtils.playSound("Wrong.mp3");
             return;
         }
 
-        // 🆕 HIỂN THỊ CÂY VÀ XE CHỨA CUỘN
-        if (material.getTreeId() != null) {
-            MaterialCartTree tree = materialCartTreeService.getById(material.getTreeId());
-            if (tree != null) {
-                MaterialCart cart = materialCartService.getCartById(tree.getCartId());
-                txtStatusLog.appendText(
-                        "📦 Cuộn [" + rollCode + "] đang ở cây [" + tree.getTreeCode() + "] trong xe [" + (cart != null ? cart.getCartCode() : "N/A") + "]\n"
-                );
-            }
+        String rollCodeScan = txtScanRollForSap.getText().trim();
+        if (rollCodeScan.isEmpty()) return;
+
+        Material scanned = materialService.getMaterialByRollCode(rollCodeScan);
+        if (scanned == null) {
+            txtStatusLog.appendText("❌ Không tìm thấy cuộn [" + rollCodeScan + "]\n");
+            SoundUtils.playSound("Wrong.mp3");
+            return;
         }
 
-        // Lọc feeder theo sapCode
+        // (tuỳ chọn) log vị trí cây/xe như bạn đang làm...
+
+        // 1) Lấy feeder đúng SAP cho model+line
         List<Feeder> feeders = feederService.getFeedersByModelAndLine(
                         currentModelLine.getProductId(),
                         currentModelLine.getWarehouseId()
-                ).stream()
-                .filter(f -> f.getSapCode().equalsIgnoreCase(material.getSapCode()))
+                ).stream().filter(f -> f.getSapCode().equalsIgnoreCase(scanned.getSapCode()))
                 .toList();
 
-
         if (feeders.isEmpty()) {
-            txtStatusLog.appendText("❌ Không tìm thấy Feeder nào cho SAP [" + material.getSapCode() + "]\n");
+            txtStatusLog.appendText("❌ Không tìm thấy Feeder nào cho SAP [" + scanned.getSapCode() + "]\n");
             return;
         }
 
         ObservableList<FeederDisplayRow> rows = FXCollections.observableArrayList();
+
         for (Feeder feeder : feeders) {
             FeederDisplayRow row = FeederDisplayRow.fromFeeder(feeder);
-            row.setRollCode(material.getRollCode()); // Roll muốn gắn
-            row.setMaterialQty(material.getQuantity());
 
-            // Kiểm tra trạng thái
-            List<FeederAssignmentMaterial> mats = materialAssignmentService.getActiveByFeederId(feeder.getFeederId());
-            if (mats.isEmpty()) {
+            // 2) Lấy assignment theo RUN hiện tại
+            FeederAssignment ass = assignmentService.getAssignment(currentRun.getRunId(), feeder.getFeederId());
+
+            if (ass == null) {
+                // chưa từng gắn gì trong run này
+                row.setRollCode("");          // không có cuộn đang gắn
+                row.setMaterialQty(0);
                 row.setStatus("Chưa gắn");
             } else {
-                row.setStatus("Đã gắn");
+                List<FeederAssignmentMaterial> mats =
+                        materialAssignmentService.getMaterialsByAssignment(ass.getAssignmentId());
+
+                if (mats == null || mats.isEmpty()) {
+                    row.setRollCode("");
+                    row.setMaterialQty(0);
+                    row.setStatus("Chưa gắn");
+                } else {
+                    FeederAssignmentMaterial last = mats.get(mats.size() - 1);
+                    Material attached = materialService.getMaterialById(last.getMaterialId());
+
+                    row.setRollCode(attached != null ? attached.getRollCode() : "N/A");
+                    row.setMaterialQty(attached != null ? attached.getQuantity() : 0);
+
+                    // nếu feeder từng bổ sung nhiều cuộn
+                    row.setStatus(mats.size() > 1 ? "Bổ sung" : "Đã gắn");
+                }
             }
+
             rows.add(row);
         }
 
         tblFeederBySap.setItems(rows);
+
+        // 3) Gợi ý UX: tự focus để bấm “Gắn”
+        txtStatusLog.appendText("🔎 Tìm feeder theo SAP [" + scanned.getSapCode() + "] cho cuộn [" + rollCodeScan + "]\n");
     }
+
     private void handleSearchMaterialCart() {
         String treeCode = txtTreeCode.getText().trim();
         String rollCode = txtRollCodeSearch.getText().trim();
@@ -1032,7 +1046,7 @@ public class FeederMultiRollController {
 
     private void handleToggleRun() {
         if (currentRun == null) {
-            showAlert("⚠️ Không có phiên chạy nào được chọn.");
+            FxAlertUtils.warning("⚠️ Không có phiên chạy nào được chọn.");
             return;
         }
 
