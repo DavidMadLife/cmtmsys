@@ -12,6 +12,7 @@ import org.chemtrovina.cmtmsys.model.enums.UserRole;
 import org.chemtrovina.cmtmsys.security.RequiresRoles;
 import org.chemtrovina.cmtmsys.service.base.*;
 import org.chemtrovina.cmtmsys.utils.AutoCompleteUtils;
+import org.chemtrovina.cmtmsys.utils.FxAlertUtils;
 import org.chemtrovina.cmtmsys.utils.FxClipboardUtils;
 import org.chemtrovina.cmtmsys.utils.SoundUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -189,22 +190,10 @@ public class FeederMultiRollController {
 
     private void setupTableView() {
         setupTableColumns();
-        tblFeederAssignments.getSelectionModel().setCellSelectionEnabled(true);
-        tblFeederAssignments.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        tblFeederAssignments.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-
-        tblFeederAssignments.setOnKeyPressed(event -> {
-            if (event.isControlDown() && event.getCode() == javafx.scene.input.KeyCode.C)
-                FxClipboardUtils.copySelectionToClipboard(tblFeederAssignments);
-        });
-
-        tblFeederBySap.getSelectionModel().setCellSelectionEnabled(true);
-        tblFeederBySap.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        tblFeederBySap.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        tblFeederBySap.setOnKeyPressed(event -> {
-            if (event.isControlDown() && event.getCode() == javafx.scene.input.KeyCode.C)
-                FxClipboardUtils.copySelectionToClipboard(tblFeederBySap);
-        });
+        FxClipboardUtils.enableCopyShortcut(tblFeederBySap);
+        FxClipboardUtils.enableCopyShortcut(tblFeederAssignments);
+        FxClipboardUtils.enableCopyShortcut(tblRollInTree);
+        FxClipboardUtils.enableCopyShortcut(tblTreeList);
     }
 
 

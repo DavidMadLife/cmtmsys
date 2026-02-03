@@ -15,6 +15,8 @@ module org.chemtrovina.cmtmsys {
     requires spring.beans;
     requires javafx.media;
     requires static lombok;
+    requires com.sun.jna.platform;
+    requires com.sun.jna;
 
     opens org.chemtrovina.cmtmsys to javafx.fxml;
     opens org.chemtrovina.cmtmsys.controller; // ✅ mở full package controller

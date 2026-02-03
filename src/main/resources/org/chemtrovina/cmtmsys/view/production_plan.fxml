@@ -113,7 +113,7 @@
         </TitledPane>
 
         <!-- Pane 3: Thực tế theo khung giờ -->
-        <TitledPane text="Thực tế theo khung giờ" expanded="false" VBox.vgrow="ALWAYS">
+        <TitledPane  fx:id="tpHourly" text="Thực tế theo khung giờ" expanded="false" VBox.vgrow="ALWAYS">
             <content>
                 <VBox spacing="10">
                     <HBox spacing="10">

@@ -95,6 +95,11 @@ public class NavbarController {
     @FXML private MenuItem menuSparePartManager;
     @FXML private MenuItem menuSparePartManagerOut;
 
+    // ==== Tools Menu ====
+    @FXML private MenuButton menuTools;
+    @FXML private MenuItem menuFirmwareCheck;
+
+
     @FXML private MenuItem menuChangePassword, menuManageAccount;
     @FXML private MenuItem menuLogout;
 
@@ -202,6 +207,9 @@ public class NavbarController {
         menuSparePartManagerOut.setOnAction(e ->
                 openTab("Spare Part Out", "/org/chemtrovina/cmtmsys/view/spare_part_output_view.fxml"));
 
+        menuFirmwareCheck.setOnAction(e ->
+                openTab("Firmware Check", "/org/chemtrovina/cmtmsys/view/firmware-check.fxml")
+        );
 
 
 

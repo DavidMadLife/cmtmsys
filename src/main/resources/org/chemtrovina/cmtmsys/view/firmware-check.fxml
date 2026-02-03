@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<AnchorPane prefHeight="800.0" prefWidth="1280.0"
+            style="-fx-background-color: #456F92;"
+            xmlns="http://javafx.com/javafx/23.0.1"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="org.chemtrovina.cmtmsys.controller.FirmwareCheckController">
+
+    <children>
+        <HBox spacing="10" AnchorPane.bottomAnchor="10" AnchorPane.leftAnchor="10" AnchorPane.rightAnchor="10" AnchorPane.topAnchor="10">
+
+            <!-- LEFT -->
+            <VBox prefWidth="420" spacing="20" style="-fx-background-color: #B9B9B9; -fx-padding: 20;">
+                <StackPane prefHeight="50" style="-fx-background-color: #2D3748; -fx-background-radius: 5;">
+                    <Text fill="white" style="-fx-font-weight: Bold;" text="Firmware Version Check">
+                        <font><Font size="22.0" /></font>
+                    </Text>
+                </StackPane>
+
+                <VBox spacing="10">
+                    <Label text="Input Version" style="-fx-font-weight: bold;" />
+                    <TextField fx:id="inputVersionField" promptText="Enter version..." />
+
+                    <Button fx:id="btnCheck" text="CheckVersion" style="-fx-font-weight: bold; -fx-background-color: #e11313;" textFill="WHITE"/>
+
+                    <Button fx:id="btnMockPopup" text="Mock Popup" style="-fx-font-weight: bold;" />
+
+                    <ToggleButton fx:id="btnAuto" text="AUTO" />
+
+                    <Button fx:id="btnGet" text="Get" />
+
+
+
+                </VBox>
+
+                <VBox spacing="10" style="-fx-padding: 10; -fx-background-color: white; -fx-background-radius: 6;">
+                    <HBox spacing="10">
+                        <Label text="Popup Version:" style="-fx-font-weight: bold;" />
+                        <Label fx:id="lblPopupVersion" text="-" />
+                    </HBox>
+                    <HBox spacing="10">
+                        <Label text="Result:" style="-fx-font-weight: bold;" />
+                        <Label fx:id="lblResult" text="-" />
+                    </HBox>
+                </VBox>
+
+                <Label text="Tip: Nhấn Enter để check nhanh" style="-fx-font-style: italic;" />
+            </VBox>
+
+            <!-- RIGHT -->
+            <VBox spacing="10" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
+                <TableView fx:id="historyTable" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="colNo" prefWidth="60" text="No"/>
+                        <TableColumn fx:id="colInput" prefWidth="140" text="Input"/>
+                        <TableColumn fx:id="colPopup" prefWidth="140" text="Popup"/>
+                        <TableColumn fx:id="colResult" prefWidth="80" text="Result"/>
+                        <TableColumn fx:id="colMessage" prefWidth="600" text="Message"/>
+                        <TableColumn fx:id="colTime" prefWidth="200" text="Time"/>
+                    </columns>
+                </TableView>
+            </VBox>
+
+        </HBox>
+    </children>
+</AnchorPane>

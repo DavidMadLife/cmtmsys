@@ -109,6 +109,15 @@
             </items>
         </MenuButton>
 
+        <MenuButton fx:id="menuTools" text="Tools">
+            <items>
+                <MenuItem fx:id="menuFirmwareCheck" text="Firmware Check"/>
+            </items>
+        </MenuButton>
+
+
+
+
         <!-- Menu: Tài khoản / User -->
         <MenuButton fx:id="menuUser" text="Tài khoản (User)" style="-fx-font-weight: bold;" prefWidth="140">
             <items>

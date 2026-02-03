@@ -265,11 +265,12 @@ public class HistoryServiceImpl implements HistoryService {
         return allMakerPNs.stream()
                 .filter(dbMPN -> {
                     if (dbMPN == null || dbMPN.trim().isEmpty()) return false; // bảo vệ thêm
-                    String normalized = dbMPN.replaceAll("[^A-Za-z0-9]", "").toUpperCase();
-                    return cleanedInput.contains(normalized);
+                    String normalized = dbMPN.replaceAll("[^A-Za-z0-9]", "" ).toUpperCase();
+                    return cleanedInput.contains(normalized) ;
                 })
                 .max(Comparator.comparingInt(mpn -> mpn.replaceAll("[^A-Za-z0-9]", "").length()))
                 .orElse(null);
+
     }
 
 }

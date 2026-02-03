@@ -43,6 +43,8 @@ public class ProductionPlanHourlySection {
     private final ProductionPlanDailyService dailyService;
     private final ProductService productService;
 
+    private boolean active = true;
+
     public ProductionPlanHourlySection(
             WarehouseService warehouseService,
             PcbPerformanceLogService pcbPerformanceLogService,

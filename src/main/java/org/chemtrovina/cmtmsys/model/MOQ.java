@@ -1,5 +1,7 @@
 package org.chemtrovina.cmtmsys.model;
 
+import java.time.LocalDateTime;
+
 public class MOQ {
     private int id;
     private String maker;
@@ -8,11 +10,13 @@ public class MOQ {
     private Integer moq;
     private String msql;
     private String spec;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     public MOQ() {
     }
 
-    public MOQ(int id, String maker, String makerPN, String sapPN, Integer moq, String msql, String spec) {
+    public MOQ(int id, String maker, String makerPN, String sapPN, Integer moq, String msql, String spec, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.maker = maker;
         this.makerPN = makerPN;
@@ -20,6 +24,8 @@ public class MOQ {
         this.moq = moq;
         this.msql = msql;
         this.spec = spec;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
     }
 
     // Getter và Setter methods
@@ -72,6 +78,22 @@ public class MOQ {
     }
     public String getSpec() {return spec;}
     public void setSpec(String spec) {this.spec = spec;}
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 
     @Override
     public String toString() {

@@ -96,6 +96,7 @@ public class ProductionPlanController implements TabDisposable {
     @FXML private Button btnLoadHourly;
 
     @FXML private TableView<HourlyActualRow> tblHourly;
+    @FXML private TitledPane tpHourly;
     @FXML private TableColumn<HourlyActualRow, String> colHLine, colHModel, colHModelType, colHProduct, colHStage;
     @FXML private TableColumn<HourlyActualRow, Integer> colS1,colS2,colS3,colS4,colS5,colS6,colS7,colS8,colS9,colS10,colS11,colS12,colHTotal;
 
@@ -163,6 +164,8 @@ public class ProductionPlanController implements TabDisposable {
         hourlySection.init(buildHourlyRefs());
 
         setupCommonUi();
+
+
     }
 
     @Override
