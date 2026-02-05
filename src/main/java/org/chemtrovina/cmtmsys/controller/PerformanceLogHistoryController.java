@@ -19,6 +19,7 @@ import org.chemtrovina.cmtmsys.service.base.PcbPerformanceLogService;
 import org.chemtrovina.cmtmsys.service.base.WarehouseService;
 import org.chemtrovina.cmtmsys.utils.FxAlertUtils;
 import org.chemtrovina.cmtmsys.utils.FxClipboardUtils;
+import org.chemtrovina.cmtmsys.utils.FxFilterUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -67,12 +68,20 @@ public class PerformanceLogHistoryController {
     // ======================================================================
     // ✔ SERVICES
     // ======================================================================
+
+
+
     private final PcbPerformanceLogService logService;
     private final MaterialConsumeDetailLogService consumeDetailService;
     private final WarehouseService warehouseService;
 
     private final ObservableList<PcbPerformanceLogHistoryDTO> logList = FXCollections.observableArrayList();
     private List<Warehouse> warehouseCache;  // ✔ Cache warehouse tránh query DB nhiều lần
+
+    private List<MaterialUsage> materialCache = List.of();
+
+
+
 
     // ======================================================================
     // ✔ CONSTRUCTOR
@@ -242,9 +251,14 @@ public class PerformanceLogHistoryController {
     // 📦 MATERIAL TABLE LOAD
     // ======================================================================
     private void loadMaterialsForLog(PcbPerformanceLogHistoryDTO dto) {
-        List<MaterialUsage> rows = consumeDetailService.getMaterialUsageBySourceLog(dto.getLogId());
-        tblMaterials.setItems(FXCollections.observableArrayList(rows));
+        materialCache = consumeDetailService.getMaterialUsageBySourceLog(dto.getLogId());
+        tblMaterials.setItems(FXCollections.observableArrayList(materialCache));
+
+        // setup filter menu giống EmployeeManage
+        setupMaterialFilterMenu(materialCache);
     }
+
+
 
     // ======================================================================
     // 🧹 CLEAR FILTERS
@@ -273,4 +287,60 @@ public class PerformanceLogHistoryController {
                 .findFirst()
                 .orElse(null);
     }
+
+    private void setupMaterialFilterMenu(List<MaterialUsage> rows) {
+
+        // Lọc theo từng cột (mỗi cột gọi FxFilterUtils)
+        FxFilterUtils.setupFilterMenu(colSapCode, rows, MaterialUsage::getSapCode, this::applySapFilter);
+        FxFilterUtils.setupFilterMenu(colRollCode, rows, MaterialUsage::getRollCode, this::applyRollFilter);
+        FxFilterUtils.setupFilterMenu(colWarehouseName, rows, MaterialUsage::getWarehouseName, this::applyWarehouseFilter);
+        FxFilterUtils.setupFilterMenu(colSpec, rows, MaterialUsage::getSpec, this::applySpecFilter);
+        FxFilterUtils.setupFilterMenu(colLot, rows, MaterialUsage::getLot, this::applyLotFilter);
+
+        // Nếu có maker:
+        // FxFilterUtils.setupFilterMenu(colMaker, rows, MaterialUsage::getMaker, this::applyMakerFilter);
+
+        // Quantity/Created thường không làm checklist vì quá nhiều giá trị.
+    }
+
+    private void applySapFilter(List<String> selected) {
+        List<MaterialUsage> filtered = materialCache.stream()
+                .filter(m -> selected.contains(nullSafe(m.getSapCode())))
+                .toList();
+        tblMaterials.setItems(FXCollections.observableArrayList(filtered));
+    }
+
+    private void applyRollFilter(List<String> selected) {
+        List<MaterialUsage> filtered = materialCache.stream()
+                .filter(m -> selected.contains(nullSafe(m.getRollCode())))
+                .toList();
+        tblMaterials.setItems(FXCollections.observableArrayList(filtered));
+    }
+
+    private void applyWarehouseFilter(List<String> selected) {
+        List<MaterialUsage> filtered = materialCache.stream()
+                .filter(m -> selected.contains(nullSafe(m.getWarehouseName())))
+                .toList();
+        tblMaterials.setItems(FXCollections.observableArrayList(filtered));
+    }
+
+    private void applySpecFilter(List<String> selected) {
+        List<MaterialUsage> filtered = materialCache.stream()
+                .filter(m -> selected.contains(nullSafe(m.getSpec())))
+                .toList();
+        tblMaterials.setItems(FXCollections.observableArrayList(filtered));
+    }
+
+    private void applyLotFilter(List<String> selected) {
+        List<MaterialUsage> filtered = materialCache.stream()
+                .filter(m -> selected.contains(nullSafe(m.getLot())))
+                .toList();
+        tblMaterials.setItems(FXCollections.observableArrayList(filtered));
+    }
+
+    private String nullSafe(String s) {
+        return s == null ? "" : s;
+    }
+
+
 }
