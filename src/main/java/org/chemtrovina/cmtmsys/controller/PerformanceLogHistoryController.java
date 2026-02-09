@@ -59,12 +59,13 @@ public class PerformanceLogHistoryController {
     @FXML private TableColumn<PcbPerformanceLogHistoryDTO, Double> colTimeDiff;
 
 
+
     // Material Table
     @FXML private TableView<MaterialUsage> tblMaterials;
     @FXML private TableColumn<MaterialUsage, String> colSapCode, colRollCode, colWarehouseName, colSpec, colLot;
     @FXML private TableColumn<MaterialUsage, Integer> colQuantity;
     @FXML private TableColumn<MaterialUsage, LocalDateTime> colCreated;
-
+    @FXML private TableColumn<MaterialUsage, String> colMaker;
     // ======================================================================
     // ✔ SERVICES
     // ======================================================================
@@ -129,6 +130,7 @@ public class PerformanceLogHistoryController {
     private void setupComboBoxes() {
         cbModelType.setItems(FXCollections.observableArrayList(ModelType.values()));
     }
+
 
     private void setupLogTable() {
         tblLogs.setItems(logList);
@@ -298,7 +300,7 @@ public class PerformanceLogHistoryController {
         FxFilterUtils.setupFilterMenu(colLot, rows, MaterialUsage::getLot, this::applyLotFilter);
 
         // Nếu có maker:
-        // FxFilterUtils.setupFilterMenu(colMaker, rows, MaterialUsage::getMaker, this::applyMakerFilter);
+         FxFilterUtils.setupFilterMenu(colMaker, rows, MaterialUsage::getMaker, this::applyMaker);
 
         // Quantity/Created thường không làm checklist vì quá nhiều giá trị.
     }
@@ -333,10 +335,21 @@ public class PerformanceLogHistoryController {
 
     private void applyLotFilter(List<String> selected) {
         List<MaterialUsage> filtered = materialCache.stream()
+
                 .filter(m -> selected.contains(nullSafe(m.getLot())))
                 .toList();
         tblMaterials.setItems(FXCollections.observableArrayList(filtered));
+
+
     }
+
+    private void applyMaker(List<String> selected) {
+        List<MaterialUsage> filtered = materialCache.stream()
+                .filter(m -> selected.contains(nullSafe(m.getMaker())))
+                .toList();
+        tblMaterials.setItems(FXCollections.observableArrayList(filtered));
+    }
+
 
     private String nullSafe(String s) {
         return s == null ? "" : s;
