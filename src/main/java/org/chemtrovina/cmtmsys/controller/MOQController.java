@@ -184,7 +184,10 @@ public class MOQController {
         });
 
         btnSearch.setOnAction(e -> onSearch());
-        btnCreate.setOnAction(e -> showCreateDialog()); // đã thêm nút tạo mới
+        btnCreate.setOnAction(e -> {
+            if (!ActionGuard.adminOnly("import MOQ data")) return;
+            showCreateDialog();
+        }); // đã thêm nút tạo mới
         btnClear.setOnAction(e -> OnClear());
         btnExportData.setOnAction(e -> exportDataToExcel());
 
