@@ -36,7 +36,9 @@ public class App extends Application {
     @Override
     public void start(Stage stage) throws IOException {
         // Dùng SpringFXMLLoader để load FXML có inject controller
-        var fxmlUrl = App.class.getResource("view/login.fxml");
+        var fxmlUrl = App.class.getResource("/org/chemtrovina/cmtmsys/view/login.fxml");
+        if (fxmlUrl == null) throw new RuntimeException("Missing login.fxml in jar");
+
         var loader = SpringFXMLLoader.load(fxmlUrl);
         var scene = new Scene(loader.load());
 
