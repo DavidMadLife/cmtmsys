@@ -6,14 +6,10 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.stage.Stage;
 import org.chemtrovina.cmtmsys.App;
-import org.chemtrovina.cmtmsys.config.DataSourceConfig;
 import org.chemtrovina.cmtmsys.context.UserContext;
 import org.chemtrovina.cmtmsys.model.User;
-import org.chemtrovina.cmtmsys.repository.Impl.UserRepositoryImpl;
-import org.chemtrovina.cmtmsys.service.Impl.UserServiceImpl;
 import org.chemtrovina.cmtmsys.service.base.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;

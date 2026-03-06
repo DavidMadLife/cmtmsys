@@ -5,7 +5,6 @@ module org.chemtrovina.cmtmsys {
     requires net.synedra.validatorfx;
     requires org.kordamp.ikonli.javafx;
     requires org.kordamp.bootstrapfx.core;
-    requires java.sql;
     requires javafx.swing;
     requires spring.jdbc;
     requires org.apache.poi.ooxml;
@@ -17,6 +16,9 @@ module org.chemtrovina.cmtmsys {
     requires static lombok;
     requires com.sun.jna.platform;
     requires com.sun.jna;
+    requires jakarta.persistence;
+    requires spring.data.jpa;
+    requires spring.boot.persistence;
 
     opens org.chemtrovina.cmtmsys to javafx.fxml;
     opens org.chemtrovina.cmtmsys.controller; // ✅ mở full package controller
@@ -29,9 +31,9 @@ module org.chemtrovina.cmtmsys {
     exports org.chemtrovina.cmtmsys.controller;
     exports org.chemtrovina.cmtmsys.config;
     exports org.chemtrovina.cmtmsys.repository.base;
-    exports org.chemtrovina.cmtmsys.repository.Impl;
+    exports org.chemtrovina.cmtmsys.repository.impl;
     exports org.chemtrovina.cmtmsys.service.base;
-    exports org.chemtrovina.cmtmsys.service.Impl;
+    exports org.chemtrovina.cmtmsys.service.impl;
     exports org.chemtrovina.cmtmsys.utils;
     exports org.chemtrovina.cmtmsys.helper;
     exports org.chemtrovina.cmtmsys.controller.workorder;

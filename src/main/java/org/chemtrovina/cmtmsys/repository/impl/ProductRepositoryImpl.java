@@ -1,0 +1,194 @@
+package org.chemtrovina.cmtmsys.repository.impl;
+
+import org.chemtrovina.cmtmsys.model.Product;
+import org.chemtrovina.cmtmsys.model.enums.ModelType;
+import org.chemtrovina.cmtmsys.repository.RowMapper.ProductRowMapper;
+import org.chemtrovina.cmtmsys.repository.base.ProductRepository;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
+
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+
+@Repository
+public class ProductRepositoryImpl implements ProductRepository {
+
+    private final JdbcTemplate jdbcTemplate;
+
+    public ProductRepositoryImpl(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
+
+    public void add(Product product) {
+        String sql = """
+        INSERT INTO Products (ProductCode, Name, Description, ModelType, CreatedDate, UpdatedDate)
+        VALUES (?, ?, ?, ?, GETDATE(), GETDATE())
+    """;
+        jdbcTemplate.update(sql,
+                product.getProductCode(),
+                product.getName(),                      // có thể null
+                product.getDescription(),               // có thể null
+                product.getModelType() != null ? product.getModelType().name() : "NONE"
+        );
+    }
+
+
+    public void update(Product product) {
+        String sql = "UPDATE Products SET ProductCode = ?, Description = ?, UpdatedDate = ? WHERE ProductID = ?";
+        jdbcTemplate.update(sql,
+                product.getProductCode(),
+                product.getDescription(),
+                Timestamp.valueOf(LocalDateTime.now()),
+                product.getProductId()
+        );
+    }
+
+    public void deleteById(int productId) {
+        String sql = "DELETE FROM Products WHERE ProductID = ?";
+        jdbcTemplate.update(sql, productId);
+    }
+
+    public Product findById(int productId) {
+        String sql = "SELECT * FROM Products WHERE ProductID = ?";
+        List<Product> results = jdbcTemplate.query(sql, new ProductRowMapper(), productId);
+        return results.isEmpty() ? null : results.get(0);
+    }
+
+    public List<Product> findAll() {
+        String sql = "SELECT * FROM Products ORDER BY ProductID";
+        return jdbcTemplate.query(sql, new ProductRowMapper());
+    }
+
+    @Override
+    public Product getProductByCode(String code) {
+        List<Product> result = jdbcTemplate.query(
+                "SELECT * FROM Products WHERE productCode = ?",
+                new Object[]{code},
+                new ProductRowMapper()
+        );
+        return result.isEmpty() ? null : result.get(0);
+    }
+
+    @Override
+    public boolean checkProductExists(String productCode, ModelType modelType) {
+        String sql = "SELECT COUNT(1) FROM Products WHERE ProductCode = ? AND ModelType = ?";
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, productCode, modelType.name());
+        return count != null && count > 0;
+    }
+
+
+
+    @Override
+    public Product findByCodeAndModelType(String productCode, ModelType modelType) {
+        String sql = "SELECT * FROM Products WHERE ProductCode = ? AND ModelType = ?";
+        List<Product> results = jdbcTemplate.query(sql, new ProductRowMapper(), productCode, modelType.name());
+        return results.isEmpty() ? null : results.get(0);
+    }
+
+    @Override
+    public void updateProduct(Product product) {
+        String sql = """
+        UPDATE Products
+        SET productCode = ?, name = ?, description = ?, modelType = ?, updatedDate = GETDATE()
+        WHERE productId = ?
+    """;
+        jdbcTemplate.update(sql,
+                product.getProductCode(),
+                product.getName(),
+                product.getDescription(),
+                product.getModelType().name(),
+                product.getProductId()  // ✅ đúng: ID là kiểu int
+        );
+    }
+
+
+    @Override
+    public void deleteProductWithBOM(int productId) {
+        // Xoá ProductBOM trước
+        String deleteBOM = "DELETE FROM ProductBOM WHERE productId = ?";
+        jdbcTemplate.update(deleteBOM, productId);
+
+        // Sau đó xoá Product
+        String deleteProduct = "DELETE FROM Products WHERE productId = ?";
+        jdbcTemplate.update(deleteProduct, productId);
+    }
+
+    @Override
+    public List<Product> findAllByCodeContainedInText(String text) {
+        // SQL Server: ? LIKE '%' + ProductCode + '%'
+        String sql = """
+        SELECT *
+        FROM Products
+        WHERE ? LIKE '%' + ProductCode + '%'
+        ORDER BY LEN(ProductCode) DESC
+    """;
+        return jdbcTemplate.query(sql, new ProductRowMapper(), text);
+    }
+
+    @Override
+    public String findProductCodeByPlanItemId(int planItemId) {
+        String sql = """
+            SELECT p.productCode
+            FROM ProductionPlanItems i
+            JOIN Products p ON i.productID = p.productId
+            WHERE i.planItemID = ?
+        """;
+
+        return jdbcTemplate.queryForObject(sql, new Object[]{planItemId}, String.class);
+    }
+
+    @Override
+    public Product findByNameAndModelType(String productName, ModelType modelType) {
+        String sql = "SELECT * FROM Products WHERE Name = ? AND ModelType = ?";
+        List<Product> results = jdbcTemplate.query(sql, new ProductRowMapper(), productName, modelType.name());
+        return results.isEmpty() ? null : results.get(0);
+    }
+
+    @Override
+    public Map<String, String> findProductNamesByCodeAndModelType(Set<String> keys) {
+        if (keys == null || keys.isEmpty()) return new HashMap<>();
+
+        // tách key thành pair
+        List<Object[]> params = keys.stream()
+                .map(k -> k.split("\\|"))
+                .filter(arr -> arr.length == 2)
+                .map(arr -> new Object[]{arr[0], arr[1]})
+                .toList();
+
+        // (ProductCode = ? AND ModelType = ?) OR ...
+        String whereClause = params.stream()
+                .map(p -> "(ProductCode = ? AND ModelType = ?)")
+                .collect(Collectors.joining(" OR "));
+
+        String sql = """
+        SELECT ProductCode, ModelType,
+               COALESCE(NULLIF(LTRIM(RTRIM(Name)), ''), ProductCode) AS Name
+        FROM Products
+        WHERE %s
+    """.formatted(whereClause);
+
+        Object[] flatParams = params.stream()
+                .flatMap(p -> List.of(p[0], p[1]).stream())
+                .toArray();
+
+        return jdbcTemplate.query(sql, flatParams, rs -> {
+            Map<String, String> map = new HashMap<>();
+            while (rs.next()) {
+                String key = rs.getString("ProductCode") + "|" + rs.getString("ModelType");
+                map.put(key, rs.getString("Name"));
+            }
+            return map;
+        });
+    }
+
+
+
+
+
+}

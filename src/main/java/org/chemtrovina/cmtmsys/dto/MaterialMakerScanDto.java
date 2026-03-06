@@ -10,12 +10,9 @@ public class MaterialMakerScanDto {
     private String rollCode;
     private String spec;
     private String maker;
-
     private String makerPNInput;
     private String expectedMakerPN;
-
     private ScanResult result;
     private String message;
-
     private LocalDateTime scanAt;
 }

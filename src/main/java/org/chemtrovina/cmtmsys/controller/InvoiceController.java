@@ -3,7 +3,6 @@ package org.chemtrovina.cmtmsys.controller;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.geometry.Side;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.KeyCode;
@@ -15,44 +14,32 @@ import javafx.util.StringConverter;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.chemtrovina.cmtmsys.config.DataSourceConfig;
 import org.chemtrovina.cmtmsys.dto.InvoiceDataDto;
 import org.chemtrovina.cmtmsys.dto.InvoiceDetailViewDto;
 import org.chemtrovina.cmtmsys.model.Invoice;
 import org.chemtrovina.cmtmsys.model.InvoiceDetail;
 import org.chemtrovina.cmtmsys.model.MOQ;
 import org.chemtrovina.cmtmsys.model.enums.UserRole;
-import org.chemtrovina.cmtmsys.repository.Impl.InvoiceRepositoryImpl;
-import org.chemtrovina.cmtmsys.repository.Impl.MOQRepositoryImpl;
-import org.chemtrovina.cmtmsys.repository.base.InvoiceRepository;
-import org.chemtrovina.cmtmsys.repository.base.MOQRepository;
 import org.chemtrovina.cmtmsys.security.RequiresRoles;
-import org.chemtrovina.cmtmsys.service.Impl.InvoiceServiceImpl;
-import org.chemtrovina.cmtmsys.service.Impl.MOQServiceImpl;
 import org.chemtrovina.cmtmsys.service.base.InvoiceService;
 import org.chemtrovina.cmtmsys.service.base.MOQService;
 import org.chemtrovina.cmtmsys.utils.AutoCompleteUtils;
 import org.chemtrovina.cmtmsys.utils.FxClipboardUtils;
-import org.controlsfx.control.textfield.TextFields;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 
-import javax.sql.DataSource;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 @RequiresRoles({
         UserRole.ADMIN,

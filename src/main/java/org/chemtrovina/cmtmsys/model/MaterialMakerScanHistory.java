@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+
 public class MaterialMakerScanHistory {
     private int id;
     private String rollCode;
