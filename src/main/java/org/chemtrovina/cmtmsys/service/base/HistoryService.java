@@ -20,10 +20,22 @@ public interface HistoryService {
     Optional<History> getHistoryById(int id);
 
     List<History> searchHistory(LocalDate date, String sapPN, String status);
-    void createHistoryForScannedMakePN(MOQ moq, String employeeId, String scanCode, int invoiceId, String status);
-    void createHistoryForScanOddReel(MOQ moq, String employeeId, String scanCode, int invoiceId, int quantity);
 
+    void createHistoryForScannedMakePN(
+            MOQ moq,
+            String employeeId,
+            String scanCode,
+            String rollCode,
+            int invoiceId,
+            String status);
 
+    void createHistoryForScanOddReel(
+            MOQ moq,
+            String employeeId,
+            String scanCode,
+            String rollCode,
+            int invoiceId,
+            int quantity);
     void deleteById(int id);
 
     boolean isValidMakerPN(String makerPN);
@@ -48,5 +60,6 @@ public interface HistoryService {
     Map<String, HistorySummary> getHistorySummaryByInvoiceId(int invoiceId);
 
 
+    boolean isRollCodeDuplicated(String rollCode);
 
 }

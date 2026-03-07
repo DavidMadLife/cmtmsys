@@ -52,7 +52,10 @@ public class HistoryListController {
     @FXML private TableColumn<History, String> timeColumn;
     @FXML private TableColumn<History, String> employeeIdColumn; // thêm dòng này
     @FXML private TableColumn<History, String> statusColumn;
+
     @FXML private TableColumn<History, String> scanCodeColumn;
+    @FXML private TableColumn<History, String> codeScanColumn;
+    @FXML private TableColumn<History, String> rollCodeColumn;
 
 
 
@@ -153,6 +156,8 @@ public class HistoryListController {
         employeeIdColumn.setCellValueFactory(new PropertyValueFactory<>("employeeId"));
         statusColumn.setCellValueFactory(new PropertyValueFactory<>("status"));
         scanCodeColumn.setCellValueFactory(new PropertyValueFactory<>("scanCode"));
+        codeScanColumn.setCellValueFactory(new PropertyValueFactory<>("codeScan"));
+        rollCodeColumn.setCellValueFactory(new PropertyValueFactory<>("rollCode"));
 
 
         historyDateTableView.setEditable(true);

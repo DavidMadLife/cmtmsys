@@ -34,7 +34,8 @@ import java.util.concurrent.TimeUnit;
 @RequiresRoles({
         UserRole.ADMIN,
         UserRole.INVENTORY,
-        UserRole.SUBLEEDER
+        UserRole.SUBLEEDER,
+        UserRole.GENERALWAREHOUSE
 })
 
 @Component
@@ -49,6 +50,7 @@ public class ScanController {
 
     @FXML private TextField txtScanInput;
     @FXML private TextField txtScanCode;
+    @FXML private TextField txtRollCode;
     @FXML private Button btnOnOff, btnKeepGoing, btnCallSuperV, btnSearch, btnClear, btnRefresh, btnScanOddReel;
 
     @FXML private Text txtScanStatus, txtScanResultTitle;
@@ -125,6 +127,7 @@ public class ScanController {
         txtSapSelect.setDisable(true);
         txtScanCode.setDisable(true);
         btnScanOddReel.setDisable(true);
+        txtRollCode.setDisable(true);
 
 
         tblScanDetails.setItems(detailList);
@@ -290,150 +293,228 @@ public class ScanController {
     }
 
     private void showOddReelScanDialog() {
+
         if (selectedInvoice == null) {
             showAlert("No Invoice Selected", "Please select an invoice before scanning odd reel.");
             return;
         }
 
-        Dialog<Pair<String, String>> dialog = new Dialog<>();
+        Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("Scan Odd Reel");
-        dialog.setHeaderText("Nhập MakerPN và Quantity cho cuộn lẻ");
+        dialog.setHeaderText("Scan MakerPN → nhập Quantity");
 
-        ButtonType okButton = new ButtonType("Submit", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(okButton, ButtonType.CANCEL);
+        ButtonType closeBtn = new ButtonType("Close", ButtonBar.ButtonData.CANCEL_CLOSE);
+        dialog.getDialogPane().getButtonTypes().add(closeBtn);
+
+        TextField txtRollCode = new TextField();
+        txtRollCode.setPromptText("Scan RollCode");
 
         TextField txtMakerPN = new TextField();
-        txtMakerPN.setPromptText("MakerPN (Scan Code)");
+        txtMakerPN.setPromptText("Scan MakerPN");
 
         TextField txtQty = new TextField();
-        txtQty.setPromptText("Quantity (số lượng cuộn lẻ)");
+        txtQty.setPromptText("Quantity");
 
         GridPane gp = new GridPane();
         gp.setHgap(10);
         gp.setVgap(10);
+
+        gp.add(new Label("RollCode:"), 0, 0);
+        gp.add(txtRollCode, 1, 0);
+
         gp.add(new Label("MakerPN:"), 0, 0);
         gp.add(txtMakerPN, 1, 0);
+
         gp.add(new Label("Quantity:"), 0, 1);
         gp.add(txtQty, 1, 1);
 
         dialog.getDialogPane().setContent(gp);
 
-        dialog.setResultConverter(btn -> {
-            if (btn == okButton) {
-                return new Pair<>(txtMakerPN.getText(), txtQty.getText());
+        setupOddReelScanHandlers(dialog, txtRollCode, txtMakerPN, txtQty);
+
+        Platform.runLater(txtMakerPN::requestFocus);
+
+        dialog.showAndWait();
+    }
+    private void setupOddReelScanHandlers(
+            Dialog<?> dialog,
+            TextField txtRollCode,
+            TextField txtMakerPN,
+            TextField txtQty) {
+
+        txtMakerPN.setOnKeyPressed(e -> {
+
+            if (e.getCode() == KeyCode.ENTER) {
+
+                String raw = txtMakerPN.getText();
+
+                if (raw == null || raw.isBlank()) return;
+
+                String makerPN = historyService.extractRealMakerPN(raw);
+
+                if (makerPN == null) {
+
+                    showResult("NG", "#d01029", "Cannot detect MakerPN");
+
+                    txtMakerPN.clear();
+                    txtMakerPN.requestFocus();
+                    return;
+                }
+
+                txtMakerPN.setText(makerPN);
+
+                Platform.runLater(txtQty::requestFocus);
             }
-            return null;
         });
 
-        dialog.showAndWait().ifPresent(pair -> {
-            processOddReelInput(pair.getKey(), pair.getValue());
+        txtQty.setOnKeyPressed(e -> {
+
+            if (e.getCode() == KeyCode.ENTER) {
+
+                processOddReelInput(
+                        txtRollCode.getText(),
+                        txtMakerPN.getText(),
+                        txtQty.getText()
+                );
+
+                dialog.close();
+            }
+        });
+
+        txtRollCode.setOnKeyPressed(e -> {
+
+            if (e.getCode() == KeyCode.ENTER) {
+
+                if (txtRollCode.getText().isBlank()) return;
+
+                Platform.runLater(txtMakerPN::requestFocus);
+            }
         });
     }
-    private void processOddReelInput(String rawMakerPN, String qtyStr) {
-        if (rawMakerPN == null || rawMakerPN.isBlank() ||
-                qtyStr == null || qtyStr.isBlank()) {
+    private void processOddReelInput(String rollCode, String rawMakerPN, String qtyStr) {
+
+        if (rawMakerPN == null || rawMakerPN.isBlank()
+                || qtyStr == null || qtyStr.isBlank()) {
+
             showAlert("Missing Data", "MakerPN và Quantity không được để trống.");
             return;
         }
 
         int qty;
+
         try {
+
             qty = Integer.parseInt(qtyStr);
+
             if (qty <= 0) throw new NumberFormatException();
+
         } catch (Exception e) {
+
             showAlert("Invalid Quantity", "Quantity phải là số nguyên dương.");
             return;
         }
 
-        // detect makerPN gốc
         String makerPN = historyService.extractRealMakerPN(rawMakerPN);
+
         if (makerPN == null) {
+
             showResult("NG", "#d01029", "Cannot detect MakerPN!");
             return;
         }
 
-        // lấy tất cả MOQ theo makerPN
         List<MOQ> moqList = moqService.getAllMOQsByMakerPN(makerPN);
+
         if (moqList == null || moqList.isEmpty()) {
-            showResult("NG", "#d01029", "MakerPN không tồn tại trong MOQ!");
+
+            showResult("NG", "#d01029", "MakerPN not exist in MOQ");
             return;
         }
 
-        // tìm MOQ thuộc invoice
         MOQ matched = null;
+
         for (MOQ moq : moqList) {
-            InvoiceDetail detail = invoiceDetailService.getInvoiceDetailBySapPNAndInvoiceId(
-                    moq.getSapPN(), selectedInvoice.getId()
-            );
+
+            InvoiceDetail detail =
+                    invoiceDetailService.getInvoiceDetailBySapPNAndInvoiceId(
+                            moq.getSapPN(),
+                            selectedInvoice.getId()
+                    );
+
             if (detail != null) {
+
                 matched = moq;
                 break;
             }
         }
 
-        // Nếu không có – gán đại bản đầu tiên và đánh trạng thái Z
         boolean notExistInInvoice = false;
+
         if (matched == null) {
+
             matched = moqList.get(0);
             notExistInInvoice = true;
         }
 
-        saveScanOddReel(matched, qty, notExistInInvoice);
+        saveScanOddReel(matched, qty, notExistInInvoice, rollCode);
     }
-    private void saveScanOddReel(MOQ moq, int qty, boolean notExistInInvoice) {
+    private void saveScanOddReel(MOQ moq, int qty, boolean notExistInInvoice, String rollCode) {
 
-        // lưu history
         historyService.createHistoryForScanOddReel(
                 moq,
                 currentScanId,
                 "ODD_REEL",
+                rollCode,
                 selectedInvoice.getId(),
                 qty
         );
 
-        // cập nhật bảng UI
         for (HistoryDetailViewDto dto : detailList) {
-            if (dto.getSapCode().equalsIgnoreCase(moq.getSapPN())) {
 
+            if (dto.getSapCode() != null
+                    && dto.getSapCode().equalsIgnoreCase(moq.getSapPN())) {
+
+                // 🔹 set makerCode
+                dto.setMakerCode(moq.getMakerPN());
+
+                // 🔹 update qty
                 int newQty = dto.getQtyScanned() + qty;
+
                 dto.setQtyScanned(newQty);
-                dto.setReelQty(newQty / Math.max(1, dto.getMoq()));
+
+                // 🔹 tính reelQty
+                int moqValue = Math.max(1, dto.getMoq());
+                dto.setReelQty(newQty / moqValue);
 
                 if (notExistInInvoice) {
+
                     dto.setStatus("Z");
-                    showResult("Z", "orange", "MakerPN not in invoice (Odd Reel).");
-                } else if (newQty > dto.getQty()) {
-                    dto.setStatus("Over");
-                    showResult("Over", "#ff3b3b", "Odd Reel → Over quantity!");
-                } else if (newQty == dto.getQty()) {
-                    dto.setStatus("O");
-                    showResult("O", "#4CAF50", "Odd Reel OK (Đủ số lượng!)");
+                    showResult("Z", "orange", "Odd reel not in invoice");
+
                 } else {
-                    dto.setStatus("X");
-                    showResult("X", "#d01029", "Odd Reel scanned, nhưng chưa đủ.");
+
+                    if (newQty > dto.getQty()) {
+
+                        dto.setStatus("Over");
+                        showResult("Over", "#ff3b3b", "Quantity Over");
+
+                    } else if (newQty == dto.getQty()) {
+
+                        dto.setStatus("O");
+                        showResult("OK", "#4CAF50", "Completed");
+
+                    } else {
+
+                        dto.setStatus("X");
+                        showResult("Scan", "#0099cc", "Odd reel added");
+                    }
                 }
 
-                tblScanDetails.refresh();
-                return;
+                break;
             }
         }
 
-        // nếu chưa có dòng SAP nào (rare case)
-        HistoryDetailViewDto dto = new HistoryDetailViewDto();
-        dto.setSapCode(moq.getSapPN());
-        dto.setMakerCode(moq.getMakerPN());
-        dto.setMaker(moq.getMaker());
-        dto.setSpec(moq.getSpec());
-        dto.setQtyScanned(qty);
-        dto.setQty(0); // không có trong invoice
-        dto.setReelQty(qty / Math.max(1, moq.getMoq()));
-
-        dto.setStatus("Z");
-
-        detailList.add(dto);
+        // 🔹 refresh table sau khi update
         tblScanDetails.refresh();
-
-        showResult("Z", "orange", "Odd Reel → SAP không thuộc invoice!");
     }
 
 
@@ -479,6 +560,7 @@ public class ScanController {
     private void loadInvoicePNs() {
         List<String> list = invoiceService.getAllInvoicePNs();
         cbInvoicePN.setItems(FXCollections.observableArrayList(list));
+
     }
 
     /*private void loadSapListForInvoice(Invoice invoice) {
@@ -611,7 +693,7 @@ public class ScanController {
                 txtSapSelect.setDisable(false);
                 txtScanCode.setDisable(false);
                 btnScanOddReel.setDisable(false);
-
+                txtRollCode.setDisable(false);
                 txtSapSelect.requestFocus();
                 showResult("READY", "#2196F3", "Scan mode is now active.");
             }
@@ -634,16 +716,54 @@ public class ScanController {
                 return;
             }
 
+            String roll = txtRollCode.getText().trim();
+
+            if (roll.isEmpty()) {
+
+                showAlert("Missing RollCode", "Please scan RollCode first.");
+                txtRollCode.requestFocus();
+                return;
+            }
+
+
             String makerPN = txtScanCode.getText().trim();
             if (!makerPN.isEmpty()) {
                 handleScan(makerPN, sap);
                 txtScanCode.clear();
+                txtRollCode.clear();
+                txtRollCode.requestFocus();
             }
         });
 
         txtSapSelect.setOnAction(e -> {
             String sap = txtSapSelect.getText().trim();
             bringSapToTop(sap);
+            txtRollCode.requestFocus();
+        });
+
+        txtRollCode.setOnAction(e -> {
+
+            if (!isScanEnabled) {
+                showAlert("Scan Disabled", "Please turn ON scan mode first.");
+                return;
+            }
+
+            String roll = txtRollCode.getText().trim();
+
+            if (roll.isEmpty()) return;
+
+            boolean duplicated = historyService.isRollCodeDuplicated(roll);
+
+            if (duplicated) {
+
+                showResult("Duplicate", "#d01029", "Roll already scanned!");
+
+                txtRollCode.clear();
+                txtRollCode.requestFocus();
+
+                return;
+            }
+
             txtScanCode.requestFocus();
         });
 
@@ -691,7 +811,7 @@ public class ScanController {
             txtSapSelect.setDisable(false);
             txtScanCode.setDisable(false);
             btnScanOddReel.setDisable(false);
-
+            txtRollCode.setDisable(false);
             txtScanCode.requestFocus();
 
         } else {
@@ -700,6 +820,7 @@ public class ScanController {
             txtSapSelect.setDisable(true);
             txtScanCode.setDisable(true);
             btnScanOddReel.setDisable(true);
+            txtRollCode.setDisable(true);
         }
     }
 
@@ -739,6 +860,13 @@ public class ScanController {
 
     // =========  SCAN LOGIC =========
     private void handleScan(String makerPN, String selectedSap) {
+        String rollCode = txtRollCode.getText().trim();
+
+        if (rollCode.isEmpty()) {
+            showAlert("Missing Roll Code", "Please scan RollCode first.");
+            return;
+        }
+
         String extractedMakerPN = historyService.extractRealMakerPN(makerPN);
 
         // ⚠️ 1️⃣ Không detect được MakerPN
@@ -747,7 +875,7 @@ public class ScanController {
             dummy.setMakerPN(makerPN);
             dummy.setSapPN(selectedSap);
             dummy.setMoq(0);
-            historyService.createHistoryForScannedMakePN(dummy, currentScanId, "NG_NO_DETECT", selectedInvoice.getId(), "NG");
+            historyService.createHistoryForScannedMakePN(dummy, currentScanId, "NG_NO_DETECT", rollCode, selectedInvoice.getId(), "NG");
 
             showResult("NG", "#d01029", "Cannot detect MakerPN!");
             markStatus(selectedSap, "Z");
@@ -763,7 +891,7 @@ public class ScanController {
             dummy.setMakerPN(extractedMakerPN);
             dummy.setSapPN(selectedSap);
             dummy.setMoq(0);
-            historyService.createHistoryForScannedMakePN(dummy, currentScanId, "NG_NOT_IN_MOQ", selectedInvoice.getId(), "NG");
+            historyService.createHistoryForScannedMakePN(dummy, currentScanId, "NG_NOT_IN_MOQ",rollCode, selectedInvoice.getId(), "NG");
 
             showResult("NG", "#d01029", "MakerPN not found in MOQ table!");
             markStatus(selectedSap, "Z");
@@ -790,6 +918,7 @@ public class ScanController {
                     dummy,
                     currentScanId,
                     "NG_WRONG_SAP",
+                    rollCode,
                     selectedInvoice.getId(),
                     "NG"
             );
@@ -821,7 +950,7 @@ public class ScanController {
         // ================================
 
         // 4️⃣ Hợp lệ → ghi bình thường
-        historyService.createHistoryForScannedMakePN(matchedMOQ, currentScanId, "Scan Code: " + matchedMOQ, selectedInvoice.getId(), "Scanned");
+        historyService.createHistoryForScannedMakePN(matchedMOQ, currentScanId, "Scan Code: " + matchedMOQ, rollCode, selectedInvoice.getId(), "Scanned");
 
 
 

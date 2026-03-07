@@ -15,5 +15,6 @@ public interface HistoryRepository extends GenericRepository<History>{
     void deleteLastByMakerPNAndInvoiceId(String makerPN, int invoiceId);
     void deleteLastBySapPNAndInvoiceId(String sapPN, int invoiceId);
     Map<String, HistorySummary> getHistorySummaryByInvoiceId(int invoiceId);
+    boolean existsByRollCode(String rollCode);
 
 }

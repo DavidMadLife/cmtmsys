@@ -1,8 +1,11 @@
 package org.chemtrovina.cmtmsys.model;
 
+import lombok.Data;
+
 import java.time.LocalDate;
 import java.time.LocalTime;
 
+@Data
 public class History {
     private int id;
     private Integer invoiceId;
@@ -21,6 +24,13 @@ public class History {
 
     //When get into View
     private String invoiceNo;
+
+    private String codeScan;   // NEW raw scan
+    private String lotNo;      // NEW
+    private String rollCode;   // NEW
+
+
+
 
     public History() {
     }

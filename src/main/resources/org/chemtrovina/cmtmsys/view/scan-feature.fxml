@@ -80,6 +80,12 @@
 
                   <HBox alignment="CENTER_LEFT" spacing="10" prefWidth="320"
                         style="-fx-background-color:white; -fx-background-radius:5; -fx-padding:5 10;">
+                     <Text text="Roll Code"/>
+                     <TextField fx:id="txtRollCode" prefWidth="220"/>
+                  </HBox>
+
+                  <HBox alignment="CENTER_LEFT" spacing="10" prefWidth="320"
+                        style="-fx-background-color:white; -fx-background-radius:5; -fx-padding:5 10;">
                      <Text text="Scan Code"/>
                      <TextField fx:id="txtScanCode" prefWidth="220"/>
                   </HBox>

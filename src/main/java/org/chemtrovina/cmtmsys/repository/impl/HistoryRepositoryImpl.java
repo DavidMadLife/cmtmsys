@@ -26,8 +26,15 @@ public class HistoryRepositoryImpl extends GenericRepositoryImpl<History> implem
 
     @Override
     public void add(History history) {
-        String sql = "INSERT INTO History (InvoiceId, Date, Time, Maker, MakerPN, SapPN, Quantity, EmployeeId, Status, ScanCode, MSL, InvoicePN, Spec) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+        String sql = """
+        INSERT INTO History
+        (InvoiceId, Date, Time, Maker, MakerPN, SapPN, Quantity,
+         EmployeeId, Status, ScanCode, MSL, InvoicePN, Spec,
+         code_scan, lot_no, roll_code)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """;
+
         jdbcTemplate.update(sql,
                 history.getInvoiceId(),
                 history.getDate(),
@@ -41,7 +48,10 @@ public class HistoryRepositoryImpl extends GenericRepositoryImpl<History> implem
                 history.getScanCode(),
                 history.getMSL(),
                 history.getInvoicePN(),
-                history.getSpec()
+                history.getSpec(),
+                history.getCodeScan(),
+                history.getLotNo(),
+                history.getRollCode()
         );
     }
 
@@ -95,6 +105,21 @@ public class HistoryRepositoryImpl extends GenericRepositoryImpl<History> implem
         if (history.getSpec() != null && !history.getSpec().equals("")) {
             sql.append("Spec = ?, ");
             params.add(history.getSpec());
+        }
+
+        if (history.getCodeScan() != null && !history.getCodeScan().isEmpty()) {
+            sql.append("code_scan = ?, ");
+            params.add(history.getCodeScan());
+        }
+
+        if (history.getLotNo() != null && !history.getLotNo().isEmpty()) {
+            sql.append("lot_no = ?, ");
+            params.add(history.getLotNo());
+        }
+
+        if (history.getRollCode() != null && !history.getRollCode().isEmpty()) {
+            sql.append("roll_code = ?, ");
+            params.add(history.getRollCode());
         }
 
         // Loại bỏ dấu phẩy cuối câu SQL
@@ -223,6 +248,15 @@ public class HistoryRepositoryImpl extends GenericRepositoryImpl<History> implem
         jdbcTemplate.update(sql, sapPN, invoiceId);
     }
 
+    @Override
+    public boolean existsByRollCode(String rollCode) {
+
+        String sql = "SELECT COUNT(*) FROM History WHERE roll_code = ?";
+
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, rollCode);
+
+        return count != null && count > 0;
+    }
 
     @Override
     public Map<String, HistorySummary> getHistorySummaryByInvoiceId(int invoiceId) {
@@ -258,8 +292,10 @@ public class HistoryRepositoryImpl extends GenericRepositoryImpl<History> implem
 
 
     static class HistoryRowMapper implements RowMapper<History> {
+
         @Override
         public History mapRow(ResultSet rs, int rowNum) throws SQLException {
+
             History h = new History(
                     rs.getInt("Id"),
                     rs.getInt("InvoiceId"),
@@ -276,9 +312,15 @@ public class HistoryRepositoryImpl extends GenericRepositoryImpl<History> implem
                     rs.getString("InvoicePN"),
                     rs.getString("Spec")
             );
+
+            h.setCodeScan(rs.getString("code_scan"));
+            h.setLotNo(rs.getString("lot_no"));
+            h.setRollCode(rs.getString("roll_code"));
+
             try {
                 h.setInvoiceNo(rs.getString("InvoiceNo"));
             } catch (SQLException ignore) {}
+
             return h;
         }
     }
